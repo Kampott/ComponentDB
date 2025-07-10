@@ -7,3 +7,9 @@ python-dotenv
 alembic
 python-jose[cryptography]
 passlib[bcrypt]
+sqladmin
+jinja2
+aiofiles
+loguru
+pandas
+markdown2

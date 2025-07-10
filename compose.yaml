@@ -14,11 +14,14 @@ services:
     restart: always
     depends_on:
       - db
+    tty: true
     ports:
       - "${BACKEND_PORT}:8000"
     env_file:
       - ./backend/.env
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app  # Optional if you want live-reload in dev
 
   frontend:
     build: ./frontend
@@ -29,7 +32,9 @@ services:
     volumes:
       - ./frontend:/app
     command: npm start
-
+    working_dir: /app
+    stdin_open: true
+    tty: true
 
 volumes:
   pgdata:
