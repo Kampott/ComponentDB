@@ -8,7 +8,18 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "${PGADMIN_PORT}:80"
+    depends_on:
+      - db
   backend:
     build: ./backend
     restart: always
