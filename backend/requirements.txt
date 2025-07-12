@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy
+asyncpg
+psycopg2-binary
+python-dotenv
+alembic
+python-jose[cryptography]
+passlib[bcrypt]
+sqladmin
+jinja2
+aiofiles
+loguru
+pandas
+markdown2
