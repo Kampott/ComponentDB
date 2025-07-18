@@ -8,7 +8,7 @@ from alembic import context
 from dotenv import load_dotenv
 from app.db.base import Base
 from app.models import *
-from app.models.core import Objects
+from app.models import core
 import os
 
 load_dotenv()
@@ -19,12 +19,13 @@ fileConfig(config.config_file_name)
 target_metadata = Base.metadata
 
 # Берём URL из переменной окружения
-DATABASE_URL = os.getenv("DATABASE_URL")
+ASYNC_DATABASE_URL = os.getenv("DATABASE_URL")
+SYNC_DATABASE_URL = ASYNC_DATABASE_URL.replace("asyncpg", "psycopg2")
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode."""
     context.configure(
-        url=DATABASE_URL,
+        url=SYNC_DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -34,7 +35,7 @@ def run_migrations_offline():
 
 async def run_migrations_online():
     """Run migrations in 'online' mode."""
-    connectable = create_async_engine(DATABASE_URL, poolclass=pool.NullPool)
+    connectable = create_async_engine(ASYNC_DATABASE_URL, poolclass=pool.NullPool)
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
 

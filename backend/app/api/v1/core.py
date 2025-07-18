@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.crud.core import get_objects, create_object
-from app.schemas.core import ObjectsRead, ObjectsCreate
+from typing import List
+
+from app.schemas.core import ObjectsRead, ObjectsCreate, ObjectsUpdate
+from app.crud.core import create_object, get_objects
 from app.db.database import get_async_session
 
 router = APIRouter(prefix="/objects", tags=["core"])
