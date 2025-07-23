@@ -20,7 +20,7 @@ class Objects(Base):
         backref="children"
         )  
 
-    root_id: Mapped[int] = mapped_column(ForeignKey("objects.id"))
+    root_id: Mapped[int] = mapped_column(ForeignKey("objects.id"), nullable=True)
     root: Mapped["Objects"] = relationship(
         "Objects",
         foreign_keys=[root_id],
@@ -43,7 +43,7 @@ class Types(Base):
         backref="children"
         )
 
-    root_id: Mapped[int] = mapped_column(ForeignKey("types.id"))
+    root_id: Mapped[int] = mapped_column(ForeignKey("types.id"), nullable = True)
     root: Mapped["Types"] = relationship(
         "Types",
         foreign_keys=[root_id], 
@@ -71,7 +71,7 @@ class PropertyTypes(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
-    id_type: Mapped[int] = mapped_column(ForeignKey("types.id"))
+    type_id: Mapped[int] = mapped_column(ForeignKey("types.id"))
     type_: Mapped["Types"] = relationship("Types")
 
     name: Mapped[str] = mapped_column(String, nullable = False)
