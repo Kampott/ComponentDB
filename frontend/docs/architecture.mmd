@@ -1,0 +1,68 @@
+classDiagram
+direction LR
+    class RestApiClient {
+	    +get(url: string, query?: Record) : Promise
+	    +post(url: string, data: PostData, query?) : Promise
+	    +patch(url: string, data: PatchData, query?) : Promise
+	    +put(url: string, data: PutData, query?) : Promise
+	    +delete(url: string, query?) : Promise
+    }
+
+    class IAuthService {
+	    +login(userData: LoginRequest) : Promise
+	    +register(userData: RegisterRequest) : Promise
+	    +logout() : Promise
+	    +refresh() : Promise
+	    +me() : Promise
+    }
+
+    class IStore {
+	    +auth_service: IAuthService
+	    +user: User
+	    +isAuthenticated: boolean
+	    +setUser(user: User) : void
+	    +setAuth(isAuthenticated: boolean) : void
+	    +login(userData: LoginRequest) : Promise
+	    +logout() : Promise
+	    +checkAuth() : Promise
+    }
+
+    class AxiosClient {
+	    -axiosInstance: AxiosInstance
+	    +get(...)
+	    +post(...)
+	    +patch(...)
+	    +put(...)
+	    +delete(...)
+    }
+
+    class AuthService {
+	    -client: RestApiClient
+	    +login(...)
+	    +register(...)
+	    +logout()
+	    +refresh()
+	    +me()
+    }
+
+    class Zustand {
+	    +auth_service: IAuthService
+	    +user: User
+	    +isAuthenticated: boolean
+	    +setUser(user: User) : void
+	    +setAuth(isAuthenticated: boolean) : void
+	    +login(userData: LoginRequest) : Promise
+	    +logout() : Promise
+	    +checkAuth() : Promise
+    }
+
+	<<interface>> RestApiClient
+	<<interface>> IAuthService
+	<<interface>> IStore
+
+    RestApiClient <|.. AxiosClient
+    IAuthService <|.. AuthService
+    IStore <|.. Zustand
+    AuthService --> RestApiClient : uses
+    Zustand --> IAuthService : has
+
