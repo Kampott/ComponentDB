@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.schemas.core import InstancePropertiesRead, InstancePropertiesCreate, InstancePropertiesUpdate
-from app.crud.core import create_instanceproperty, get_instanceproperties, get_instanceproperties
+from app.crud.core.instance_properties import *
 from app.db.database import get_async_session
 
-router = APIRouter(prefix="/instanceproperties", tags=["core"])
+router = APIRouter(prefix="/instanceproperties", tags=["DB: Core: Instance Properties"])
 
 @router.get("/", response_model=list[InstancePropertiesRead])
 async def read_instance_properties(db: AsyncSession = Depends(get_async_session)):
@@ -22,3 +22,7 @@ async def read_instance_properties(instance_property_id: int, db: AsyncSession =
 @router.post("/", response_model=InstancePropertiesCreate)
 async def add_object(data: InstancePropertiesCreate, db: AsyncSession = Depends(get_async_session)):
     return await create_instanceproperty(db, data)
+
+@router.delete("/{instance_property_id}", status_code=204)
+async def delete_instance_property(object_id: int, db: AsyncSession = Depends(get_async_session)):
+    await delete_instanceproperty(db, instance_property_id)

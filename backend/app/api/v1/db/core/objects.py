@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.schemas.core import ObjectsRead, ObjectsCreate, ObjectsUpdate
-from app.crud.core import create_object, get_objects, get_object
+from app.crud.core.objects import create_object, get_objects, get_object
 from app.db.database import get_async_session
 
-router = APIRouter(prefix="/objects", tags=["core"])
+router = APIRouter(prefix="/objects", tags=["DB: Core: Objects"])
 
 @router.get("/", response_model=list[ObjectsRead])
 async def read_objects(db: AsyncSession = Depends(get_async_session)):
@@ -22,3 +22,7 @@ async def read_object(object_id: int, db: AsyncSession = Depends(get_async_sessi
 @router.post("/", response_model=ObjectsCreate)
 async def add_object(data: ObjectsCreate, db: AsyncSession = Depends(get_async_session)):
     return await create_object(db, data)
+
+@router.delete("/{objects_id}", status_code=204)
+async def delete_objects(object_id: int, db: AsyncSession = Depends(get_async_session)):
+    await delete_object(db, objects_id)

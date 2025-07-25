@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 
 #Objects
@@ -22,6 +22,9 @@ class ObjectsRead(ObjectsBase):
     class Config:
         from_attribues = True
 
+class ObjectsDelete(BaseModel):
+    id: int
+
 
 #Types
 class TypesBase(BaseModel):
@@ -43,6 +46,8 @@ class TypesRead(TypesBase):
     class Config:
         from_attribues = True
 
+class TypesDelete(BaseModel):
+    id: int
 
 #PropertyTypes
 class PropertyTypesBase(BaseModel):
@@ -61,6 +66,9 @@ class PropertyTypesRead(PropertyTypesBase):
 
     class Config:
         from_attribues = True
+
+class PropertyTypesDelete(BaseModel):
+    id: int
 
 
 
@@ -83,6 +91,8 @@ class PropertiesRead(PropertiesBase):
 
     class Config:
         from_attribues = True
+class PropertiesDelete(BaseModel):
+    id: int
 
 
 #Instances
@@ -105,6 +115,9 @@ class InstancesRead(InstancesBase):
     class Config:
         from_attribues = True
 
+class InstancesDelete(BaseModel):
+    id: int
+
 #Instance Properties
 
 class InstancePropertiesBase(BaseModel):
@@ -123,3 +136,53 @@ class InstancePropertiesRead(InstancePropertiesBase):
 
     class Config:
         from_attribues = True
+
+class InstancePropertiesDelete(BaseModel):
+    id: int
+
+
+
+#DataTree
+
+class TypeTree(BaseModel):
+    id: int
+    name: str
+    children: List["TypeTree"] = []
+
+    class Config:
+        from_attribues = True
+
+class ObjectNode(BaseModel):
+    id: int
+    type_id: int
+    type_name: str
+    children: List["ObjectNode"] = []
+
+    class Config:
+        from_attribues = True
+
+ObjectNode.update_forward_refs()
+
+class InstanceOut(BaseModel):
+    id: int
+    type_id: int
+    type_name: str
+    is_active: bool
+
+    class Config:
+        from_attribues = True
+
+class ObjectInstanceTree(BaseModel):
+    id: int
+    type_id: int
+    type_name: str
+    instances: List[InstanceOut]
+    children: List["ObjectInstanceTree"]
+
+    class Config:
+        from_attribues = True
+
+ObjectInstanceTree.update_forward_refs()
+
+
+
