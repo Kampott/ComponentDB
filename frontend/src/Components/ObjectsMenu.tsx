@@ -1,10 +1,10 @@
-import {Button, Nav, Offcanvas} from "react-bootstrap";
+import {Button, Nav} from "react-bootstrap";
 import {useState} from "react";
-import type {Object} from "../schemas/object.ts";
+// import type {Object} from "../schemas/object.ts";
 
 function ObjectsMenu() {
     const [sidebarVisible, setSidebarVisible] = useState(true);
-    const [rootObjects, setRootObjects] = useState<Object[]>([]);
+    // const [rootObjects, setRootObjects] = useState<Object[]>([]);
 
     const toggleSidebar = () => {
         setSidebarVisible(!sidebarVisible)
