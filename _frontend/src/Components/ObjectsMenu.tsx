@@ -1,12 +1,13 @@
 import {Button, Nav, Offcanvas} from "react-bootstrap";
 import {useState} from "react";
+import type {Object} from "../schemas/object.ts";
 
-
-const ObjectsMenu = () => {
+function ObjectsMenu() {
     const [sidebarVisible, setSidebarVisible] = useState(true);
+    const [rootObjects, setRootObjects] = useState<Object[]>([]);
 
     const toggleSidebar = () => {
-        setSidebarVisible(!sidebarVisible);
+        setSidebarVisible(!sidebarVisible)
     };
 
     return (
@@ -43,6 +44,6 @@ const ObjectsMenu = () => {
             </div>
         </div>
     );
-};
+}
 
 export default ObjectsMenu;
