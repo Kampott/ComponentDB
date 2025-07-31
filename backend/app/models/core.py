@@ -20,7 +20,7 @@ class Types(Base):
         passive_deletes=True
         )
 
-    root_id: Mapped[int] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"), nullable = True)
+    root_id: Mapped[int] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"), nullable = False)
     root: Mapped["Types"] = relationship(
         "Types",
         foreign_keys=[root_id], 
