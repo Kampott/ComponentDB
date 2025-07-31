@@ -1,13 +1,12 @@
 import {create} from "zustand/react";
 
 import type {LoginRequest, User} from "../models/auth.ts";
-import AuthService from "../services/auth/AuthService.ts";
 import type IStore from "./IStore.ts";
 import logError from "../log_error.ts";
-
+import Services from "../services/Services.ts";
 
 export const useStore = create<IStore>((set) => ({
-    auth_service: new AuthService(),
+    services: new Services(),
     user: {} as User,
     isAuthenticated: false,
 
@@ -21,10 +20,10 @@ export const useStore = create<IStore>((set) => ({
 
     async login(userData: LoginRequest) {
         try {
-            const response = await this.auth_service.login(userData);
+            const response = await this.services.authService.login(userData);
             localStorage.setItem("token", response.access_token);
             this.setAuth(true)
-            this.setUser(await this.auth_service.me())
+            this.setUser(await this.services.authService.me())
         } catch (e) {
             logError(e)
         }
@@ -32,7 +31,7 @@ export const useStore = create<IStore>((set) => ({
 
     async logout() {
         try {
-            await this.auth_service.logout();
+            await this.services.authService.logout();
             localStorage.removeItem("token");
             this.setAuth(false)
             this.setUser({} as User)
@@ -43,10 +42,10 @@ export const useStore = create<IStore>((set) => ({
 
     async checkAuth() {
         try {
-            const response = await this.auth_service.refresh()
+            const response = await this.services.authService.refresh()
             localStorage.setItem("token", response.access_token);
             this.setAuth(true)
-            this.setUser(await this.auth_service.me())
+            this.setUser(await this.services.authService.me())
         } catch (e) {
             logError(e)
         }
