@@ -1,11 +1,19 @@
-import {type AxiosInstance, type AxiosResponse, default as axios} from "axios"
+import {type AxiosError, type AxiosInstance, type AxiosResponse, default as axios} from "axios"
 
-import type RestApiClient from "./RestApiClient.ts"
+import {RestApiError} from "./RestApiClient.ts"
+import type RestApiClient from "./RestApiClient.ts";
 import type {LoginResponse} from "../models/auth.ts";
 import logError from "../log_error.ts";
 
 export default class AxiosClient implements RestApiClient {
     private axiosInstance: AxiosInstance;
+
+    private static parseAxiosError(error: AxiosError<{detail: string}>) {
+        throw new RestApiError(
+            error.response?.status,
+            error.response?.data?.detail,
+        );
+    }
 
     constructor(baseUrl: string, baseHeaders: Record<string, string>, refreshTokenUrl: string) {
         this.axiosInstance = axios.create({
@@ -42,37 +50,72 @@ export default class AxiosClient implements RestApiClient {
     }
 
     async get<ReturnData>(url: string, query?: Record<string, number | string>): Promise<ReturnData> {
-        const response = await this.axiosInstance.get<ReturnData>(
-            url, {params: query}
-        )
-        return response.data
+        try {
+            const response = await this.axiosInstance.get<ReturnData>(
+                url, {params: query}
+            )
+            return response.data
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                AxiosClient.parseAxiosError(error)
+            }
+            throw error;
+        }
     }
 
     async post<PostData, ReturnData>(url: string, data: PostData, query?: Record<string, number | string>): Promise<ReturnData> {
-        const response = await this.axiosInstance.post<PostData, AxiosResponse<ReturnData>>(
-            url, data, {params: query}
-        )
-        return response.data
+        try {
+            const response = await this.axiosInstance.post<PostData, AxiosResponse<ReturnData>>(
+                url, data, {params: query}
+            )
+            return response.data
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                AxiosClient.parseAxiosError(error)
+            }
+            throw error;
+        }
     }
 
     async patch<PatchData, ReturnData>(url: string, data: PatchData, query?: Record<string, number | string>): Promise<ReturnData> {
-        const response = await this.axiosInstance.patch<PatchData, AxiosResponse<ReturnData>>(
-            url, data, {params: query}
-        )
-        return response.data
+        try {
+            const response = await this.axiosInstance.patch<PatchData, AxiosResponse<ReturnData>>(
+                url, data, {params: query}
+            )
+            return response.data
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                AxiosClient.parseAxiosError(error)
+            }
+            throw error;
+        }
     }
 
     async put<PutData, ReturnData>(url: string, data: PutData, query?: Record<string, number | string>): Promise<ReturnData> {
-        const response = await this.axiosInstance.put<PutData, AxiosResponse<ReturnData>>(
-            url, data, {params: query}
-        )
-        return response.data
+        try {
+            const response = await this.axiosInstance.put<PutData, AxiosResponse<ReturnData>>(
+                url, data, {params: query}
+            )
+            return response.data
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                AxiosClient.parseAxiosError(error)
+            }
+            throw error;
+        }
     }
 
     async delete<ReturnData>(url: string, query?: Record<string, number | string>): Promise<ReturnData> {
-        const response = await this.axiosInstance.delete<ReturnData>(
-            url, {params: query}
-        )
-        return response.data
+        try {
+            const response = await this.axiosInstance.delete<ReturnData>(
+                url, {params: query}
+            )
+            return response.data
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                AxiosClient.parseAxiosError(error)
+            }
+            throw error;
+        }
     }
 }

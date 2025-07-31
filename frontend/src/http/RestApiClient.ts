@@ -1,3 +1,16 @@
+export class RestApiError extends Error {
+    public readonly detail?: string;
+
+    constructor(
+        status?: number,
+        detail?: string,
+    ) {
+        super(`RestApiClient returns status ${status}: ${detail}`);
+        this.detail = detail;
+        this.name = 'ApiError';
+    }
+}
+
 export default interface RestApiClient {
     get<ReturnData>(url: string, query?: Record<string, number | string>): Promise<ReturnData>
 
