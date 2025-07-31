@@ -1,0 +1,9 @@
+dist
+docs
+node_modules
+.gitignore
+.git
+Dockerfile
+.dockerignore
+*.md
+package-lock.json
