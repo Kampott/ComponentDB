@@ -3,6 +3,7 @@ import {create} from "zustand/react";
 import type {LoginRequest, User} from "../models/auth.ts";
 import AuthService from "../services/auth/AuthService.ts";
 import type IStore from "./IStore.ts";
+import logError from "../log_error.ts";
 
 
 export const useStore = create<IStore>((set) => ({
@@ -25,7 +26,7 @@ export const useStore = create<IStore>((set) => ({
             this.setAuth(true)
             this.setUser(await this.auth_service.me())
         } catch (e) {
-            console.log(e.response?.data?.detail)
+            logError(e)
         }
     },
 
@@ -35,8 +36,8 @@ export const useStore = create<IStore>((set) => ({
             localStorage.removeItem("token");
             this.setAuth(false)
             this.setUser({} as User)
-        } catch (e) {
-            console.log(e.response?.data?.detail)
+        } catch (e: unknown) {
+            logError(e)
         }
     },
 
@@ -47,7 +48,7 @@ export const useStore = create<IStore>((set) => ({
             this.setAuth(true)
             this.setUser(await this.auth_service.me())
         } catch (e) {
-            console.log(e.response?.data?.detail)
+            logError(e)
         }
     }
 }));

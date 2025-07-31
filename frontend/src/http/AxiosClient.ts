@@ -2,6 +2,7 @@ import {type AxiosInstance, type AxiosResponse, default as axios} from "axios"
 
 import type RestApiClient from "./RestApiClient.ts"
 import type {LoginResponse} from "../models/auth.ts";
+import logError from "../log_error.ts";
 
 export default class AxiosClient implements RestApiClient {
     private axiosInstance: AxiosInstance;
@@ -29,7 +30,7 @@ export default class AxiosClient implements RestApiClient {
                     localStorage.setItem("token", response.data.access_token)
                     return this.axiosInstance.request(originalRequest)
                 } catch (e) {
-                    console.log(e.response?.data?.detail)
+                    logError(e)
                 }
             }
             throw error
