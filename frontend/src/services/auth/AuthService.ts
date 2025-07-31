@@ -8,7 +8,7 @@ export default class AuthService implements IAuthService {
     private client: RestApiClient;
 
     public constructor() {
-        this.client = new AxiosClient("http://localhost:8080", {}, "http://localhost:8080");
+        this.client = new AxiosClient("http://localhost:8080", {}, "http://localhost:8080/refresh");
     }
 
     async login(userData: LoginRequest): Promise<LoginResponse> {
