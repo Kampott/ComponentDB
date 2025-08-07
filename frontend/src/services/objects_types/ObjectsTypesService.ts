@@ -12,13 +12,20 @@ export default class ObjectsTypesService implements IObjectsTypesService {
     public async getTypes(): Promise<ObjectType[]> {
         return await this.client.get<ObjectType[]>("/types/")
     }
-    public async getTypeById(id: string): Promise<ObjectType> {
-        return await this.client.get<ObjectType>(`/types/${id}`);
+
+    public async getTypeById(id: number): Promise<ObjectType> {
+        return await this.client.get<ObjectType>(`/types/${id}`)
     }
+
     public async addType(object: ObjectTypeAdd): Promise<ObjectTypeAdd> {
-        return await this.client.post<ObjectTypeAdd, ObjectTypeAdd>("/types/", object);
+        return await this.client.post<ObjectTypeAdd, ObjectTypeAdd>("/types/", object)
     }
-    public async deleteType(id: string): Promise<null> {
-        return await this.client.delete(`/types/${id}`);
+
+    public async deleteType(id: number): Promise<null> {
+        return await this.client.delete(`/types/${id}`)
+    }
+
+    public async getTypesByParentId(parentId: number): Promise<ObjectType[]> {
+        return await this.client.get<ObjectType[]>("/types/", {parent_id: parentId})
     }
 }

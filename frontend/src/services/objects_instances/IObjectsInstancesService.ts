@@ -3,9 +3,13 @@ import type {ObjectInstance, ObjectInstanceAdd} from "../../schemas/ObjectInstan
 export default interface IObjectsInstancesService {
     getInstances(): Promise<ObjectInstance[]>
 
-    getInstanceById(id: string): Promise<ObjectInstance>
+    getInstanceById(id: number): Promise<ObjectInstance>
 
     addInstance(object: ObjectInstanceAdd): Promise<ObjectInstanceAdd>
 
-    deleteInstance(id: string): Promise<null>
+    deleteInstance(id: number): Promise<null>
+
+    getInstancesByObjectId(objectId: number): Promise<ObjectInstance[]>
+
+    getInstancesByParentId(parentId: number): Promise<ObjectInstance[]>
 }

@@ -9,16 +9,23 @@ export default class PropertiesTypesService implements IPropertiesTypesService {
         this.client = client
     }
 
-    public async getTypes(): Promise<PropertyType[]> {
+    public async getPropertyTypes(): Promise<PropertyType[]> {
         return await this.client.get<PropertyType[]>("/property_types/")
     }
-    public async getTypeById(id: string): Promise<PropertyType> {
+
+    public async getPropertyTypeById(id: number): Promise<PropertyType> {
         return await this.client.get<PropertyType>(`/property_types/${id}`);
     }
-    public async addType(object: PropertyTypeAdd): Promise<PropertyTypeAdd> {
+
+    public async addPropertyType(object: PropertyTypeAdd): Promise<PropertyTypeAdd> {
         return await this.client.post<PropertyTypeAdd, PropertyTypeAdd>("/property_types/", object);
     }
-    public async deleteType(id: string): Promise<null> {
+
+    public async deletePropertyType(id: number): Promise<null> {
         return await this.client.delete(`/property_types/${id}`);
+    }
+
+    public async getPropertyTypesByTypeId(typeId: number): Promise<PropertyType[]> {
+        return await this.client.get<PropertyType[]>("/property_types/", {type_id: typeId});
     }
 }

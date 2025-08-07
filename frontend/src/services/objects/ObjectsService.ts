@@ -13,7 +13,7 @@ export default class ObjectsService implements IObjectsService {
         return await this.client.get<Object[]>("/objects/")
     }
 
-    public async getObjectById(id: string): Promise<Object> {
+    public async getObjectById(id: number): Promise<Object> {
         return await this.client.get<Object>(`/objects/${id}`);
     }
 
@@ -21,7 +21,11 @@ export default class ObjectsService implements IObjectsService {
         return await this.client.post<ObjectAdd, ObjectAdd>("/objects/", object);
     }
 
-    public async deleteObject(id: string): Promise<null> {
+    public async deleteObject(id: number): Promise<null> {
         return await this.client.delete(`/objects/${id}`);
+    }
+
+    public async getObjectsByParentId(parentId: number): Promise<Object[]> {
+        return await this.client.get<Object[]>("/objects/", {parent_id: parentId})
     }
 }

@@ -13,7 +13,7 @@ export default class InstancesPropertiesService implements IInstancesPropertiesS
         return await this.client.get<InstanceProperty[]>("/instanceproperties/")
     }
 
-    public async getInstanceById(id: string): Promise<InstanceProperty> {
+    public async getInstanceById(id: number): Promise<InstanceProperty> {
         return await this.client.get<InstanceProperty>(`/instanceproperties/${id}`);
     }
 
@@ -21,7 +21,11 @@ export default class InstancesPropertiesService implements IInstancesPropertiesS
         return await this.client.post<InstancePropertyAdd, InstancePropertyAdd>("/instanceproperties/", object);
     }
 
-    public async deleteInstance(id: string): Promise<null> {
+    public async deleteInstance(id: number): Promise<null> {
         return await this.client.delete(`/instanceproperties/${id}`);
+    }
+
+    public async getInstancesByObjectId(objectId: number): Promise<InstanceProperty[]> {
+        return await this.client.get<InstanceProperty[]>(`/instanceproperties/`, {object_id: objectId});
     }
 }

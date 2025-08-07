@@ -13,7 +13,7 @@ export default class PropertiesService implements IPropertiesService {
         return await this.client.get<Property[]>("/properties/")
     }
 
-    public async getPropertyById(id: string): Promise<Property> {
+    public async getPropertyById(id: number): Promise<Property> {
         return await this.client.get<Property>(`/properties/${id}`);
     }
 
@@ -21,7 +21,11 @@ export default class PropertiesService implements IPropertiesService {
         return await this.client.post<PropertyAdd, PropertyAdd>("/properties/", object);
     }
 
-    public async deleteProperty(id: string): Promise<null> {
+    public async deleteProperty(id: number): Promise<null> {
         return await this.client.delete(`/properties/${id}`);
+    }
+
+    public async getPropertiesByObjectId(objectId: number): Promise<Property[]> {
+        return await this.client.get<Property[]>("/properties/", {object_id: objectId})
     }
 }
