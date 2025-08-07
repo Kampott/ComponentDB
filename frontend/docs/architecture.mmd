@@ -41,9 +41,10 @@ classDiagram
 	class IPropertiesTypesService {
 		<<abstract>>
 		+getTypes(): Promise<PropertyType[]>
-		+getTypeById(id: string): Promise<PropertyType>
+		+getTypeById(id: int): Promise<PropertyType>
 		+addType(object: PropertyTypeAdd): Promise<PropertyTypeAdd>
-		+deleteType(id: string): Promise<null>
+		+deleteType(id: int): Promise<null>
+		+getPropertyTypesByTypeId(typeId: int): Promise<PropertyType[]>
 	}
 	class PropertiesTypesService {
 		-client: RestApiClient
@@ -56,9 +57,10 @@ classDiagram
 	class IPropertiesService {
 		<<abstract>>
 		+getProperties(): Promise<Property[]>
-		+getPropertyById(id: string): Promise<Property>
+		+getPropertyById(id: int): Promise<Property>
 		+addProperty(object: PropertyAdd): Promise<PropertyAdd>
-		+deleteProperty(id: string): Promise<null>
+		+deleteProperty(id: int): Promise<null>
+		+getPropertiesByObjectId(objectId: int): Promise<Property[]>
 	}
 	class PropertiesService {
 		-client: RestApiClient
@@ -71,9 +73,10 @@ classDiagram
 	class IObjectsTypesService {
 		<<abstract>>
 		+getTypes(): Promise<ObjectType[]>
-		+getTypeById(id: string): Promise<ObjectType>
+		+getTypeById(id: int): Promise<ObjectType>
 		+addType(object: ObjectTypeAdd): Promise<ObjectTypeAdd>
-		+deleteType(id: string): Promise<null>
+		+deleteType(id: int): Promise<null>
+		+getTypesByParentId(parentId: int): Promise<ObjectType[]>
 	}
 	class ObjectsTypesService {
 		-client: RestApiClient
@@ -86,9 +89,11 @@ classDiagram
 	class IObjectsInstancesService {
 		<<abstract>>
 		+getInstances(): Promise<ObjectInstance[]>
-		+getInstanceById(id: string): Promise<ObjectInstance>
+		+getInstanceById(id: int): Promise<ObjectInstance>
 		+addInstance(object: ObjectInstanceAdd): Promise<ObjectInstanceAdd>
-		+deleteInstance(id: string): Promise<null>
+		+deleteInstance(id: int): Promise<null>
+		+getInstancesByObjectId(objectId: int): Promise<ObjectInstance[]>
+		+getInstancesByParentId(parentId: int): Promise<ObjectInstance[]>
 	}
 	class ObjectsInstancesService {
 		-client: RestApiClient
@@ -101,9 +106,10 @@ classDiagram
 	class IObjectsService {
 		<<abstract>>
 		+getObjects(): Promise<Object[]>
-		+getObjectById(id: string): Promise<Object>
+		+getObjectById(id: int): Promise<Object>
 		+addObject(object: ObjectAdd): Promise<ObjectAdd>
-		+deleteObject(id: string): Promise<null>
+		+deleteObject(id: int): Promise<null>
+		+getObjectsByParentId(parentId: int): Promise<Object[]>
 	}
 	class ObjectsService {
 		-client: RestApiClient
@@ -116,9 +122,10 @@ classDiagram
 	class IInstancesPropertiesService {
 		<<abstract>>
 		+getInstances(): Promise<InstanceProperty[]>
-		+getInstanceById(id: string): Promise<InstanceProperty>
+		+getInstanceById(id: int): Promise<InstanceProperty>
 		+addInstance(object: InstancePropertyAdd): Promise<InstancePropertyAdd>
-		+deleteInstance(id: string): Promise<null>
+		+deleteInstance(id: int): Promise<null>
+		getInstancesByObjectId(objectId: int): Promise<InstanceProperty[]>
 	}
 	class InstancesPropertiesService {
 		-client: RestApiClient
@@ -163,5 +170,5 @@ classDiagram
 		+store: IStore
 	}
 	useStore ..> IStore : returns
-	IStore o-- Services
+	IStore o-- Services : stores
 ```
