@@ -1,13 +1,33 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
+from sqlalchemy.sql import and_
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
 from fastapi import HTTPException
 
 #Get all of the available instances
-async def get_instances(db: AsyncSession) -> List[Instances]:
-    result = await db.execute(select(Instances))
+async def get_instances(db: AsyncSession,
+    type_id: Optional[int] = None,
+    object_id: Optional[int] = None,
+    is_active: Optional[bool] = None
+) -> List[Instances]:
+    query = select(Instances)
+
+    filters = []
+    if type_id is not None:
+        filters.append(Instances.type_id == type_id)
+    if object_id is not None:
+        filters.append(Instances.object_id == object_id)
+    if is_active is not None:
+        filters.append(Instances.is_active == is_active)
+
+    if filters:
+        query = query.where(and_(*filters))
+
+    result = await db.execute(query)
     return result.scalars().all()
 
 #Get one type using the instances's id

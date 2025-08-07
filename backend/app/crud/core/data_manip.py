@@ -3,8 +3,9 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
-from app.schemas.core import ObjectInstanceTree, InstanceOut
+from app.schemas.core import ObjectInstanceTree, InstanceOut, ObjectsRead, TypesRead
 from app.models.core import Types, Objects, Instances
+from typing import List
 
 async def get_type_tree(db: AsyncSession, root_id: int):
 
@@ -36,6 +37,19 @@ async def get_type_tree(db: AsyncSession, root_id: int):
 
     return tree[root.id]
 
+async def get_root_objects(db: AsyncSession) -> List[Objects]:
+    result = await db.execute(
+        select(Objects)
+        .where(Objects.parent_id == None)
+    )
+    return result.scalars().all()
+
+async def get_root_types(db: AsyncSession) -> List[Types]:
+    result = await db.execute(
+        select(Types)
+        .where(Types.parent_id == None)
+    )
+    return result.scalars().all()
 
 
 async def get_all_type_hierarchies(db: AsyncSession):

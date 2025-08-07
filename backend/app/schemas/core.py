@@ -20,7 +20,7 @@ class ObjectsRead(ObjectsBase):
     root_id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class ObjectsDelete(BaseModel):
     id: int
@@ -44,7 +44,7 @@ class TypesRead(TypesBase):
     root_id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class TypesDelete(BaseModel):
     id: int
@@ -53,6 +53,7 @@ class TypesDelete(BaseModel):
 class PropertyTypesBase(BaseModel):
     type_id: int
     name: str
+    is_static: bool
 
 class PropertyTypesCreate(PropertyTypesBase):
     pass
@@ -60,12 +61,13 @@ class PropertyTypesCreate(PropertyTypesBase):
 class PropertyTypesUpdate(BaseModel):
     type_id: Optional[int] = None
     name: Optional[int] = None
+    is_static: Optional[bool] = None
  
 class PropertyTypesRead(PropertyTypesBase):
     id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class PropertyTypesDelete(BaseModel):
     id: int
@@ -90,7 +92,7 @@ class PropertiesRead(PropertiesBase):
     id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 class PropertiesDelete(BaseModel):
     id: int
 
@@ -113,7 +115,7 @@ class InstancesRead(InstancesBase):
     type_id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class InstancesDelete(BaseModel):
     id: int
@@ -123,6 +125,7 @@ class InstancesDelete(BaseModel):
 class InstancePropertiesBase(BaseModel):
     value: str
     instance_id: int
+    property_type_id: int
 
 class InstancePropertiesCreate(InstancePropertiesBase):
     pass
@@ -130,12 +133,13 @@ class InstancePropertiesCreate(InstancePropertiesBase):
 class InstancePropertiesUpdate(BaseModel):
     value: Optional[str] = None
     instance_id: Optional[int] = None
+    property_type_id: Optional[int] = None
 
 class InstancePropertiesRead(InstancePropertiesBase):
     id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class InstancePropertiesDelete(BaseModel):
     id: int
@@ -150,7 +154,7 @@ class TypeTree(BaseModel):
     children: List["TypeTree"] = []
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class ObjectNode(BaseModel):
     id: int
@@ -159,7 +163,7 @@ class ObjectNode(BaseModel):
     children: List["ObjectNode"] = []
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 ObjectNode.update_forward_refs()
 
@@ -170,7 +174,7 @@ class InstanceOut(BaseModel):
     is_active: bool
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class ObjectInstanceTree(BaseModel):
     id: int
@@ -180,7 +184,7 @@ class ObjectInstanceTree(BaseModel):
     children: List["ObjectInstanceTree"]
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 ObjectInstanceTree.update_forward_refs()
 

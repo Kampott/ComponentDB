@@ -1,5 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
+from sqlalchemy.sql import and_
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
@@ -7,8 +10,28 @@ from fastapi import HTTPException
 
 
 #Get all of the available types
-async def get_types(db: AsyncSession) -> List[Types]:
-    result = await db.execute(select(Types))
+async def get_types(db: AsyncSession,
+    name: Optional[str] = None,
+    parent_id: Optional[int] = None,
+    root_id: Optional[int] = None,
+    index_of_layer: Optional[int] = None
+) -> List[Types]:
+    query = select(Types)
+
+    filters = []
+    if name is not None:
+        filters.append(Types.name == name)
+    if parent_id is not None:
+        filters.append(Types.parent_id == parent_id)
+    if root_id is not None:
+        filters.append(Types.root_id == root_id)
+    if index_of_layer is not None:
+        filters.append(Types.index_of_layer == index_of_layer)
+
+    if filters:
+        query = query.where(and_(*filters))
+
+    result = await db.execute(query)
     return result.scalars().all()
 
 #Get one type using the types's id

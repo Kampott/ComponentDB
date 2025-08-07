@@ -90,6 +90,8 @@ class PropertyTypes(Base):
 
     name: Mapped[str] = mapped_column(String, nullable = False)
 
+    is_static: Mapped[bool] = mapped_column(nullable = False)
+
 
 class Instances(Base):
     __tablename__ = "instances"
@@ -103,10 +105,10 @@ class Instances(Base):
     object_: Mapped["Objects"] = relationship("Objects", back_populates="instances", passive_deletes=True)
 
 
-    is_active: Mapped[bool]
+    is_active: Mapped[bool] = mapped_column(nullable = False)
 
 
-class InstanceProperties(Base): # зачем?
+class InstanceProperties(Base): 
     __tablename__ = "instance_properties"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -115,3 +117,9 @@ class InstanceProperties(Base): # зачем?
 
     instance_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"))
     instance: Mapped["Instances"] = relationship("Instances", passive_deletes=True)
+
+    property_type_id: Mapped[int] = mapped_column(ForeignKey("property_types.id", ondelete="CASCADE"))
+    property_type: Mapped["PropertyTypes"] = relationship("PropertyTypes", passive_deletes=True)
+
+
+

@@ -1,5 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
+from sqlalchemy.sql import and_
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
@@ -10,8 +13,30 @@ from fastapi import HTTPException
 ############ Objects
 
 #Get all of the available objects
-async def get_objects(db: AsyncSession) -> List[Objects]:
-    result = await db.execute(select(Objects))
+async def get_objects(
+    db: AsyncSession,
+    type_id: Optional[int] = None,
+    parent_id: Optional[int] = None,
+    root_id: Optional[int] = None,
+    index_of_layer: Optional[int] = None
+) -> List[Objects]:
+
+    query = select(Objects)
+
+    filters = []
+    if type_id is not None:
+        filters.append(Objects.type_id == type_id)
+    if parent_id is not None:
+        filters.append(Objects.parent_id == parent_id)
+    if root_id is not None:
+        filters.append(Objects.root_id == root_id)
+    if index_of_layer is not None:
+        filters.append(Objects.index_of_layer == index_of_layer)
+
+    if filters:
+        query = query.where(and_(*filters))
+
+    result = await db.execute(query)
     return result.scalars().all()
 
 #Get one object using the object's id
