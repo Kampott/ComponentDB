@@ -98,21 +98,23 @@ class PropertiesDelete(BaseModel):
 
 
 #Instances
+
 class InstancesBase(BaseModel):
     object_id: int
+    root_id: int
     is_active: bool
 
 class InstancesCreate(InstancesBase):
+    parent_instance_id: Optional[int] = None
     pass
 
 class InstancesUpdate(BaseModel):
     object_id: Optional[int] = None
-    type_id: Optional[int] = None
+    root_id: Optional[int] = None
     is_active: Optional[bool] = None
 
 class InstancesRead(InstancesBase):
     id: int
-    type_id: int
 
     class Config:
         from_attributes = True
@@ -189,4 +191,20 @@ class ObjectInstanceTree(BaseModel):
 ObjectInstanceTree.update_forward_refs()
 
 
+#InstanceTreeMap
+class InstanceTreeMapBase(BaseModel):
+    root_object_id: int
+    object_id: int
+    instance_id: int
+    parent_instance_id: Optional[int] = None
+    is_active: bool
+
+class InstanceTreeMapCreate(InstanceTreeMapBase):
+    pass
+
+class InstanceTreeMapRead(InstanceTreeMapBase):
+    id: int
+
+    class Config:
+        from_attributes = True
 

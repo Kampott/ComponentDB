@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
 from app.db.database import Base
+from sqlalchemy import Index, text, UniqueConstraint
 from typing import Optional, List
 from sqlalchemy import ForeignKey, String, Integer, Boolean
 
@@ -98,14 +99,16 @@ class Instances(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
-    type_id: Mapped[int] = mapped_column(ForeignKey("types.id", ondelete="CASCADE")) # нужна ли связь
-    type_: Mapped["Types"] = relationship("Types", passive_deletes=True) # ??
-
     object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
     object_: Mapped["Objects"] = relationship("Objects", back_populates="instances", passive_deletes=True)
 
+    is_active: Mapped[bool] = mapped_column(nullable=False)
 
-    is_active: Mapped[bool] = mapped_column(nullable = False)
+    tree_mappings: Mapped[List["InstanceTreeMap"]] = relationship(
+        "InstanceTreeMap",
+        back_populates="instance",
+        cascade="all, delete-orphan"
+    )
 
 
 class InstanceProperties(Base): 
@@ -121,5 +124,27 @@ class InstanceProperties(Base):
     property_type_id: Mapped[int] = mapped_column(ForeignKey("property_types.id", ondelete="CASCADE"))
     property_type: Mapped["PropertyTypes"] = relationship("PropertyTypes", passive_deletes=True)
 
+class InstanceTreeMap(Base):
+    __tablename__ = "instance_tree_map"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    root_object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
+    root_object: Mapped["Objects"] = relationship("Objects", foreign_keys=[root_object_id], passive_deletes=True)
+
+    object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
+    object_: Mapped["Objects"] = relationship("Objects", foreign_keys=[object_id], passive_deletes=True)
+
+    instance_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"))
+    instance: Mapped["Instances"] = relationship("Instances", back_populates="tree_mappings", passive_deletes=True)
+
+    parent_instance_id: Mapped[Optional[int]] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), nullable=True)
+    parent_instance: Mapped[Optional["Instances"]] = relationship("Instances", foreign_keys=[parent_instance_id], passive_deletes=True)
+
+    is_active: Mapped[bool] = mapped_column(nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("root_object_id", "object_id", name="uix_root_object_object"),
+    )
 
 

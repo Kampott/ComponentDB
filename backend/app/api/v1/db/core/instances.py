@@ -11,11 +11,11 @@ router = APIRouter(prefix="/instances", tags=["DB: Core: Instances"])
 @router.get("/", response_model=list[InstancesRead])
 async def read_instances(
     db: AsyncSession = Depends(get_async_session),
-    type_id: Optional[int] = Query(None),
     object_id: Optional[int] = Query(None),
-    is_active: Optional[bool] = Query(None)
+    is_active: Optional[bool] = Query(None),
+    root_id: Optional[int] = Query(None)
 ):
-    return await get_instances(db, type_id, object_id, is_active)
+    return await get_instances(db, object_id, is_active, root_id)
 
 @router.get("/{instance_id}", response_model=InstancesRead)
 async def read_instances(instance_id: int, db: AsyncSession = Depends(get_async_session)):
