@@ -1,7 +1,7 @@
 
 export interface ObjectAdd {
     type_id: number
-    parent_id: number
+    parent_id: number | null
 }
 
 export interface Object extends ObjectAdd {
