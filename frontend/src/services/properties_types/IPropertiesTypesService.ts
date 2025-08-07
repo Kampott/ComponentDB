@@ -1,11 +1,13 @@
 import type {PropertyType, PropertyTypeAdd} from "../../schemas/PropertyType.ts";
 
 export default interface IPropertiesTypesService {
-    getTypes(): Promise<PropertyType[]>
+    getPropertyTypes(): Promise<PropertyType[]>
 
-    getTypeById(id: string): Promise<PropertyType>
+    getPropertyTypeById(id: number): Promise<PropertyType>
 
-    addType(object: PropertyTypeAdd): Promise<PropertyTypeAdd>
+    addPropertyType(object: PropertyTypeAdd): Promise<PropertyTypeAdd>
 
-    deleteType(id: string): Promise<null>
+    deletePropertyType(id: number): Promise<null>
+
+    getPropertyTypesByTypeId(typeId: number): Promise<PropertyType[]>
 }

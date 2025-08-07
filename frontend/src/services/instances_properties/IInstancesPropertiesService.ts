@@ -3,9 +3,11 @@ import type {InstanceProperty, InstancePropertyAdd} from "../../schemas/Instance
 export default interface IInstancesPropertiesService {
     getInstances(): Promise<InstanceProperty[]>
 
-    getInstanceById(id: string): Promise<InstanceProperty>
+    getInstanceById(id: number): Promise<InstanceProperty>
 
     addInstance(object: InstancePropertyAdd): Promise<InstancePropertyAdd>
 
-    deleteInstance(id: string): Promise<null>
+    deleteInstance(id: number): Promise<null>
+
+    getInstancesByObjectId(objectId: number): Promise<InstanceProperty[]>
 }

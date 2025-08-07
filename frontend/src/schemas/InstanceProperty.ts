@@ -3,6 +3,6 @@ export interface InstancePropertyAdd {
     instance_id: number
 }
 
-export interface InstanceProperty {
+export interface InstanceProperty extends InstancePropertyAdd {
     id: number
 }
