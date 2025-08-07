@@ -1,5 +1,4 @@
 import type RestApiClient from "../../http/RestApiClient.ts";
-import AxiosClient from "../../http/AxiosClient.ts";
 import type {LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User} from "../../models/auth.ts";
 import type IAuthService from "./IAuthService.ts";
 
@@ -7,8 +6,8 @@ import type IAuthService from "./IAuthService.ts";
 export default class AuthService implements IAuthService {
     private client: RestApiClient;
 
-    public constructor() {
-        this.client = new AxiosClient("http://localhost:8080", {}, "http://localhost:8080");
+    public constructor(client: RestApiClient) {
+        this.client = client
     }
 
     async login(userData: LoginRequest): Promise<LoginResponse> {

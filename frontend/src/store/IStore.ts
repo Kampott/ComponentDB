@@ -1,8 +1,8 @@
-import type IAuthService from "../services/auth/IAuthService.ts";
 import type {LoginRequest, User} from "../models/auth.ts";
+import type Services from "../services/Services.ts";
 
 export default interface IStore {
-    auth_service: IAuthService
+    services: Services
     user: User
     isAuthenticated: boolean
 

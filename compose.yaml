@@ -36,16 +36,8 @@ services:
 
   frontend:
     build: ./frontend
-    env_file:
-      - .env
     ports:
-      - "${FRONTEND_PORT}:5173"
-    volumes:
-      - ./frontend:/app
-    command: npm run dev
-    working_dir: /app
-    stdin_open: true
-    tty: true
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
 
 volumes:
   pgdata:
