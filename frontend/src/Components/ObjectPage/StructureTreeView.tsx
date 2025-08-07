@@ -13,7 +13,7 @@ export interface Props {
 function StructureTreeView({data}: Props) {
     const [openNodes, setOpenNodes] = useState(new Set());
 
-    const toggleNode = (name) => {
+    const toggleNode = (name: string) => {
         setOpenNodes((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(name)) {
