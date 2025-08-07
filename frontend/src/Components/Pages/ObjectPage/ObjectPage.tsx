@@ -1,16 +1,19 @@
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
-import ListGroup from "react-bootstrap/ListGroup";
+import Breadcrumb from "react-bootstrap/Breadcrumb";
 import Tabs from "react-bootstrap/Tabs";
 import Tab from "react-bootstrap/Tab";
 import Button from "react-bootstrap/Button";
-import Breadcrumb from "react-bootstrap/Breadcrumb";
+import ListGroup from "react-bootstrap/ListGroup";
 import Image from "react-bootstrap/Image";
 
 import StructureTreeView, {type TmpData} from "./StructureTreeView.tsx";
+import {useParams} from "react-router-dom";
 
-function ObjectPageMainContent() {
+function ObjectPage() {
+    const { objectId } = useParams();
+
     const instances = [
         'БАРК-4821',
         'БАРК-1937',
@@ -55,6 +58,8 @@ function ObjectPageMainContent() {
             ]
         }
     ];
+
+    console.log(objectId);
 
     return (
         <Container className="mt-4">
@@ -136,4 +141,4 @@ function ObjectPageMainContent() {
     );
 }
 
-export default ObjectPageMainContent;
+export default ObjectPage;

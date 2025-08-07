@@ -9,7 +9,7 @@ export default class ObjectsTypesService implements IObjectsTypesService {
         this.client = client
     }
 
-    public async getTypes(): Promise<ObjectType[]> {
+    public async getRootTypes(): Promise<ObjectType[]> {
         return await this.client.get<ObjectType[]>("/types/")
     }
 

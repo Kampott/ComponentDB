@@ -1,7 +1,7 @@
 import type {ObjectType, ObjectTypeAdd} from "../../schemas/ObjectType.ts";
 
 export default interface IObjectsTypesService {
-    getTypes(): Promise<ObjectType[]>
+    getRootTypes(): Promise<ObjectType[]>
 
     getTypeById(id: number): Promise<ObjectType>
 

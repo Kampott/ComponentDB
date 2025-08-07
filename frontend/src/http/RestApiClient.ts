@@ -1,5 +1,6 @@
 export class RestApiError extends Error {
     public readonly detail?: string;
+    public readonly statusCode?: number;
 
     constructor(
         status?: number,
@@ -7,6 +8,7 @@ export class RestApiError extends Error {
     ) {
         super(`RestApiClient returns status ${status}: ${detail}`);
         this.detail = detail;
+        this.statusCode = status;
         this.name = 'ApiError';
     }
 }
