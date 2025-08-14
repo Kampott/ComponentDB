@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 
 from app.schemas.core import InstancesRead, InstancesCreate, InstancesUpdate
 from app.crud.core.instances import create_instance, get_instances, get_instance
@@ -9,8 +9,13 @@ from app.db.database import get_async_session
 router = APIRouter(prefix="/instances", tags=["DB: Core: Instances"])
 
 @router.get("/", response_model=list[InstancesRead])
-async def read_instances(db: AsyncSession = Depends(get_async_session)):
-    return await get_instances(db)
+async def read_instances(
+    db: AsyncSession = Depends(get_async_session),
+    object_id: Optional[int] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    root_id: Optional[int] = Query(None)
+):
+    return await get_instances(db, object_id, is_active, root_id)
 
 @router.get("/{instance_id}", response_model=InstancesRead)
 async def read_instances(instance_id: int, db: AsyncSession = Depends(get_async_session)):

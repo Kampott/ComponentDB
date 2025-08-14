@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 
 from app.schemas.core import TypesRead, TypesCreate, TypesUpdate
 from app.crud.core.types import create_type, get_types, get_type
@@ -9,8 +9,14 @@ from app.db.database import get_async_session
 router = APIRouter(prefix="/types", tags=["DB: Core: Types"])
 
 @router.get("/", response_model=list[TypesRead])
-async def read_types(db: AsyncSession = Depends(get_async_session)):
-    return await get_types(db)
+async def read_types(
+    db: AsyncSession = Depends(get_async_session),
+    name: Optional[str] = Query(None),
+    parent_id: Optional[int] = Query(None),
+    root_id: Optional[int] = Query(None),
+    index_of_layer: Optional[int] = Query(None)
+):
+    return await get_types(db, name, parent_id, root_id, index_of_layer)
 
 @router.get("/{type_id}", response_model=TypesRead)
 async def read_type(type_id: int, db: AsyncSession = Depends(get_async_session)):

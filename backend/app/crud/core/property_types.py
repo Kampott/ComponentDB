@@ -1,13 +1,34 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
+from sqlalchemy.sql import and_
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
 from fastapi import HTTPException
 
 #Get all of the available property types
-async def get_propertytypes(db: AsyncSession) -> List[PropertyTypes]:
-    result = await db.execute(select(PropertyTypes))
+async def get_propertytypes(
+    db: AsyncSession,
+    type_id: Optional[int] = None,
+    name: Optional[str] = None,
+    is_static: Optional[bool] = None
+) -> List[PropertyTypes]:
+    query = select(PropertyTypes)
+
+    filters = []
+    if type_id is not None:
+        filters.append(PropertyTypes.type_id == type_id)
+    if name is not None:
+        filters.append(PropertyTypes.name == name)
+    if is_static is not None:
+        filters.append(PropertyTypes.is_static == is_static)
+        
+    if filters:
+        query = query.where(and_(*filters))
+
+    result = await db.execute(query)
     return result.scalars().all()
 
 #Get one type using the property types' id

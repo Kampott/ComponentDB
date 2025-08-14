@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 
 from app.schemas.core import PropertiesRead, PropertiesCreate, PropertiesUpdate
 from app.crud.core.properties import create_property, get_properties, get_property
@@ -9,8 +9,11 @@ from app.db.database import get_async_session
 router = APIRouter(prefix="/properties", tags=["DB: Core: Properties"])
 
 @router.get("/", response_model=list[PropertiesRead])
-async def read_properties(db: AsyncSession = Depends(get_async_session)):
-    return await get_properties(db)
+async def read_properties(db: AsyncSession = Depends(get_async_session),
+    property_id: Optional[int] = Query(None),
+    value: Optional[str] = Query(None),
+    object_id: Optional[int] = Query(None)):
+    return await get_properties(db, property_id, value, object_id)
 
 @router.get("/{property_id}", response_model=PropertiesRead)
 async def read_type(property_id: int, db: AsyncSession = Depends(get_async_session)):
