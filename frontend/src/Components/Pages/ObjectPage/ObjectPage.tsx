@@ -1,3 +1,6 @@
+import {useEffect, useState} from "react";
+import {useNavigate, useParams} from "react-router-dom";
+
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
@@ -8,11 +11,18 @@ import Button from "react-bootstrap/Button";
 import ListGroup from "react-bootstrap/ListGroup";
 import Image from "react-bootstrap/Image";
 
-import StructureTreeView, {type TmpData} from "./StructureTreeView.tsx";
-import {useParams} from "react-router-dom";
+import ObjectTreeView from "./ObjectTreeView.tsx";
+import {useStore} from "../../../store/Zustand.ts";
+import {RestApiError} from "../../../http/RestApiClient.ts";
+import type {Object} from "../../../schemas/Object.ts";
 
 function ObjectPage() {
-    const { objectId } = useParams();
+    const {objectId} = useParams()
+    const navigate = useNavigate()
+
+    const services = useStore((state) => state.services)
+
+    const [object, setObject] = useState<Object | null>(null);
 
     const instances = [
         'БАРК-4821',
@@ -20,46 +30,48 @@ function ObjectPage() {
         'БАРК-6504',
         'БАРК-3098'
     ];
+
     const properties = [
         {name: 'Цвет', value: 'Синий'},
         {name: 'Размер', value: 'L'},
         {name: 'Вес', value: '2 кг'},
         {name: 'Материал', value: 'Металл'}
     ];
+
     const documents = [
         'Документ1.pdf',
         'Отчет_апрель.docx',
         'Спецификация.xlsx'
     ];
 
-    const structure: TmpData[] = [
-        {
-            name: 'Печатный узел #1',
-            children: [
-                {
-                    name: 'Резистор #1',
-                    children: []
-                }, {
-                    name: 'Резистор #2',
-                    children: []
-                }
-            ]
-        },
-        {
-            name: 'Печатный узел #2',
-            children: [
-                {
-                    name: 'Резистор #1',
-                    children: []
-                }, {
-                    name: 'Резистор #2',
-                    children: []
-                }
-            ]
-        }
-    ];
+    const id: number = Number(objectId)
 
-    console.log(objectId);
+    async function loadObject() {
+        if (isNaN(id)) {
+            navigate("/404")
+            return
+        }
+
+        try {
+            setObject(await services.objectService.getObjectById(id))
+        } catch (error) {
+            if (error instanceof RestApiError) {
+                const apiError: RestApiError = error as RestApiError
+                if (apiError.statusCode && apiError.statusCode == 404) {
+                    navigate("/404")
+                    return
+                }
+            }
+            if (error instanceof Error) {
+                console.log(error)
+            }
+        }
+    }
+
+    useEffect(() => {
+        loadObject()
+    }, [])
+
 
     return (
         <Container className="mt-4">
@@ -131,8 +143,7 @@ function ObjectPage() {
                         </Tab>
 
                         <Tab eventKey="structure" title="Структура">
-                            <Button variant="primary" className="mt-4">Добавить объект</Button>
-                            <StructureTreeView data={structure}/>
+                            {object && <ObjectTreeView objectId={object.id}/>}
                         </Tab>
                     </Tabs>
                 </Col>

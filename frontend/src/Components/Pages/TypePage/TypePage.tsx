@@ -21,7 +21,7 @@ function TypePage() {
         }
 
         try {
-            setObjectType(await services.objectsTypesService.getTypeById(+id))
+            setObjectType(await services.objectsTypesService.getTypeById(id))
         } catch (error) {
             if (error instanceof RestApiError) {
                 const apiError: RestApiError = error as RestApiError
