@@ -10,4 +10,6 @@ export default interface IObjectsService {
     deleteObject(id: number): Promise<null>
 
     getObjectsByParentId(parentId: number): Promise<Object[]>
+
+    getObjectsByTypeId(typeId: number): Promise<Object[]>
 }
