@@ -9,5 +9,5 @@ export default interface IPropertiesTypesService {
 
     deletePropertyType(id: number): Promise<null>
 
-    getPropertyTypesByTypeId(typeId: number): Promise<PropertyType[]>
+    getPropertyTypesByTypeId(typeId: number, isStatic: boolean): Promise<PropertyType[]>
 }

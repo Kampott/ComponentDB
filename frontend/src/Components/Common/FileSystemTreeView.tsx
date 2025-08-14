@@ -67,7 +67,7 @@ function FileSystemTreeView<T>(
         }
     }
 
-    async function renderNodes (nodes: DataNode<T>[], depth = 0) {
+    function renderNodes (nodes: DataNode<T>[], depth = 0) {
         return (
             <div>
                 {nodes.map((node) => {

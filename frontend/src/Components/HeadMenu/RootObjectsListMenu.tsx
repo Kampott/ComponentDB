@@ -1,7 +1,6 @@
 import Offcanvas from "react-bootstrap/Offcanvas";
-import ListGroup from "react-bootstrap/ListGroup";
 
-import {useEffect, useState} from "react";
+import {type ReactNode, useEffect, useState} from "react";
 
 import type {ObjectType, ObjectTypeAdd} from "../../schemas/ObjectType.ts";
 import {useStore} from "../../store/Zustand.ts";
@@ -9,6 +8,7 @@ import Button from "react-bootstrap/Button";
 import AddRootObjectForm from "./AddRootObjectForm.tsx";
 import {useNavigate} from "react-router-dom";
 import LoadEffect from "../Common/LoadEffect.tsx";
+import DefaultList from "../Common/DefaultList.tsx";
 
 
 interface Props {
@@ -24,8 +24,8 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
     const [rootObjectTypes, setRootObjectTypes] = useState<ObjectType[] | null>(null);
     const [formShow, setFormShow] = useState(false)
 
-    function handleObjectTypeClick(id: number) {
-        navigate(`/types/${id}`)
+    function handleObjectTypeClick(objectType: ObjectType) {
+        navigate(`/types/${objectType.id}`)
     }
 
     async function confirmAddType(data: ObjectTypeAdd | null) {
@@ -50,35 +50,32 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
         }
     }
 
+    function renderObjectType(objectType: ObjectType): ReactNode {
+        return (
+            <>{objectType.name}</>
+        )
+    }
+
     useEffect(() => {
         loadRootObjectTypes()
     }, [])
 
     return (
         <>
-        <Offcanvas show={showObjectsMenu} onHide={handleClose} placement="start">
-            <Offcanvas.Header closeButton>
-                <Offcanvas.Title>Список типов</Offcanvas.Title>
-            </Offcanvas.Header>
-            <Offcanvas.Body>
-                <LoadEffect data={rootObjectTypes} contentSize={{height: "20px", width: "100%"}}>
-                    <ListGroup>
-                        {rootObjectTypes?.map((rootObjectType, id) => (
-                            <ListGroup.Item
-                                key={id}
-                                action
-                                onClick={() => handleObjectTypeClick(rootObjectType.id)}
-                            >
-                                {rootObjectType.name}
-                            </ListGroup.Item>
-                        ))}
-                    </ListGroup>
-                </LoadEffect>
-                <Button variant="primary" className="mt-4" onClick={() => setFormShow(true)}>Добавить тип</Button>
-            </Offcanvas.Body>
-        </Offcanvas>
+            <Offcanvas show={showObjectsMenu} onHide={handleClose} placement="start">
+                <Offcanvas.Header closeButton>
+                    <Offcanvas.Title>Список типов</Offcanvas.Title>
+                </Offcanvas.Header>
+                <Offcanvas.Body>
+                    <LoadEffect data={rootObjectTypes} contentSize={{height: "20px", width: "100%"}}>
+                        <DefaultList data={rootObjectTypes ? rootObjectTypes : []} onClick={handleObjectTypeClick}
+                                     renderItem={renderObjectType}/>
+                    </LoadEffect>
+                    <Button variant="primary" className="mt-4" onClick={() => setFormShow(true)}>Добавить тип</Button>
+                </Offcanvas.Body>
+            </Offcanvas>
 
-        {formShow && <AddRootObjectForm confirmAddCallback={confirmAddType} />}
+            {formShow && <AddRootObjectForm confirmAddCallback={confirmAddType}/>}
         </>
     )
 }

@@ -22,7 +22,7 @@ function ObjectPropertiesTab({object}: Props): ReactNode {
     const [objectProperties, setObjectProperties] = useState<ObjectProperty[] | null>(null);
 
     async function loadProperties(): Promise<void> {
-        const propertiesTypes: PropertyType[] = await services.propertiesTypesService.getPropertyTypesByTypeId(object.type_id);
+        const propertiesTypes: PropertyType[] = await services.propertiesTypesService.getPropertyTypesByTypeId(object.type_id, true);
         const propertiesValues: Property[] = await services.propertiesService.getPropertiesByObjectId(object.id);
 
         setObjectProperties(propertiesTypes.map(propertyType => {

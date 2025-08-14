@@ -15,6 +15,7 @@ import type {Object} from "../../../schemas/Object.ts";
 import ObjectInstancesTab from "./ObjectInstancesTab.tsx";
 import ObjectPropertiesTab from "./ObjectPropertiesTab.tsx";
 import ObjectDocumentsTab from "./ObjectDocumentsTab.tsx";
+import LoadEffect from "../../Common/LoadEffect.tsx";
 
 function ObjectPage() {
     const {objectId} = useParams()
@@ -50,17 +51,21 @@ function ObjectPage() {
 
     useEffect(() => {
         loadObject()
-    }, [])
+    }, [objectId])
 
     return (
         <Container className="mt-4">
             <Row>
                 <Col>
                     <Breadcrumb className="mb-3">
-                        <Breadcrumb.Item href="/">Главная</Breadcrumb.Item>
-                        <Breadcrumb.Item active>Тип 2</Breadcrumb.Item>
+                        <LoadEffect data={object} contentSize={{height: "20px", width: "100%"}}>
+                            <Breadcrumb.Item href="/">Главная</Breadcrumb.Item>
+                            <Breadcrumb.Item active>{object?.id}</Breadcrumb.Item>
+                        </LoadEffect>
                     </Breadcrumb>
-                    <h1 className="text-center mb-5">Тип 2</h1>
+                    <LoadEffect data={object} contentSize={{height: "20px", width: "100%"}}>
+                        <h1 className="text-center mb-5">ID: {object?.id}</h1>
+                    </LoadEffect>
                     <Tabs defaultActiveKey="instances" id="main-tabs" className="mb-4" justify>
                         <Tab eventKey="instances" title="Экземпляры">
                             {object && <ObjectInstancesTab object={object}/>}
