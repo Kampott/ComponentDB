@@ -8,6 +8,7 @@ import {useStore} from "../../store/Zustand.ts";
 import Button from "react-bootstrap/Button";
 import AddRootObjectForm from "./AddRootObjectForm.tsx";
 import {useNavigate} from "react-router-dom";
+import LoadEffect from "../Common/LoadEffect.tsx";
 
 
 interface Props {
@@ -60,9 +61,9 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
                 <Offcanvas.Title>Список типов</Offcanvas.Title>
             </Offcanvas.Header>
             <Offcanvas.Body>
-                {rootObjectTypes == null ? <p>Загрузка...</p> :
+                <LoadEffect data={rootObjectTypes} contentSize={{height: "20px", width: "100%"}}>
                     <ListGroup>
-                        {rootObjectTypes.map((rootObjectType, id) => (
+                        {rootObjectTypes?.map((rootObjectType, id) => (
                             <ListGroup.Item
                                 key={id}
                                 action
@@ -72,7 +73,7 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
                             </ListGroup.Item>
                         ))}
                     </ListGroup>
-                }
+                </LoadEffect>
                 <Button variant="primary" className="mt-4" onClick={() => setFormShow(true)}>Добавить тип</Button>
             </Offcanvas.Body>
         </Offcanvas>

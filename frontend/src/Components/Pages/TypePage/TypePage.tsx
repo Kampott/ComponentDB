@@ -3,6 +3,7 @@ import {useEffect, useState} from "react";
 import type {ObjectType} from "../../../schemas/ObjectType.ts";
 import {useStore} from "../../../store/Zustand.ts";
 import {RestApiError} from "../../../http/RestApiClient.ts";
+import LoadEffect from "../../Common/LoadEffect.tsx";
 
 function TypePage() {
     const {typeId} = useParams();
@@ -41,10 +42,11 @@ function TypePage() {
     }, [])
 
     return (
-        <div>
-            {!objectType ? `Loading type ${id}...` : objectType.name}
-        </div>
-    );
+        <LoadEffect data={objectType} contentSize={{height: "20px", width: "100%"}}>
+            {objectType?.name}
+        </LoadEffect>
+
+    )
 }
 
 export default TypePage;

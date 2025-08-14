@@ -1,45 +1,25 @@
 import {useEffect, useState} from 'react';
 
+import Button from "react-bootstrap/Button";
+
 import {useStore} from "../../../store/Zustand.ts";
 import FileSystemTreeView, {type DataNode} from "../../Common/FileSystemTreeView.tsx";
 import type {Object} from "../../../schemas/Object.ts";
-import Button from "react-bootstrap/Button";
+import LoadEffect from "../../Common/LoadEffect.tsx";
 
 interface Props {
-    objectId: number
+    object: Object;
 }
 
-function ObjectTreeView({objectId}: Props) {
+function ObjectTreeView({object}: Props) {
     const services = useStore((state) => state.services)
 
-    const [objectTree, setObjectTree] = useState<DataNode<Object>[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [objectTree, setObjectTree] = useState<DataNode<Object>[] | null>(null);
 
     const [openIds, setOpenIds] = useState<Set<number>>(new Set())
     const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set())
 
-    async function loadObjectTree() {
-        await services.objectService.getObjectsByParentId(objectId)
-    }
-
-    useEffect(() => {
-        loadObjectTree()
-            .then(() => setLoading(false))
-    }, []);
-
-    async function onToggle(id: number): Promise<void> {
-        setOpenIds((prev: Set<number>): Set<number> => {
-            const next = new Set(prev)
-            if (next.has(id)) {
-                next.delete(id)
-            } else {
-                next.add(id)
-            }
-            return next;
-        })
-    }
-
-    async function onRequestChildren(id: number): Promise<DataNode<Object>[]> {
+    async function loadObjectChildren(id: number): Promise<DataNode<Object>[]> {
         setLoadingIds((prev) => new Set(prev).add(id))
 
         const children: Object[] = await services.objectService.getObjectsByParentId(id)
@@ -54,7 +34,24 @@ function ObjectTreeView({objectId}: Props) {
         })
     }
 
-    function onChildrenLoaded(id: number, children: DataNode<Object>[]) {
+    useEffect(() => {
+        loadObjectChildren(object.id)
+            .then((data) => setObjectTree(data))
+    }, []);
+
+    async function onObjectChildrenToggle(id: number): Promise<void> {
+        setOpenIds((prev: Set<number>): Set<number> => {
+            const next = new Set(prev)
+            if (next.has(id)) {
+                next.delete(id)
+            } else {
+                next.add(id)
+            }
+            return next;
+        })
+    }
+
+    function onObjectChildrenLoaded(id: number, children: DataNode<Object>[]) {
         const attachChildren = (nodes: DataNode<Object>[]): DataNode<Object>[] => {
             return nodes.map((n) => {
                 if (n.id === id) {
@@ -67,7 +64,7 @@ function ObjectTreeView({objectId}: Props) {
             })
         }
 
-        setObjectTree((prev) => attachChildren(prev));
+        setObjectTree((prev) => prev && attachChildren(prev));
         setLoadingIds((prev) => {
             const next = new Set(prev)
             next.delete(id)
@@ -86,15 +83,17 @@ function ObjectTreeView({objectId}: Props) {
     return (
         <>
             <Button variant="primary" className="mt-4">Добавить объект</Button>
-            {loading ? <p>Загрузка...</p> : <FileSystemTreeView
-                data={objectTree}
-                openIds={openIds}
-                onToggle={onToggle}
-                renderItem={renderItem}
-                onRequestChildren={onRequestChildren}
-                onChildrenLoaded={onChildrenLoaded}
-                loadingIds={loadingIds}
-            />}
+            <LoadEffect data={objectTree} contentSize={{height: "20px", width: "100%"}}>
+                <FileSystemTreeView
+                    data={objectTree ? objectTree : []}
+                    openIds={openIds}
+                    onToggle={onObjectChildrenToggle}
+                    renderItem={renderItem}
+                    onRequestChildren={loadObjectChildren}
+                    onChildrenLoaded={onObjectChildrenLoaded}
+                    loadingIds={loadingIds}
+                />
+            </LoadEffect>
         </>
     )
 }
