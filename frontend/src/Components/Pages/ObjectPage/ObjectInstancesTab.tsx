@@ -24,8 +24,9 @@ function ObjectInstancesTab({object}: Props): ReactNode {
     }
 
     useEffect(() => {
+        setObjectInstances(null);
         loadInstances();
-    }, [])
+    }, [object])
 
     function renderInstance(instance: ObjectInstance): ReactNode {
         return (

@@ -5,7 +5,7 @@ import {type ReactNode, useEffect, useState} from "react";
 import type {ObjectType, ObjectTypeAdd} from "../../schemas/ObjectType.ts";
 import {useStore} from "../../store/Zustand.ts";
 import Button from "react-bootstrap/Button";
-import AddRootObjectForm from "./AddRootObjectForm.tsx";
+import AddRootTypeForm from "./AddRootTypeForm.tsx";
 import {useNavigate} from "react-router-dom";
 import LoadEffect from "../Common/LoadEffect.tsx";
 import DefaultList from "../Common/DefaultList.tsx";
@@ -75,7 +75,7 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
                 </Offcanvas.Body>
             </Offcanvas>
 
-            {formShow && <AddRootObjectForm submitCallback={confirmAddType}/>}
+            {formShow && <AddRootTypeForm submitCallback={confirmAddType}/>}
         </>
     )
 }

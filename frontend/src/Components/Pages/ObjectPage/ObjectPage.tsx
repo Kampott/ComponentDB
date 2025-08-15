@@ -50,7 +50,8 @@ function ObjectPage() {
     }
 
     useEffect(() => {
-        loadObject()
+        setObject(null);
+        loadObject();
     }, [objectId])
 
     return (

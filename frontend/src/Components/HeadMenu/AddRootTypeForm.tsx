@@ -6,7 +6,7 @@ interface Props {
     submitCallback: (data: ObjectTypeAdd | null) => void;
 }
 
-function AddRootObjectForm({submitCallback}: Props) {
+function AddRootTypeForm({submitCallback}: Props) {
     function nameValidator(value: string | number | null): string | null {
         if (value == null || typeof value == "number") {
             return "Неверный формат ввода"
@@ -36,4 +36,4 @@ function AddRootObjectForm({submitCallback}: Props) {
     );
 }
 
-export default AddRootObjectForm;
+export default AddRootTypeForm;

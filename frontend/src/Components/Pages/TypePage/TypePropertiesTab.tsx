@@ -24,8 +24,10 @@ function TypePropertiesTab({objectType}: Props): ReactNode {
     }
 
     useEffect(() => {
+        setObjectProperties(null);
+        setInstanceProperties(null);
         loadProperties();
-    }, [])
+    }, [objectType])
 
     function renderProperty(property: PropertyType): ReactNode {
         return (

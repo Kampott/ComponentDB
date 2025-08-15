@@ -38,8 +38,9 @@ function ObjectPropertiesTab({object}: Props): ReactNode {
     }
 
     useEffect(() => {
+        setObjectProperties(null);
         loadProperties();
-    }, [])
+    }, [object])
 
     function renderObjectProperty(property: ObjectProperty): ReactNode {
         return (

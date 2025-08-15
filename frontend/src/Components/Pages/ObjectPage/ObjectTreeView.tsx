@@ -35,9 +35,10 @@ function ObjectTreeView({object}: Props) {
     }
 
     useEffect(() => {
+        setObjectTree(null)
         loadObjectChildren(object.id)
             .then((data) => setObjectTree(data))
-    }, []);
+    }, [object]);
 
     async function onObjectChildrenToggle(id: number): Promise<void> {
         setOpenIds((prev: Set<number>): Set<number> => {

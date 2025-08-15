@@ -12,9 +12,10 @@ import type {ObjectType} from "../../../schemas/ObjectType.ts";
 import {useStore} from "../../../store/Zustand.ts";
 import {RestApiError} from "../../../http/RestApiClient.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
-import TypeObjectsTab from "./TypeObjectsTab.tsx";
+import TypeObjectsTab from "./TypeObjectsTab/TypeObjectsTab.tsx";
 import TypePropertiesTab from "./TypePropertiesTab.tsx";
 import TypeTreeView from "./TypeTreeView.tsx";
+import TypeMainInfo from "./TypeMainInfo.tsx";
 
 function TypePage() {
     const {typeId} = useParams();
@@ -28,8 +29,8 @@ function TypePage() {
 
     async function loadObjectType() {
         if (isNaN(id)) {
-            navigate("/404")
-            return
+            navigate("/404");
+            return;
         }
 
         try {
@@ -49,7 +50,8 @@ function TypePage() {
     }
 
     useEffect(() => {
-        loadObjectType()
+        setObjectType(null);
+        loadObjectType();
     }, [typeId])
 
     return (
@@ -65,6 +67,8 @@ function TypePage() {
 
                     <LoadEffect data={objectType} contentSize={{height: "20px", width: "100%"}}>
                         <h1 className="text-center mb-5">{objectType?.name}</h1>
+
+                        {objectType && <TypeMainInfo objectType={objectType}/>}
                     </LoadEffect>
 
                     <Tabs defaultActiveKey="instances" id="main-tabs" className="mb-4" justify>
