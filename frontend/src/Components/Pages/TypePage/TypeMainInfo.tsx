@@ -6,20 +6,19 @@ import Col from "react-bootstrap/Col";
 
 import type {ObjectType} from "../../../schemas/ObjectType.ts";
 import type {Object} from "../../../schemas/Object.ts";
-import {RestApiError} from "../../../http/RestApiClient.ts";
-import {useNavigate} from "react-router-dom";
 import {useStore} from "../../../store/Zustand.ts";
+import LoadEffect from "../../Common/LoadEffect.tsx";
 
 interface Props {
     objectType: ObjectType
 }
 
 function TypeMainInfo({objectType}: Props): ReactNode {
-    const navigate = useNavigate();
 
     const services = useStore((state) => state.services)
 
     const [rootObject, setRootObject] = useState<Object | null>(null);
+    const [rootType, setRootType] = useState<ObjectType | null>(null);
 
     async function loadRootObject() {
         try {
@@ -33,13 +32,16 @@ function TypeMainInfo({objectType}: Props): ReactNode {
 
             setRootObject(rootObjects[0]);
         } catch (error) {
-            if (error instanceof RestApiError) {
-                const apiError: RestApiError = error as RestApiError
-                if (apiError.statusCode && apiError.statusCode == 404) {
-                    navigate("/404")
-                    return
-                }
+            if (error instanceof Error) {
+                console.log(error)
             }
+        }
+    }
+
+    async function loadRootType() {
+        try {
+            setRootType(await services.objectsTypesService.getTypeById(objectType.root_id));
+        } catch (error) {
             if (error instanceof Error) {
                 console.log(error)
             }
@@ -47,10 +49,12 @@ function TypeMainInfo({objectType}: Props): ReactNode {
     }
 
     useEffect(() => {
+        setRootObject(null);
+        setRootType(null);
         if (objectType.parent_id == null) {
-            setRootObject(null);
             loadRootObject();
         }
+        loadRootType();
     }, [objectType]);
 
 
@@ -75,9 +79,12 @@ function TypeMainInfo({objectType}: Props): ReactNode {
                                 <i className="bi bi-bookmark-fill me-2 text-primary fs-4"></i>
                                 <div>
                                     <div className="text-muted small">Корневой тип</div>
-                                    <a href={`/types/${objectType.root_id}`} className="fw-bold text-decoration-none">
-                                        {objectType.name}
-                                    </a>
+                                    <LoadEffect data={rootType} contentSize={{width: "30%", height: "15px"}}>
+                                        <a href={`/types/${rootType?.id}`}
+                                           className="fw-bold text-decoration-none">
+                                            {rootType?.name}
+                                        </a>
+                                    </LoadEffect>
                                 </div>
                             </div>
                         </Col>
@@ -97,7 +104,8 @@ function TypeMainInfo({objectType}: Props): ReactNode {
                                         ) : (
                                             <>
                                                 <span className="text-danger fw-bold">Не создан
-                                                    <button onClick={() => addRootObject()} className="btn btn-sm btn-outline-primary">Добавить</button>
+                                                    <button onClick={() => addRootObject()}
+                                                            className="btn btn-sm btn-outline-primary">Добавить</button>
                                                 </span>
                                             </>
                                         )}

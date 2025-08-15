@@ -1,12 +1,13 @@
-import type {ObjectTypeAdd} from "../../schemas/ObjectType.ts";
+import type {ObjectType, ObjectTypeAdd} from "../../schemas/ObjectType.ts";
 import DefaultForm, {type FormField} from "../Common/DefaultForm.tsx";
 
 
 interface Props {
+    parentObjectType: ObjectType | null;
     submitCallback: (data: ObjectTypeAdd | null) => void;
 }
 
-function AddRootTypeForm({submitCallback}: Props) {
+function AddObjectTypeForm({parentObjectType, submitCallback}: Props) {
     function nameValidator(value: string | number | null): string | null {
         if (value == null || typeof value == "number") {
             return "Неверный формат ввода"
@@ -28,7 +29,7 @@ function AddRootTypeForm({submitCallback}: Props) {
     ]
 
     const defaultData = {
-        parent_id: null
+        parent_id: parentObjectType?.id
     } as ObjectTypeAdd;
 
     return (
@@ -36,4 +37,4 @@ function AddRootTypeForm({submitCallback}: Props) {
     );
 }
 
-export default AddRootTypeForm;
+export default AddObjectTypeForm;

@@ -1,10 +1,11 @@
-import React, {useState} from "react";
+import React from "react";
+
+import ListGroup from "react-bootstrap/ListGroup";
 
 export type DataNode<T> = {
     id: number
     data: T
-    children?: DataNode<T>[] | null
-    hasChildren?: boolean
+    children: DataNode<T>[] | null
     childrenLoaded?: boolean
 }
 
@@ -13,10 +14,7 @@ export interface Props<T> {
     openIds: Set<number>
     onToggle: (id: number) => void
 
-    renderItem: (
-        node: DataNode<T>,
-        meta: { isOpen: boolean; depth: number; toggle: () => void }
-    ) => React.ReactNode;
+    renderItem: (node: DataNode<T>) => React.ReactNode;
 
     onRequestChildren?: (id: number) => Promise<DataNode<T>[]>;
     onChildrenLoaded?: (id: number, children: DataNode<T>[]) => void;
@@ -32,73 +30,50 @@ function FileSystemTreeView<T>(
         renderItem,
         onRequestChildren,
         onChildrenLoaded,
-        loadingIds,
     }: Props<T>) {
-    const [internalLoading, setInternalLoading] = useState<Set<number>>(new Set());
-
-    function isLoading(id: number): boolean {
-        if (loadingIds) {
-            return loadingIds.has(id);
-        }
-        return internalLoading.has(id);
-    }
-
     async function handleToggle(node: DataNode<T>) {
         onToggle(node.id)
 
         const willOpen = !openIds.has(node.id)
-        if (willOpen && node.hasChildren && node.children === undefined && onRequestChildren && onChildrenLoaded) {
-            if (!loadingIds) {
-                setInternalLoading((prev) => prev.add(node.id))
-            }
-
+        if (willOpen && node.children === null && onRequestChildren && onChildrenLoaded) {
             try {
                 const children = await onRequestChildren(node.id)
                 onChildrenLoaded(node.id, children)
             } catch (e) {
                 console.error("Failed to load children for", node.id, e)
-            } finally {
-                if (!loadingIds) setInternalLoading((prev) => {
-                    const next = new Set(prev);
-                    next.delete(node.id);
-                    return next;
-                })
             }
         }
     }
 
     function renderNodes (nodes: DataNode<T>[], depth = 0) {
         return (
-            <div>
+            <ListGroup variant="flush">
                 {nodes.map((node) => {
-                    const isOpen = openIds.has(node.id)
-                    const loading = isLoading(node.id)
+                    const isOpen = openIds.has(node.id);
 
                     return (
-                        <div key={node.id} className="py-1">
-                            <div className="flex items-center">
-                                <button
+                        <React.Fragment key={node.id}>
+                            <ListGroup.Item className="d-flex align-items-center pb-3 pt-3">
+                                <div
                                     onClick={() => handleToggle(node)}
-                                    className="w-6 h-6 inline-flex items-center justify-center"
-                                    aria-label={isOpen ? "collapse" : "expand"}
+                                    style={{ cursor: 'pointer', width: '20px' }}
                                 >
-                                    {node.hasChildren ? (isOpen ? "▾" : "▸") : ""}
-                                </button>
-
-                                <div className="ml-2 flex-1">
-                                    {renderItem(node, {isOpen, depth, toggle: () => handleToggle(node)})}
+                                    {isOpen ? "▾" : "▸"}
                                 </div>
 
-                                {loading && <div className="ml-2 text-sm italic">loading...</div>}
-                            </div>
+                                {renderItem(node)}
+                            </ListGroup.Item>
 
                             {isOpen && node.children && node.children.length > 0 && (
-                                <div className="ml-6">{renderNodes(node.children, depth + 1)}</div>
+                                <div className="ms-4">
+                                    {renderNodes(node.children, depth + 1)}
+                                </div>
                             )}
-                        </div>
-                    )
+                        </React.Fragment>
+                    );
                 })}
-            </div>
+            </ListGroup>
+
         )
     }
 

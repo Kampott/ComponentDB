@@ -1,13 +1,12 @@
 import {type ReactNode, useEffect, useState} from "react";
 
-import Button from "react-bootstrap/Button";
 import {useNavigate} from "react-router-dom";
 
-import {useStore} from "../../../../store/Zustand.ts";
-import DefaultList from "../../../Common/DefaultList.tsx";
-import LoadEffect from "../../../Common/LoadEffect.tsx";
-import type {Object} from "../../../../schemas/Object.ts";
-import type {ObjectType} from "../../../../schemas/ObjectType.ts";
+import {useStore} from "../../../store/Zustand.ts";
+import DefaultList from "../../Common/DefaultList.tsx";
+import LoadEffect from "../../Common/LoadEffect.tsx";
+import type {Object} from "../../../schemas/Object.ts";
+import type {ObjectType} from "../../../schemas/ObjectType.ts";
 
 interface Props {
     objectType: ObjectType;

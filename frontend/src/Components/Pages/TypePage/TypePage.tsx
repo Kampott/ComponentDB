@@ -12,7 +12,7 @@ import type {ObjectType} from "../../../schemas/ObjectType.ts";
 import {useStore} from "../../../store/Zustand.ts";
 import {RestApiError} from "../../../http/RestApiClient.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
-import TypeObjectsTab from "./TypeObjectsTab/TypeObjectsTab.tsx";
+import TypeObjectsTab from "./TypeObjectsTab.tsx";
 import TypePropertiesTab from "./TypePropertiesTab.tsx";
 import TypeTreeView from "./TypeTreeView.tsx";
 import TypeMainInfo from "./TypeMainInfo.tsx";

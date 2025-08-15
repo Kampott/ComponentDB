@@ -5,10 +5,10 @@ import {type ReactNode, useEffect, useState} from "react";
 import type {ObjectType, ObjectTypeAdd} from "../../schemas/ObjectType.ts";
 import {useStore} from "../../store/Zustand.ts";
 import Button from "react-bootstrap/Button";
-import AddRootTypeForm from "./AddRootTypeForm.tsx";
 import {useNavigate} from "react-router-dom";
 import LoadEffect from "../Common/LoadEffect.tsx";
 import DefaultList from "../Common/DefaultList.tsx";
+import AddObjectTypeForm from "../Forms/AddObjectTypeForm.tsx";
 
 
 interface Props {
@@ -49,7 +49,6 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
     }, [])
 
     async function confirmAddType(data: ObjectTypeAdd | null) {
-        console.log(data)
         if (!data) {
             setFormShow(false)
             return
@@ -75,7 +74,7 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
                 </Offcanvas.Body>
             </Offcanvas>
 
-            {formShow && <AddRootTypeForm submitCallback={confirmAddType}/>}
+            {formShow && <AddObjectTypeForm parentObjectType={null} submitCallback={confirmAddType}/>}
         </>
     )
 }

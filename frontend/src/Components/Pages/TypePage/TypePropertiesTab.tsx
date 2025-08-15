@@ -5,8 +5,9 @@ import Button from "react-bootstrap/Button";
 import {useStore} from "../../../store/Zustand.ts";
 import DefaultList from "../../Common/DefaultList.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
-import type {PropertyType} from "../../../schemas/PropertyType.ts";
+import type {PropertyType, PropertyTypeAdd} from "../../../schemas/PropertyType.ts";
 import type {ObjectType} from "../../../schemas/ObjectType.ts";
+import AddTypePropertyForm from "../../Forms/AddTypePropertyForm.tsx";
 
 interface Props {
     objectType: ObjectType;
@@ -17,6 +18,7 @@ function TypePropertiesTab({objectType}: Props): ReactNode {
 
     const [objectProperties, setObjectProperties] = useState<PropertyType[] | null>(null);
     const [instanceProperties, setInstanceProperties] = useState<PropertyType[] | null>(null);
+    const [formShow, setFormShow] = useState(false)
 
     async function loadProperties(): Promise<void> {
         setObjectProperties(await services.propertiesTypesService.getPropertyTypesByTypeId(objectType.id, true));
@@ -38,27 +40,49 @@ function TypePropertiesTab({objectType}: Props): ReactNode {
         );
     }
 
+    async function confirmAddProperty(data: PropertyTypeAdd | null) {
+        if (!data) {
+            setFormShow(false)
+            return
+        }
+
+        try {
+            await services.propertiesTypesService.addPropertyType(data)
+        } catch (error) {
+            if (error instanceof Error) {
+                console.log(error)
+            }
+        } finally {
+            setFormShow(false)
+            await loadProperties()
+        }
+    }
+
     return (
         <>
-            <Button variant="primary" className="mt-4">Добавить свойство</Button>
+            <Button variant="primary" className="mt-4" onClick={() => setFormShow(true)}>Добавить свойство</Button>
 
             <h4 className="fw-semibold fs-4 border-bottom pb-1 mb-3 pt-5">Свойства объекта</h4>
 
             <LoadEffect data={objectProperties} contentSize={{height: "20px", width: "100%"}}>
-                {objectProperties?.length == 0 ? "Нет свойств" : <DefaultList data={objectProperties ? objectProperties : []}
-                             onClick={null}
-                             renderItem={renderProperty}
-                />}
+                {objectProperties?.length == 0 ? "Нет свойств" :
+                    <DefaultList data={objectProperties ? objectProperties : []}
+                                 onClick={null}
+                                 renderItem={renderProperty}
+                    />}
             </LoadEffect>
 
             <h4 className="fw-semibold fs-4 border-bottom pb-1 mb-3 pt-5">Свойства экземпляра</h4>
 
             <LoadEffect data={instanceProperties} contentSize={{height: "20px", width: "100%"}}>
-                {instanceProperties?.length == 0 ? "Нет свойств" : <DefaultList data={instanceProperties ? instanceProperties : []}
-                             onClick={null}
-                             renderItem={renderProperty}
-                />}
+                {instanceProperties?.length == 0 ? "Нет свойств" :
+                    <DefaultList data={instanceProperties ? instanceProperties : []}
+                                 onClick={null}
+                                 renderItem={renderProperty}
+                    />}
             </LoadEffect>
+
+            {formShow && <AddTypePropertyForm objectType={objectType} submitCallback={confirmAddProperty}/>}
         </>
     );
 }

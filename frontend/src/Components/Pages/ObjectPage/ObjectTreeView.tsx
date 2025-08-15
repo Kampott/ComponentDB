@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import {useNavigate} from "react-router-dom";
 
 import Button from "react-bootstrap/Button";
 
@@ -12,6 +13,8 @@ interface Props {
 }
 
 function ObjectTreeView({object}: Props) {
+    const navigate = useNavigate();
+
     const services = useStore((state) => state.services)
 
     const [objectTree, setObjectTree] = useState<DataNode<Object>[] | null>(null);
@@ -28,7 +31,6 @@ function ObjectTreeView({object}: Props) {
             return {
                 id: element.id,
                 data: element,
-                hasChildren: false,
                 children: null,
             } as DataNode<Object>
         })
@@ -73,11 +75,18 @@ function ObjectTreeView({object}: Props) {
         })
     }
 
-    function renderItem(node: DataNode<Object>, meta: { isOpen: boolean; depth: number; toggle: () => void }) {
+    function onObjectChildrenClick(id: number) {
+        navigate(`/types/${id}`);
+    }
+
+    function renderItem(node: DataNode<Object>) {
         return (
-            <div className="cursor-pointer" onClick={meta.toggle} role="button">
-                <span className="font-medium">ID: {node.data.id}</span>
-            </div>
+            <span
+                onClick={() => onObjectChildrenClick(node.id)}
+                className="ms-2 text-primary"
+                role="button"
+                style={{cursor: 'pointer'}}
+            >ID: {node.data.id}</span>
         )
     }
 

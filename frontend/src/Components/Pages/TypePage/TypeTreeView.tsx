@@ -1,34 +1,36 @@
 import {useEffect, useState} from 'react';
+import {useNavigate} from "react-router-dom";
 
 import Button from "react-bootstrap/Button";
 
 import {useStore} from "../../../store/Zustand.ts";
 import FileSystemTreeView, {type DataNode} from "../../Common/FileSystemTreeView.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
-import type {ObjectType} from "../../../schemas/ObjectType.ts";
+import type {ObjectType, ObjectTypeAdd} from "../../../schemas/ObjectType.ts";
+import AddObjectTypeForm from "../../Forms/AddObjectTypeForm.tsx";
 
 interface Props {
     objectType: ObjectType;
 }
 
 function TypeTreeView({objectType}: Props) {
+    const navigate = useNavigate();
+
     const services = useStore((state) => state.services)
 
     const [typeTree, setTypeTree] = useState<DataNode<ObjectType>[] | null>(null);
 
-    const [openIds, setOpenIds] = useState<Set<number>>(new Set())
-    const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set())
+    const [openIds, setOpenIds] = useState<Set<number>>(new Set());
+
+    const [formShow, setFormShow] = useState(false);
 
     async function loadObjectTypeChildren(id: number): Promise<DataNode<ObjectType>[]> {
-        setLoadingIds((prev) => new Set(prev).add(id))
-
         const children: ObjectType[] = await services.objectsTypesService.getTypesByParentId(id)
 
         return children.map((element: ObjectType) => {
             return {
                 id: element.id,
                 data: element,
-                hasChildren: false,
                 children: null,
             } as DataNode<ObjectType>
         })
@@ -66,24 +68,37 @@ function TypeTreeView({objectType}: Props) {
         }
 
         setTypeTree((prev) => prev && attachChildren(prev));
-        setLoadingIds((prev) => {
-            const next = new Set(prev)
-            next.delete(id)
-            return next
-        })
     }
 
-    function renderItem(node: DataNode<ObjectType>, meta: { isOpen: boolean; depth: number; toggle: () => void }) {
+    async function onTypeChildrenClick(id: number): Promise<void> {
+        navigate(`/types/${id}`)
+    }
+
+    function renderItem(node: DataNode<ObjectType>) {
         return (
-            <div className="cursor-pointer" onClick={meta.toggle} role="button">
-                <span className="font-medium">{node.data.name}</span>
-            </div>
+            <span
+                onClick={() => onTypeChildrenClick(node.id)}
+                className="ms-2 text-primary"
+                role="button"
+                style={{cursor: 'pointer'}}
+            >{node.data.name}</span>
         )
+    }
+
+    async function confirmAddType(data: ObjectTypeAdd | null) {
+        if (!data) {
+            setFormShow(false)
+            return
+        }
+
+        await services.objectsTypesService.addType(data)
+        setFormShow(false)
+        setTypeTree(await loadObjectTypeChildren(objectType.id))
     }
 
     return (
         <>
-            <Button variant="primary" className="mt-4">Добавить тип</Button>
+            <Button variant="primary" className="mt-4" onClick={() => setFormShow(true)}>Добавить тип</Button>
             <LoadEffect data={typeTree} contentSize={{height: "20px", width: "100%"}}>
                 <FileSystemTreeView
                     data={typeTree ? typeTree : []}
@@ -92,9 +107,10 @@ function TypeTreeView({objectType}: Props) {
                     renderItem={renderItem}
                     onRequestChildren={loadObjectTypeChildren}
                     onChildrenLoaded={onObjectChildrenLoaded}
-                    loadingIds={loadingIds}
                 />
             </LoadEffect>
+
+            {formShow && <AddObjectTypeForm parentObjectType={objectType} submitCallback={confirmAddType}/>}
         </>
     )
 }
