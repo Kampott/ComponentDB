@@ -4,6 +4,7 @@ from typing import Optional, List
 
 #Objects
 class ObjectsBase(BaseModel):
+    name: Optional[str] = None
     type_id: int
     parent_id: Optional[int] = None
 
@@ -11,6 +12,7 @@ class ObjectsCreate(ObjectsBase):
     pass
 
 class ObjectsUpdate(BaseModel):
+    name: Optional[str] = None
     type_id: Optional[int] = None
     parent_id: Optional[int] = None
 
@@ -100,21 +102,30 @@ class PropertiesDelete(BaseModel):
 #Instances
 
 class InstancesBase(BaseModel):
+    name: Optional[str] = None
     object_id: int
-    root_id: int
     is_active: bool
 
 class InstancesCreate(InstancesBase):
-    parent_instance_id: Optional[int] = None
-    pass
+    tree_id: int
+
+class InstanceCreated(BaseModel):
+    id: int
+    name: Optional[str] = None
+    object_id: int
+    is_active: bool
 
 class InstancesUpdate(BaseModel):
+    name: Optional[int] = None
     object_id: Optional[int] = None
-    root_id: Optional[int] = None
     is_active: Optional[bool] = None
 
-class InstancesRead(InstancesBase):
+class InstancesRead(BaseModel):
     id: int
+    name: Optional[str] = None
+    object_id: int
+    is_active: bool
+    tree_id: int
 
     class Config:
         from_attributes = True
@@ -146,7 +157,25 @@ class InstancePropertiesRead(InstancePropertiesBase):
 class InstancePropertiesDelete(BaseModel):
     id: int
 
+#InstanceTreeMap
+class InstanceTreeMapBase(BaseModel):
+    tree_id: int
+    instance_id: int
+    is_active: bool
 
+class InstanceTreeMapCreate(InstanceTreeMapBase):
+    pass
+
+class InstanceTreeMapUpdate(InstanceTreeMapBase):
+    tree_id: Optional[int] = None
+    instance_id: Optional[int] = None
+    is_active: Optional[int] = None
+
+class InstanceTreeMapRead(InstanceTreeMapBase):
+    id: int
+
+    class Config:
+        from_attributes = True
 
 #DataTree
 
@@ -191,20 +220,5 @@ class ObjectInstanceTree(BaseModel):
 ObjectInstanceTree.update_forward_refs()
 
 
-#InstanceTreeMap
-class InstanceTreeMapBase(BaseModel):
-    root_object_id: int
-    object_id: int
-    instance_id: int
-    parent_instance_id: Optional[int] = None
-    is_active: bool
 
-class InstanceTreeMapCreate(InstanceTreeMapBase):
-    pass
-
-class InstanceTreeMapRead(InstanceTreeMapBase):
-    id: int
-
-    class Config:
-        from_attributes = True
 

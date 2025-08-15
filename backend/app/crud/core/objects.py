@@ -15,6 +15,7 @@ from fastapi import HTTPException
 #Get all of the available objects
 async def get_objects(
     db: AsyncSession,
+    name: Optional[int] = None,
     type_id: Optional[int] = None,
     parent_id: Optional[int] = None,
     root_id: Optional[int] = None,
@@ -24,6 +25,8 @@ async def get_objects(
     query = select(Objects)
 
     filters = []
+    if name is not None:
+        filters.append(Objects.name == name)
     if type_id is not None:
         filters.append(Objects.type_id == type_id)
     if parent_id is not None:
