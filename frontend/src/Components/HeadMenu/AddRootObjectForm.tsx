@@ -1,46 +1,38 @@
-import {useState} from 'react';
-import Modal from "react-bootstrap/Modal";
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
-
 import type {ObjectTypeAdd} from "../../schemas/ObjectType.ts";
+import DefaultForm, {type FormField} from "../Common/DefaultForm.tsx";
 
 
 interface Props {
-    confirmAddCallback: CallableFunction
+    submitCallback: (data: ObjectTypeAdd | null) => void;
 }
 
-function AddRootObjectForm({confirmAddCallback}: Props) {
-    const [formData, setFormData] = useState<ObjectTypeAdd>({name: "", parent_id: null})
+function AddRootObjectForm({submitCallback}: Props) {
+    function nameValidator(value: string | number | null): string | null {
+        if (value == null || typeof value == "number") {
+            return "Неверный формат ввода"
+        }
+        if (value == "") {
+            return "Не может быть пустым"
+        }
+        return null;
+    }
+
+    const formFields: FormField<ObjectTypeAdd, keyof ObjectTypeAdd>[] = [
+        {
+            bindData: "name",
+            label: "Название типа",
+            type: "string",
+            placeholder: "Введите название",
+            validator: nameValidator
+        }
+    ]
+
+    const defaultData = {
+        parent_id: null
+    } as ObjectTypeAdd;
+
     return (
-        <Modal show={true}>
-            <Modal.Header closeButton>
-                <Modal.Title>Добавление нового типа</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <Form>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Название типа</Form.Label>
-                        <Form.Control
-                            type="text"
-                            placeholder="Введите название"
-                            value={formData.name}
-                            onChange={(e) => {
-                                setFormData({...formData, name: e.target.value})
-                            }}
-                        />
-                    </Form.Group>
-                </Form>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={() => confirmAddCallback(null)}>
-                    Отмена
-                </Button>
-                <Button variant="primary" onClick={() => confirmAddCallback(formData)}>
-                    Сохранить
-                </Button>
-            </Modal.Footer>
-        </Modal>
+        <DefaultForm defaultData={defaultData} title="Добавление нового типа" fields={formFields} onSubmit={submitCallback}/>
     );
 }
 

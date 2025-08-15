@@ -28,18 +28,6 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
         navigate(`/types/${objectType.id}`)
     }
 
-    async function confirmAddType(data: ObjectTypeAdd | null) {
-        console.log(data)
-        if (!data) {
-            setFormShow(false)
-            return
-        }
-
-        await services.objectsTypesService.addType(data)
-        setFormShow(false)
-        await loadRootObjectTypes()
-    }
-
     async function loadRootObjectTypes() {
         try {
             setRootObjectTypes(await services.objectsTypesService.getRootTypes())
@@ -60,6 +48,18 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
         loadRootObjectTypes()
     }, [])
 
+    async function confirmAddType(data: ObjectTypeAdd | null) {
+        console.log(data)
+        if (!data) {
+            setFormShow(false)
+            return
+        }
+
+        await services.objectsTypesService.addType(data)
+        setFormShow(false)
+        await loadRootObjectTypes()
+    }
+
     return (
         <>
             <Offcanvas show={showObjectsMenu} onHide={handleClose} placement="start">
@@ -75,7 +75,7 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
                 </Offcanvas.Body>
             </Offcanvas>
 
-            {formShow && <AddRootObjectForm confirmAddCallback={confirmAddType}/>}
+            {formShow && <AddRootObjectForm submitCallback={confirmAddType}/>}
         </>
     )
 }
