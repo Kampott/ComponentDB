@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
 from app.db.database import Base
+from sqlalchemy import Index, text, UniqueConstraint
 from typing import Optional, List
 from sqlalchemy import ForeignKey, String, Integer, Boolean
 
@@ -16,7 +17,7 @@ class Types(Base):
         "Types",
         foreign_keys=[parent_id],
         remote_side=[id],
-        backref=backref("children", cascade="all, delete"),
+        backref=backref("children", passive_deletes=True),
         passive_deletes=True
         )
 
@@ -25,7 +26,7 @@ class Types(Base):
         "Types",
         foreign_keys=[root_id], 
         remote_side=[id],
-        backref=backref("root_children", cascade="all, delete"),
+        backref=backref("root_children", passive_deletes=True),
         passive_deletes=True
         )
 
@@ -36,6 +37,8 @@ class Objects(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
+    name: Mapped[Optional[str]] = mapped_column(String)
+
     type_id: Mapped[int] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"))
     type_: Mapped["Types"] = relationship("Types", remote_side="Types.id", passive_deletes=True)
 
@@ -44,7 +47,7 @@ class Objects(Base):
         "Objects",
         foreign_keys=[parent_id],
         remote_side=[id],
-        backref=backref("children", cascade="all, delete"),
+        backref=backref("children", passive_deletes=True),
         passive_deletes=True
         )  
 
@@ -54,7 +57,7 @@ class Objects(Base):
         "Objects",
         foreign_keys=[root_id],
         remote_side=[id],
-        backref=backref("root_children", cascade="all, delete"),
+        backref=backref("root_children", passive_deletes=True),
         passive_deletes=True
     )
     index_of_layer: Mapped[int]
@@ -90,23 +93,28 @@ class PropertyTypes(Base):
 
     name: Mapped[str] = mapped_column(String, nullable = False)
 
+    is_static: Mapped[bool] = mapped_column(nullable = False)
+
 
 class Instances(Base):
     __tablename__ = "instances"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-
-    type_id: Mapped[int] = mapped_column(ForeignKey("types.id", ondelete="CASCADE")) # нужна ли связь
-    type_: Mapped["Types"] = relationship("Types", passive_deletes=True) # ??
+    name: Mapped[Optional[str]] = mapped_column(String)
 
     object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
     object_: Mapped["Objects"] = relationship("Objects", back_populates="instances", passive_deletes=True)
 
+    is_active: Mapped[bool] = mapped_column(nullable=False)
 
-    is_active: Mapped[bool]
+    tree_mappings: Mapped[List["InstanceTreeMap"]] = relationship(
+        "InstanceTreeMap",
+        back_populates="instance",
+        cascade="all, delete-orphan"
+    )
 
 
-class InstanceProperties(Base): # зачем?
+class InstanceProperties(Base): 
     __tablename__ = "instance_properties"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -115,3 +123,20 @@ class InstanceProperties(Base): # зачем?
 
     instance_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"))
     instance: Mapped["Instances"] = relationship("Instances", passive_deletes=True)
+
+    property_type_id: Mapped[int] = mapped_column(ForeignKey("property_types.id", ondelete="CASCADE"))
+    property_type: Mapped["PropertyTypes"] = relationship("PropertyTypes", passive_deletes=True)
+
+class InstanceTreeMap(Base):
+    __tablename__ = "instance_tree_map"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    tree_id: Mapped[int] = mapped_column(nullable = False)
+
+    instance_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"))
+    instance: Mapped["Instances"] = relationship("Instances", back_populates="tree_mappings", passive_deletes=True)
+
+    is_active: Mapped[bool] = mapped_column(nullable=False)
+
+

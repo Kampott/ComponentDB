@@ -1,15 +1,34 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
+from sqlalchemy.sql import and_
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
 from fastapi import HTTPException
 
 #Get all of the available properties
-async def get_properties(db: AsyncSession) -> List[Properties]:
-    result = await db.execute(select(Properties))
-    return result.scalars().all()
+async def get_properties(db: AsyncSession,
+    property_id: Optional[int] = None,
+    value: Optional[str] = None,
+    object_id: Optional[int] = None
+) -> List[Properties]:
+    query = select(Properties)
 
+    filters = []
+    if property_id is not None:
+        filters.append(Properties.property_id == property_id)
+    if value is not None:
+        filters.append(Properties.value == value)
+    if object_id is not None:
+        filters.append(Properties.object_id == object_id)
+
+    if filters:
+        query = query.where(and_(*filters))
+
+    result = await db.execute(query)
+    return result.scalars().all()
 #Get one type using the property's id
 async def get_property(db: AsyncSession, property_id: int) -> Optional[Properties]:
     result = await db.execute(select(Properties).where(Properties.id == property_id))

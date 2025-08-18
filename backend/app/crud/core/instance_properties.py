@@ -1,5 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
+from sqlalchemy.sql import and_
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
@@ -9,8 +12,25 @@ from fastapi import HTTPException
 ######## Instance Properties   
 
 #Get all of the available instance properties
-async def get_instanceproperties(db: AsyncSession) -> List[InstanceProperties]:
-    result = await db.execute(select(InstanceProperties))
+async def get_instanceproperties(db: AsyncSession,
+    instance_id: Optional[int] = None,
+    value: Optional[str] = None,
+    property_type_id: Optional[int] = None
+) -> List[InstanceProperties]:
+    query = select(InstanceProperties)
+
+    filters = []
+    if instance_id is not None:
+        filters.append(InstanceProperties.instance_id == instance_id)
+    if value is not None:
+        filters.append(InstanceProperties.value == value)
+    if property_type_id is not None:
+        filters.append(InstanceProperties.property_type_id == property_type_id)
+
+    if filters:
+        query = query.where(and_(*filters))
+
+    result = await db.execute(query)
     return result.scalars().all()
 
 #Get one type using the properties id
@@ -22,11 +42,17 @@ async def get_instanceproperty(db: AsyncSession, instanceproperty_id: int) -> Op
 async def create_instanceproperty(db: AsyncSession, data: InstancePropertiesCreate):
     
     
-    instance_ident = await db.get(Instances, data.instance_id)
-    if not instance_ident:
+    instance = await db.get(Instances, data.instance_id)
+    property_type = await db.get(PropertyTypes, data.property_type_id)
+    if not instance:
             raise HTTPException(status_code=404, detail="Instance id not found")
+    elif not property_type:
+            raise HTTPException(status_code=404, detail="Property type not found")
 
     instance_property = InstanceProperties(**data.dict())
+
+
+    
 
     db.add(instance_property)
     

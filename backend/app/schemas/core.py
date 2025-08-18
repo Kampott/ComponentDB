@@ -4,6 +4,7 @@ from typing import Optional, List
 
 #Objects
 class ObjectsBase(BaseModel):
+    name: Optional[str] = None
     type_id: int
     parent_id: Optional[int] = None
 
@@ -11,6 +12,7 @@ class ObjectsCreate(ObjectsBase):
     pass
 
 class ObjectsUpdate(BaseModel):
+    name: Optional[str] = None
     type_id: Optional[int] = None
     parent_id: Optional[int] = None
 
@@ -20,7 +22,7 @@ class ObjectsRead(ObjectsBase):
     root_id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class ObjectsDelete(BaseModel):
     id: int
@@ -44,7 +46,7 @@ class TypesRead(TypesBase):
     root_id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class TypesDelete(BaseModel):
     id: int
@@ -53,6 +55,7 @@ class TypesDelete(BaseModel):
 class PropertyTypesBase(BaseModel):
     type_id: int
     name: str
+    is_static: bool
 
 class PropertyTypesCreate(PropertyTypesBase):
     pass
@@ -60,12 +63,13 @@ class PropertyTypesCreate(PropertyTypesBase):
 class PropertyTypesUpdate(BaseModel):
     type_id: Optional[int] = None
     name: Optional[int] = None
+    is_static: Optional[bool] = None
  
 class PropertyTypesRead(PropertyTypesBase):
     id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class PropertyTypesDelete(BaseModel):
     id: int
@@ -90,30 +94,41 @@ class PropertiesRead(PropertiesBase):
     id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 class PropertiesDelete(BaseModel):
     id: int
 
 
 #Instances
+
 class InstancesBase(BaseModel):
+    name: Optional[str] = None
     object_id: int
     is_active: bool
 
 class InstancesCreate(InstancesBase):
-    pass
+    tree_id: int
+
+class InstanceCreated(BaseModel):
+    id: int
+    name: Optional[str] = None
+    object_id: int
+    is_active: bool
 
 class InstancesUpdate(BaseModel):
+    name: Optional[int] = None
     object_id: Optional[int] = None
-    type_id: Optional[int] = None
     is_active: Optional[bool] = None
 
-class InstancesRead(InstancesBase):
+class InstancesRead(BaseModel):
     id: int
-    type_id: int
+    name: Optional[str] = None
+    object_id: int
+    is_active: bool
+    tree_id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class InstancesDelete(BaseModel):
     id: int
@@ -123,6 +138,7 @@ class InstancesDelete(BaseModel):
 class InstancePropertiesBase(BaseModel):
     value: str
     instance_id: int
+    property_type_id: int
 
 class InstancePropertiesCreate(InstancePropertiesBase):
     pass
@@ -130,17 +146,36 @@ class InstancePropertiesCreate(InstancePropertiesBase):
 class InstancePropertiesUpdate(BaseModel):
     value: Optional[str] = None
     instance_id: Optional[int] = None
+    property_type_id: Optional[int] = None
 
 class InstancePropertiesRead(InstancePropertiesBase):
     id: int
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class InstancePropertiesDelete(BaseModel):
     id: int
 
+#InstanceTreeMap
+class InstanceTreeMapBase(BaseModel):
+    tree_id: int
+    instance_id: int
+    is_active: bool
 
+class InstanceTreeMapCreate(InstanceTreeMapBase):
+    pass
+
+class InstanceTreeMapUpdate(InstanceTreeMapBase):
+    tree_id: Optional[int] = None
+    instance_id: Optional[int] = None
+    is_active: Optional[int] = None
+
+class InstanceTreeMapRead(InstanceTreeMapBase):
+    id: int
+
+    class Config:
+        from_attributes = True
 
 #DataTree
 
@@ -150,7 +185,7 @@ class TypeTree(BaseModel):
     children: List["TypeTree"] = []
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class ObjectNode(BaseModel):
     id: int
@@ -159,7 +194,7 @@ class ObjectNode(BaseModel):
     children: List["ObjectNode"] = []
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 ObjectNode.update_forward_refs()
 
@@ -170,7 +205,7 @@ class InstanceOut(BaseModel):
     is_active: bool
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 class ObjectInstanceTree(BaseModel):
     id: int
@@ -180,9 +215,10 @@ class ObjectInstanceTree(BaseModel):
     children: List["ObjectInstanceTree"]
 
     class Config:
-        from_attribues = True
+        from_attributes = True
 
 ObjectInstanceTree.update_forward_refs()
+
 
 
 
