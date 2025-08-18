@@ -1,11 +1,11 @@
 import './App.css'
 
-import ObjectsMenu from "./Components/ObjectsMenu.tsx";
+import ObjectPage from "./Components/ObjectPage/ObjectPage.tsx";
 
 function App() {
     return (
         <div className="App">
-            <ObjectsMenu/>
+            <ObjectPage/>
         </div>
     )
 }
