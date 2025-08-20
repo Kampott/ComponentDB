@@ -13,3 +13,4 @@ aiofiles
 loguru
 pandas
 markdown2
+pydantic-settings
