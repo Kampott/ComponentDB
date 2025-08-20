@@ -15,7 +15,7 @@ from fastapi import HTTPException
 #Get all of the available objects
 async def get_objects(
     db: AsyncSession,
-    name: Optional[int] = None,
+    name: Optional[str] = None,
     type_id: Optional[int] = None,
     parent_id: Optional[int] = None,
     root_id: Optional[int] = None,
@@ -54,6 +54,12 @@ async def create_object(db: AsyncSession, data: ObjectsCreate):
     index_of_layer = 1
     root_id = None
 
+    #checking if type exists
+    type_obj = await db.get(Types, data.type_id)
+    if not type_obj:
+        raise HTTPException(status_code=404, detail="Type not found")
+
+
     #if parent_id present - getting the index of layer and adding 1, root = parent.root
     if data.parent_id:
         parent_obj = await db.get(Objects, data.parent_id)
@@ -62,11 +68,6 @@ async def create_object(db: AsyncSession, data: ObjectsCreate):
         
         index_of_layer = parent_obj.index_of_layer + 1
         root_id = parent_obj.root_id
-    
-    #checking if type exists
-    type_obj = await db.get(Types, data.type_id)
-    if not type_obj:
-        raise HTTPException(status_code=404, detail="Type not found")
 
     obj = Objects(
         **data.dict(),
