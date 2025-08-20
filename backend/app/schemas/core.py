@@ -104,16 +104,20 @@ class PropertiesDelete(BaseModel):
 class InstancesBase(BaseModel):
     name: Optional[str] = None
     object_id: int
+    parent_id: Optional[int] = None
     is_active: bool
 
 class InstancesCreate(InstancesBase):
-    tree_id: int
+    pass
 
 class InstanceCreated(BaseModel):
     id: int
     name: Optional[str] = None
     object_id: int
+    parent_id: Optional[int] = None
+    root_id: int
     is_active: bool
+    index_of_layer: int
 
 class InstancesUpdate(BaseModel):
     name: Optional[int] = None
@@ -123,9 +127,11 @@ class InstancesUpdate(BaseModel):
 class InstancesRead(BaseModel):
     id: int
     name: Optional[str] = None
+    root_id: int
+    parent_id: Optional[int] = None
     object_id: int
+    index_of_layer: int
     is_active: bool
-    tree_id: int
 
     class Config:
         from_attributes = True
@@ -157,25 +163,6 @@ class InstancePropertiesRead(InstancePropertiesBase):
 class InstancePropertiesDelete(BaseModel):
     id: int
 
-#InstanceTreeMap
-class InstanceTreeMapBase(BaseModel):
-    tree_id: int
-    instance_id: int
-    is_active: bool
-
-class InstanceTreeMapCreate(InstanceTreeMapBase):
-    pass
-
-class InstanceTreeMapUpdate(InstanceTreeMapBase):
-    tree_id: Optional[int] = None
-    instance_id: Optional[int] = None
-    is_active: Optional[int] = None
-
-class InstanceTreeMapRead(InstanceTreeMapBase):
-    id: int
-
-    class Config:
-        from_attributes = True
 
 #DataTree
 

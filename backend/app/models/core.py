@@ -21,7 +21,7 @@ class Types(Base):
         passive_deletes=True
         )
 
-    root_id: Mapped[int] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"), nullable = False)
+    root_id: Mapped[int] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"), nullable = True)
     root: Mapped["Types"] = relationship(
         "Types",
         foreign_keys=[root_id], 
@@ -102,16 +102,29 @@ class Instances(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[Optional[str]] = mapped_column(String)
 
+    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"))
+    parent: Mapped[Optional["Instances"]] = relationship(
+        "Instances",
+        foreign_keys=[parent_id],
+        remote_side=[id],
+        backref=backref("children", passive_deletes=True),
+        passive_deletes=True
+        )
+
+    root_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), nullable = True)
+    root: Mapped["Instances"] = relationship(
+        "Instances",
+        foreign_keys=[root_id], 
+        remote_side=[id],
+        backref=backref("root_children", passive_deletes=True),
+        passive_deletes=True
+        )
+
     object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
     object_: Mapped["Objects"] = relationship("Objects", back_populates="instances", passive_deletes=True)
 
     is_active: Mapped[bool] = mapped_column(nullable=False)
-
-    tree_mappings: Mapped[List["InstanceTreeMap"]] = relationship(
-        "InstanceTreeMap",
-        back_populates="instance",
-        cascade="all, delete-orphan"
-    )
+    index_of_layer: Mapped[int] = mapped_column(Integer)
 
 
 class InstanceProperties(Base): 
@@ -127,16 +140,5 @@ class InstanceProperties(Base):
     property_type_id: Mapped[int] = mapped_column(ForeignKey("property_types.id", ondelete="CASCADE"))
     property_type: Mapped["PropertyTypes"] = relationship("PropertyTypes", passive_deletes=True)
 
-class InstanceTreeMap(Base):
-    __tablename__ = "instance_tree_map"
-
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-
-    tree_id: Mapped[int] = mapped_column(nullable = False)
-
-    instance_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"))
-    instance: Mapped["Instances"] = relationship("Instances", back_populates="tree_mappings", passive_deletes=True)
-
-    is_active: Mapped[bool] = mapped_column(nullable=False)
 
 
