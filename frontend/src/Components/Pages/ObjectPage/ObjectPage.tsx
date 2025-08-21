@@ -65,7 +65,7 @@ function ObjectPage() {
                         </LoadEffect>
                     </Breadcrumb>
                     <LoadEffect data={object} contentSize={{height: "20px", width: "100%"}}>
-                        <h1 className="text-center mb-5">ID: {object?.id}</h1>
+                        <h1 className="text-center mb-5">{object?.name ? object.name : `ID: ${object?.id}`}</h1>
                     </LoadEffect>
                     <Tabs defaultActiveKey="instances" id="main-tabs" className="mb-4" justify>
                         <Tab eventKey="instances" title="Экземпляры">

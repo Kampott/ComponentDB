@@ -99,7 +99,7 @@ function TypeMainInfo({objectType}: Props): ReactNode {
                                         {rootObject ? (
                                             <a href={`/objects/${rootObject.id}`}
                                                className="fw-bold text-decoration-none">
-                                                ID: {rootObject.id}
+                                                {rootObject.name ? rootObject.name : `ID: ${rootObject.id}`}
                                             </a>
                                         ) : (
                                             <>
