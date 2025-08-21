@@ -71,8 +71,8 @@ function ObjectPropertiesTab({object}: Props): ReactNode {
             setIsEditing(true);
         };
 
-        const handleKeyDown = (e) => {
-            if (e.key === "Enter") {
+        const handleKeyDown = (key: string) => {
+            if (key === "Enter") {
                 setIsEditing(false);
                 property.value = editValue;
                 updateProperty(property);
@@ -90,7 +90,7 @@ function ObjectPropertiesTab({object}: Props): ReactNode {
                             autoFocus
                             size="sm" // компактнее
                             onChange={(e) => setEditValue(e.target.value)}
-                            onKeyDown={handleKeyDown}
+                            onKeyDown={(e) => handleKeyDown(e.key)}
                             onBlur={() => setIsEditing(false)}
                             placeholder="Введите значение"
                         />
