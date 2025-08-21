@@ -5,8 +5,9 @@ import Button from "react-bootstrap/Button";
 
 import {useStore} from "../../../store/Zustand.ts";
 import FileSystemTreeView, {type DataNode} from "../../Common/FileSystemTreeView.tsx";
-import type {Object} from "../../../schemas/Object.ts";
+import type {Object, ObjectAdd} from "../../../schemas/Object.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
+import AddObjectForm from "../../Forms/AddObjectForm.tsx";
 
 interface Props {
     object: Object;
@@ -21,6 +22,8 @@ function ObjectTreeView({object}: Props) {
 
     const [openIds, setOpenIds] = useState<Set<number>>(new Set())
     const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set())
+
+    const [formShow, setFormShow] = useState(false);
 
     async function loadObjectChildren(id: number): Promise<DataNode<Object>[]> {
         setLoadingIds((prev) => new Set(prev).add(id))
@@ -76,7 +79,7 @@ function ObjectTreeView({object}: Props) {
     }
 
     function onObjectChildrenClick(id: number) {
-        navigate(`/types/${id}`);
+        navigate(`/objects/${id}`);
     }
 
     function renderItem(node: DataNode<Object>) {
@@ -86,13 +89,26 @@ function ObjectTreeView({object}: Props) {
                 className="ms-2 text-primary"
                 role="button"
                 style={{cursor: 'pointer'}}
-            >ID: {node.data.id}</span>
+            >{node.data.name ? node.data.name : `ID: ${node.data.id}`}</span>
         )
+    }
+
+    async function confirmAddObject(data: ObjectAdd | null) {
+        if (!data) {
+            setFormShow(false)
+            return
+        }
+
+        console.log(data)
+
+        await services.objectService.addObject(data)
+        setFormShow(false)
+        setObjectTree(await loadObjectChildren(object.id))
     }
 
     return (
         <>
-            <Button variant="primary" className="mt-4">Добавить объект</Button>
+            <Button variant="primary" className="mt-4" onClick={() => setFormShow(true)}>Добавить объект</Button>
             <LoadEffect data={objectTree} contentSize={{height: "20px", width: "100%"}}>
                 <FileSystemTreeView
                     data={objectTree ? objectTree : []}
@@ -104,6 +120,8 @@ function ObjectTreeView({object}: Props) {
                     loadingIds={loadingIds}
                 />
             </LoadEffect>
+
+            {formShow && <AddObjectForm parentObject={object} submitCallback={confirmAddObject}/>}
         </>
     )
 }
