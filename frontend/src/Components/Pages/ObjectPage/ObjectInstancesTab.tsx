@@ -2,7 +2,6 @@ import {type ReactNode, useEffect, useState} from "react";
 
 import type {ObjectInstance} from "../../../schemas/ObjectInstance.ts";
 import {useStore} from "../../../store/Zustand.ts";
-import Button from "react-bootstrap/Button";
 import DefaultList from "../../Common/DefaultList.tsx";
 import {useNavigate} from "react-router-dom";
 import LoadEffect from "../../Common/LoadEffect.tsx";
