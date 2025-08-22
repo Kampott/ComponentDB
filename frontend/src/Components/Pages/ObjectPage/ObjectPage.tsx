@@ -16,6 +16,7 @@ import ObjectInstancesTab from "./ObjectInstancesTab.tsx";
 import ObjectPropertiesTab from "./ObjectPropertiesTab.tsx";
 import ObjectDocumentsTab from "./ObjectDocumentsTab.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
+import ObjectMainInfo from "./ObjectMainInfo.tsx";
 
 function ObjectPage() {
     const {objectId} = useParams()
@@ -65,7 +66,9 @@ function ObjectPage() {
                         </LoadEffect>
                     </Breadcrumb>
                     <LoadEffect data={object} contentSize={{height: "20px", width: "100%"}}>
-                        <h1 className="text-center mb-5">{object?.name ? object.name : `ID: ${object?.id}`}</h1>
+                        <h1 className="text-center mb-5">Объект "{object?.name ? object.name : `ID${object?.id}`}"</h1>
+
+                        {object && <ObjectMainInfo object={object} />}
                     </LoadEffect>
                     <Tabs defaultActiveKey="instances" id="main-tabs" className="mb-4" justify>
                         <Tab eventKey="instances" title="Экземпляры">
