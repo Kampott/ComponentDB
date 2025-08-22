@@ -7,6 +7,7 @@ import DefaultList from "../../Common/DefaultList.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import type {Object} from "../../../schemas/Object.ts";
 import type {ObjectType} from "../../../schemas/ObjectType.ts";
+import objectToString from "../../../utility/object_to_string.ts";
 
 interface Props {
     objectType: ObjectType;
@@ -30,7 +31,7 @@ function TypeObjectsTab({objectType}: Props): ReactNode {
 
     function renderObject(object: Object): ReactNode {
         return (
-            <>ID: {object.id}</>
+            <>{objectToString(object)}</>
         );
     }
 

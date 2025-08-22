@@ -40,7 +40,6 @@ function ObjectInstancesTab({object}: Props): ReactNode {
 
     return (
         <>
-            <Button variant="primary" className="mt-4">Добавить экземпляр</Button>
             <LoadEffect data={objectInstances} contentSize={{height: "20px", width: "100%"}}>
                 <DefaultList data={objectInstances ? objectInstances : []}
                              onClick={navigateToInstancePage}

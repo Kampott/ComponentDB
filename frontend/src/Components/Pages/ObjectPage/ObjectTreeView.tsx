@@ -8,6 +8,7 @@ import FileSystemTreeView, {type DataNode} from "../../Common/FileSystemTreeView
 import type {Object, ObjectAdd} from "../../../schemas/Object.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import AddObjectForm from "../../Forms/AddObjectForm.tsx";
+import objectToString from "../../../utility/object_to_string.ts";
 
 interface Props {
     object: Object;
@@ -89,7 +90,7 @@ function ObjectTreeView({object}: Props) {
                 className="ms-2 text-primary"
                 role="button"
                 style={{cursor: 'pointer'}}
-            >{node.data.name ? node.data.name : `ID: ${node.data.id}`}</span>
+            >{objectToString(node.data)}</span>
         )
     }
 

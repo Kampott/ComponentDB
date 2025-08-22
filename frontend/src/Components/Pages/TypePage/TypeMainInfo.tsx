@@ -9,6 +9,7 @@ import type {Object} from "../../../schemas/Object.ts";
 import {useStore} from "../../../store/Zustand.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import {Link} from "react-router-dom";
+import objectToString from "../../../utility/object_to_string.ts";
 
 interface Props {
     objectType: ObjectType
@@ -100,7 +101,7 @@ function TypeMainInfo({objectType}: Props): ReactNode {
                                         {rootObject ? (
                                             <Link to={`/objects/${rootObject.id}`}
                                                className="fw-bold text-decoration-none">
-                                                {rootObject.name ? rootObject.name : `ID: ${rootObject.id}`}
+                                                {objectToString(rootObject)}
                                             </Link>
                                         ) : (
                                             <>
