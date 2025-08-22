@@ -59,6 +59,14 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
         await loadRootObjectTypes()
     }
 
+    function handleChangeRequest(objectType: ObjectType) {
+        console.log(objectType);
+    }
+
+    function handleDeleteRequest(objectType: ObjectType) {
+        console.log(objectType);
+    }
+
     return (
         <>
             <Offcanvas show={showObjectsMenu} onHide={handleClose} placement="start">
@@ -67,8 +75,12 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
                 </Offcanvas.Header>
                 <Offcanvas.Body>
                     <LoadEffect data={rootObjectTypes} contentSize={{height: "20px", width: "100%"}}>
-                        <DefaultList data={rootObjectTypes ? rootObjectTypes : []} onClick={handleObjectTypeClick}
-                                     renderItem={renderObjectType}/>
+                        <DefaultList data={rootObjectTypes ? rootObjectTypes : []}
+                                     onClick={handleObjectTypeClick}
+                                     renderItem={renderObjectType}
+                                     onChangeRequest={handleChangeRequest}
+                                     onDeleteRequest={handleDeleteRequest}
+                        />
                     </LoadEffect>
                     <Button variant="primary" className="mt-4" onClick={() => setFormShow(true)}>Добавить тип</Button>
                 </Offcanvas.Body>

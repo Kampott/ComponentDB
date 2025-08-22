@@ -58,6 +58,14 @@ function TypePropertiesTab({objectType}: Props): ReactNode {
         }
     }
 
+    function handleChangeRequest(propertyType: PropertyType) {
+        console.log(propertyType);
+    }
+
+    function handleDeleteRequest(propertyType: PropertyType) {
+        console.log(propertyType);
+    }
+
     return (
         <>
             <Button variant="primary" className="mt-4" onClick={() => setFormShow(true)}>Добавить свойство</Button>
@@ -69,6 +77,8 @@ function TypePropertiesTab({objectType}: Props): ReactNode {
                     <DefaultList data={objectProperties ? objectProperties : []}
                                  onClick={null}
                                  renderItem={renderProperty}
+                                 onChangeRequest={handleChangeRequest}
+                                 onDeleteRequest={handleDeleteRequest}
                     />}
             </LoadEffect>
 
@@ -79,6 +89,8 @@ function TypePropertiesTab({objectType}: Props): ReactNode {
                     <DefaultList data={instanceProperties ? instanceProperties : []}
                                  onClick={null}
                                  renderItem={renderProperty}
+                                 onChangeRequest={handleChangeRequest}
+                                 onDeleteRequest={handleDeleteRequest}
                     />}
             </LoadEffect>
 

@@ -1,4 +1,5 @@
 import Dropdown from "react-bootstrap/Dropdown";
+import {useEffect, useRef} from "react";
 
 export type Position = {
     x: number;
@@ -14,9 +15,25 @@ interface Props<T> {
 }
 
 function ContextMenu<T>({elementData, position, options, onOptionClick, onHideClick}: Props<T>) {
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                onHideClick();
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [onHideClick]);
+
     return (
         <Dropdown.Menu
             show={true}
+            ref={menuRef}
             style={{
                 position: "absolute",
                 left: position.x,

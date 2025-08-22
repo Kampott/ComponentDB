@@ -1,4 +1,4 @@
-import {type ReactNode, useRef, useState} from "react";
+import {type ReactNode, useState} from "react";
 import type {MouseEvent} from "react";
 
 import ListGroup from "react-bootstrap/ListGroup";
@@ -7,8 +7,8 @@ import ContextMenu, {type Position} from "./ContextMenu.tsx";
 export interface Props<T> {
     data: T[]
     onClick: ((element: T) => void) | null
-    onChangeRequest: ((element: T) => void) | null
-    onDeleteRequest: ((element: T) => void) | null
+    onChangeRequest?: (element: T) => void
+    onDeleteRequest?: (element: T) => void
     renderItem: (node: T) => ReactNode
 }
 
@@ -19,6 +19,10 @@ function DefaultList<T>({data, onClick, onChangeRequest, onDeleteRequest, render
 
 
     function handleContextMenu(e: MouseEvent<HTMLElement>, data: T) {
+        if (!onChangeRequest || !onDeleteRequest) {
+            return;
+        }
+
         e.preventDefault();
         setSelectedMenuData(data);
         setRClickPosition({ x: e.pageX, y: e.pageY });
