@@ -66,7 +66,7 @@ function TypePage() {
                     </Breadcrumb>
 
                     <LoadEffect data={objectType} contentSize={{height: "20px", width: "100%"}}>
-                        <h1 className="text-center mb-5">{objectType?.name}</h1>
+                        <h1 className="text-center mb-5">Тип "{objectType?.name}"</h1>
 
                         {objectType && <TypeMainInfo objectType={objectType}/>}
                     </LoadEffect>

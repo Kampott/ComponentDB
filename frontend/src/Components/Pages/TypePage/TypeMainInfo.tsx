@@ -8,6 +8,7 @@ import type {ObjectType} from "../../../schemas/ObjectType.ts";
 import type {Object} from "../../../schemas/Object.ts";
 import {useStore} from "../../../store/Zustand.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
+import {Link} from "react-router-dom";
 
 interface Props {
     objectType: ObjectType
@@ -80,10 +81,10 @@ function TypeMainInfo({objectType}: Props): ReactNode {
                                 <div>
                                     <div className="text-muted small">Корневой тип</div>
                                     <LoadEffect data={rootType} contentSize={{width: "30%", height: "15px"}}>
-                                        <a href={`/types/${rootType?.id}`}
+                                        <Link to={`/types/${rootType?.id}`}
                                            className="fw-bold text-decoration-none">
                                             {rootType?.name}
-                                        </a>
+                                        </Link>
                                     </LoadEffect>
                                 </div>
                             </div>
@@ -97,10 +98,10 @@ function TypeMainInfo({objectType}: Props): ReactNode {
                                     <div>
                                         <div className="text-muted small">Корневой объект</div>
                                         {rootObject ? (
-                                            <a href={`/objects/${rootObject.id}`}
+                                            <Link to={`/objects/${rootObject.id}`}
                                                className="fw-bold text-decoration-none">
                                                 {rootObject.name ? rootObject.name : `ID: ${rootObject.id}`}
-                                            </a>
+                                            </Link>
                                         ) : (
                                             <>
                                                 <span className="text-danger fw-bold">Не создан
