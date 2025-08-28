@@ -8,12 +8,14 @@ from app.db.database import get_async_session
 
 router = APIRouter(prefix="/instanceproperties", tags=["DB: Core: Instance Properties"])
 
+
 @router.get("/", response_model=list[InstancePropertiesRead])
 async def read_instance_properties(db: AsyncSession = Depends(get_async_session),
-    instance_id: Optional[int] = None,
-    value: Optional[str] = None,
-    property_type_id: Optional[int] = None):
+                                   instance_id: Optional[int] = None,
+                                   value: Optional[str] = None,
+                                   property_type_id: Optional[int] = None):
     return await get_instanceproperties(db, instance_id, value, property_type_id)
+
 
 @router.get("/{instance_property_id}", response_model=InstancePropertiesRead)
 async def read_instance_properties(instance_property_id: int, db: AsyncSession = Depends(get_async_session)):
@@ -22,10 +24,12 @@ async def read_instance_properties(instance_property_id: int, db: AsyncSession =
         raise HTTPException(status_code=404, detail="Instance property not found")
     return obj
 
+
 @router.post("/", response_model=InstancePropertiesRead)
 async def add_object(data: InstancePropertiesCreate, db: AsyncSession = Depends(get_async_session)):
     return await create_instanceproperty(db, data)
 
+
 @router.delete("/{instance_property_id}", status_code=204)
-async def delete_instance_property(object_id: int, db: AsyncSession = Depends(get_async_session)):
+async def delete_instance_property(instance_property_id: int, db: AsyncSession = Depends(get_async_session)):
     await delete_instanceproperty(db, instance_property_id)

@@ -8,17 +8,19 @@ from app.db.database import get_async_session
 
 router = APIRouter(prefix="/instances", tags=["DB: Core: Instances"])
 
+
 @router.get("/", response_model=list[InstancesRead])
 async def read_instances(
-    db: AsyncSession = Depends(get_async_session),
-    name: Optional[str] = Query(None),
-    object_id: Optional[int] = Query(None),
-    root_id: Optional[int] = Query(None),
-    parent_id: Optional[int] = Query(None),
-    index_of_layer: Optional[int] = Query(None),
-    is_active: Optional[bool] = Query(None)
+        db: AsyncSession = Depends(get_async_session),
+        name: Optional[str] = Query(None),
+        object_id: Optional[int] = Query(None),
+        root_id: Optional[int] = Query(None),
+        parent_id: Optional[int] = Query(None),
+        index_of_layer: Optional[int] = Query(None),
+        is_active: Optional[bool] = Query(None)
 ):
     return await get_instances(db, name, object_id, root_id, parent_id, index_of_layer, is_active)
+
 
 @router.get("/{instance_id}", response_model=InstancesRead)
 async def read_instances(instance_id: int, db: AsyncSession = Depends(get_async_session)):
@@ -27,9 +29,11 @@ async def read_instances(instance_id: int, db: AsyncSession = Depends(get_async_
         raise HTTPException(status_code=404, detail="Instance not found")
     return instance
 
+
 @router.post("/", response_model=InstanceCreated)
 async def add_instances(data: InstancesCreate, db: AsyncSession = Depends(get_async_session)):
     return await create_instance(db, data)
+
 
 @router.delete("/{instance_id}", status_code=204)
 async def delete_instances(instance_id: int, db: AsyncSession = Depends(get_async_session)):
