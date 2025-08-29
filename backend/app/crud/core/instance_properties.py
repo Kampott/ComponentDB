@@ -3,6 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
 from sqlalchemy.sql import and_
+
+from app.crud.core.default import DefaultQueries
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
@@ -70,3 +72,8 @@ async def delete_instanceproperty(db: AsyncSession, instance_property_id: int) -
 
     await db.delete(instanceproperty)
     await db.commit()
+
+
+async def update_instance_property(session: AsyncSession, instance_property_id: int,
+                          data: InstanceProperties) -> InstanceProperties | None:
+    return await DefaultQueries.update(session, InstanceProperties, instance_property_id, data)
