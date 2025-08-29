@@ -37,9 +37,8 @@ class TypesCreate(TypesBase):
     pass
 
 
-class TypesUpdate(TypesBase):
+class TypesUpdate(BaseModel):
     name: str | None = None
-    parent_id: int | None = None
 
 
 class TypesRead(TypesBase):
@@ -156,6 +155,7 @@ class InstancePropertiesRead(InstancePropertiesBase):
 
     class Config:
         from_attributes = True
+
 
 # DataTree
 class TypeTree(BaseModel):
