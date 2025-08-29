@@ -1,7 +1,6 @@
+from sqlalchemy.exc import DatabaseError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
-from sqlalchemy.orm import joinedload
-from sqlalchemy.future import select
+from sqlalchemy import select, text, update
 from sqlalchemy.sql import and_
 from app.models.core import *
 from app.schemas.core import *
@@ -9,13 +8,13 @@ from typing import List, Optional
 from fastapi import HTTPException
 
 
-#Get all of the available types
+# Get all of the available types
 async def get_types(db: AsyncSession,
-    name: Optional[str] = None,
-    parent_id: Optional[int] = None,
-    root_id: Optional[int] = None,
-    index_of_layer: Optional[int] = None
-) -> List[Types]:
+                    name: Optional[str] = None,
+                    parent_id: Optional[int] = None,
+                    root_id: Optional[int] = None,
+                    index_of_layer: Optional[int] = None
+                    ) -> List[Types]:
     query = select(Types)
 
     filters = []
@@ -34,13 +33,14 @@ async def get_types(db: AsyncSession,
     result = await db.execute(query)
     return result.scalars().all()
 
-#Get one type using the types's id
+
+# Get one type using the types's id
 async def get_type(db: AsyncSession, type_id: int) -> Optional[Types]:
     result = await db.execute(select(Types).where(Types.id == type_id))
     return result.scalar_one_or_none()
 
 
-#Create a type
+# Create a type
 async def create_type(db: AsyncSession, data: TypesCreate):
     if data.parent_id:
         # Child type
@@ -74,6 +74,7 @@ async def create_type(db: AsyncSession, data: TypesCreate):
         await db.refresh(type_)
         return type_
 
+
 async def delete_type(db: AsyncSession, type_id: int) -> None:
     result = await db.execute(select(Types).where(Types.id == type_id))
     type_ = result.scalar_one_or_none()
@@ -83,3 +84,22 @@ async def delete_type(db: AsyncSession, type_id: int) -> None:
 
     await db.delete(type_)
     await db.commit()
+
+
+async def update_type(session: AsyncSession, type_id: int, data: TypesUpdate) -> Types | None:
+    update_data: dict = data.model_dump(exclude_unset=True)
+
+    query = (
+        update(Types)
+        .where(Types.id == type_id)
+        .values(**update_data)
+        .returning(Types)
+    )
+
+    try:
+        updated_type: Types | None = (await session.execute(query)).scalar_one_or_none()
+
+        await session.commit()
+        return updated_type
+    except IntegrityError:
+        return None
