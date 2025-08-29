@@ -38,5 +38,5 @@ async def delete_types(type_id: int, session: AsyncSession = Depends(get_async_s
     await db.delete_type(session, type_id)
 
 @router.patch("/{type_id}")
-async def update_type(type_id: int, data: TypesUpdate, session: AsyncSession = Depends(get_async_session)):
+async def update_type(type_id: int, data: TypesUpdate, session: AsyncSession = Depends(get_async_session)) -> TypesRead | None:
     return await db.update_type(session, type_id, data)

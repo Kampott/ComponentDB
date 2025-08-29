@@ -2,6 +2,9 @@ from sqlalchemy.exc import DatabaseError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, update
 from sqlalchemy.sql import and_
+from watchfiles import awatch
+
+from app.crud.core.default import DefaultQueries
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
@@ -87,19 +90,4 @@ async def delete_type(db: AsyncSession, type_id: int) -> None:
 
 
 async def update_type(session: AsyncSession, type_id: int, data: TypesUpdate) -> Types | None:
-    update_data: dict = data.model_dump(exclude_unset=True)
-
-    query = (
-        update(Types)
-        .where(Types.id == type_id)
-        .values(**update_data)
-        .returning(Types)
-    )
-
-    try:
-        updated_type: Types | None = (await session.execute(query)).scalar_one_or_none()
-
-        await session.commit()
-        return updated_type
-    except IntegrityError:
-        return None
+    return await DefaultQueries.update(session, Types, type_id, data)
