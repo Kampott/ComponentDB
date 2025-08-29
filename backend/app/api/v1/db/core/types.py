@@ -37,6 +37,13 @@ async def add_type(data: TypesCreate, session: AsyncSession = Depends(get_async_
 async def delete_types(type_id: int, session: AsyncSession = Depends(get_async_session)):
     await db.delete_type(session, type_id)
 
+
 @router.patch("/{type_id}")
-async def update_type(type_id: int, data: TypesUpdate, session: AsyncSession = Depends(get_async_session)) -> TypesRead | None:
-    return await db.update_type(session, type_id, data)
+async def update_type(type_id: int, data: TypesUpdate, session: AsyncSession = Depends(get_async_session)) -> TypesRead:
+    updated_type: TypesRead | None = await db.update_type(session, type_id, data)
+    if not updated_type:
+        raise HTTPException(
+            status_code=404,
+            detail="Тип не найден"
+        )
+    return updated_type
