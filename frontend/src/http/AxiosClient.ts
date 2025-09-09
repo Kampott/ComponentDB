@@ -36,7 +36,7 @@ export default class AxiosClient implements RestApiClient {
             }
 
             if (error.code === "ERR_CANCELED") {
-                return Promise.reject(error);
+                return new Promise(() => {});
             }
 
             if (error.response) {
