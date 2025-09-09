@@ -9,45 +9,46 @@ import type {Object} from "../../../schemas/Object.ts";
 import {useStore} from "../../../store/Zustand.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import {Link} from "react-router-dom";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
+import {RestApiError} from "../../../http/RestApiClient.ts";
 
 interface Props {
     object: Object
 }
 
 function ObjectMainInfo({object}: Props): ReactNode {
-
     const services = useStore((state) => state.services)
 
     const [rootObject, setRootObject] = useState<Object | null>(null);
     const [objectType, setObjectType] = useState<ObjectType | null>(null);
 
-    async function loadRootObject() {
-        setRootObject(null);
-        try {
-            const rootObject: Object = await services.objectService.getObjectById(object.root_id)
-            setRootObject(rootObject);
-        } catch (error) {
-            if (error instanceof Error) {
-                console.log(error)
-            }
-        }
-    }
-
-    async function loadObjectType() {
-        setObjectType(null);
-        try {
-            setObjectType(await services.objectsTypesService.getTypeById(object.type_id));
-        } catch (error) {
-            if (error instanceof Error) {
-                console.log(error)
-            }
-        }
-    }
-
     useEffect(() => {
+        async function loadRootObject() {
+            setRootObject(null);
+            try {
+                const rootObject: Object = await services.objectService.getObjectById(object.root_id)
+                setRootObject(rootObject);
+            } catch (error) {
+                handleApiError(error as RestApiError, {
+                    showToast: (m) => alert(m)
+                });
+            }
+        }
+
+        async function loadObjectType() {
+            setObjectType(null);
+            try {
+                setObjectType(await services.objectsTypesService.getTypeById(object.type_id));
+            } catch (error) {
+                handleApiError(error as RestApiError, {
+                    showToast: (m) => alert(m)
+                });
+            }
+        }
+
         loadRootObject();
         loadObjectType();
-    }, [object]);
+    }, [services.objectService, services.objectsTypesService, object]);
 
     return (
         <div className="mb-4">

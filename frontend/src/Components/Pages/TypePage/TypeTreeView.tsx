@@ -8,6 +8,8 @@ import FileSystemTreeView, {type DataNode} from "../../Common/FileSystemTreeView
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import type {ObjectType, ObjectTypeAdd} from "../../../schemas/ObjectType.ts";
 import AddObjectTypeForm from "../../Forms/AddObjectTypeForm.tsx";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
+import {RestApiError} from "../../../http/RestApiClient.ts";
 
 interface Props {
     objectType: ObjectType;
@@ -25,15 +27,23 @@ function TypeTreeView({objectType}: Props) {
     const [formShow, setFormShow] = useState(false);
 
     async function loadObjectTypeChildren(id: number): Promise<DataNode<ObjectType>[]> {
-        const children: ObjectType[] = await services.objectsTypesService.getTypesByParentId(id)
+        try {
+            const children: ObjectType[] = await services.objectsTypesService.getTypesByParentId(id)
 
-        return children.map((element: ObjectType) => {
-            return {
-                id: element.id,
-                data: element,
-                children: null,
-            } as DataNode<ObjectType>
-        })
+            return children.map((element: ObjectType) => {
+                return {
+                    id: element.id,
+                    data: element,
+                    children: null,
+                } as DataNode<ObjectType>
+            })
+        } catch (error) {
+            handleApiError(error as RestApiError, {
+                navigate,
+                showToast: (m) => alert(m)
+            });
+            return []
+        }
     }
 
     useEffect(() => {

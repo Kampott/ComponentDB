@@ -16,6 +16,7 @@ import TypeObjectsTab from "./TypeObjectsTab.tsx";
 import TypePropertiesTab from "./TypePropertiesTab.tsx";
 import TypeTreeView from "./TypeTreeView.tsx";
 import TypeMainInfo from "./TypeMainInfo.tsx";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
 
 function TypePage() {
     const {typeId} = useParams();
@@ -27,32 +28,25 @@ function TypePage() {
 
     const [objectType, setObjectType] = useState<ObjectType | null>(null);
 
-    async function loadObjectType() {
-        if (isNaN(id)) {
-            navigate("/404");
-            return;
-        }
-
-        try {
-            setObjectType(await services.objectsTypesService.getTypeById(id))
-        } catch (error) {
-            if (error instanceof RestApiError) {
-                const apiError: RestApiError = error as RestApiError
-                if (apiError.statusCode && apiError.statusCode == 404) {
-                    navigate("/404")
-                    return
-                }
-            }
-            if (error instanceof Error) {
-                console.log(error)
-            }
-        }
-    }
-
     useEffect(() => {
-        setObjectType(null);
+        async function loadObjectType() {
+            setObjectType(null);
+            if (isNaN(id)) {
+                navigate("/404");
+                return;
+            }
+
+            try {
+                setObjectType(await services.objectsTypesService.getTypeById(id))
+            } catch (error) {
+                handleApiError(error as RestApiError, {
+                    navigate,
+                    showToast: (m) => alert(m)
+                });
+            }
+        }
         loadObjectType();
-    }, [typeId])
+    }, [navigate, services.objectsTypesService, id, typeId])
 
     return (
         <Container className="mt-4">
