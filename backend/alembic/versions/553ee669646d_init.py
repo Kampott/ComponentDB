@@ -1,8 +1,8 @@
-"""first migration
+"""init
 
-Revision ID: 188e26eb2beb
+Revision ID: 553ee669646d
 Revises: 
-Create Date: 2025-07-18 07:31:29.578139
+Create Date: 2025-08-20 17:41:28.139243
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '188e26eb2beb'
+revision: str = '553ee669646d'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,50 +25,62 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('parent_id', sa.Integer(), nullable=True),
-    sa.Column('root_id', sa.Integer(), nullable=False),
+    sa.Column('root_id', sa.Integer(), nullable=True),
     sa.Column('index_of_layer', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['parent_id'], ['types.id'], ),
-    sa.ForeignKeyConstraint(['root_id'], ['types.id'], ),
+    sa.ForeignKeyConstraint(['parent_id'], ['types.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['root_id'], ['types.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_types_id'), 'types', ['id'], unique=False)
+    op.create_index(op.f('ix_types_parent_id'), 'types', ['parent_id'], unique=False)
+    op.create_index(op.f('ix_types_root_id'), 'types', ['root_id'], unique=False)
     op.create_table('objects',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(), nullable=True),
     sa.Column('type_id', sa.Integer(), nullable=False),
     sa.Column('parent_id', sa.Integer(), nullable=True),
-    sa.Column('root_id', sa.Integer(), nullable=False),
+    sa.Column('root_id', sa.Integer(), nullable=True),
     sa.Column('index_of_layer', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['parent_id'], ['objects.id'], ),
-    sa.ForeignKeyConstraint(['root_id'], ['objects.id'], ),
-    sa.ForeignKeyConstraint(['type_id'], ['types.id'], ),
+    sa.ForeignKeyConstraint(['parent_id'], ['objects.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['root_id'], ['objects.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['type_id'], ['types.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_objects_id'), 'objects', ['id'], unique=False)
+    op.create_index(op.f('ix_objects_parent_id'), 'objects', ['parent_id'], unique=False)
+    op.create_index(op.f('ix_objects_root_id'), 'objects', ['root_id'], unique=False)
     op.create_table('property_types',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('id_type', sa.Integer(), nullable=False),
+    sa.Column('type_id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.ForeignKeyConstraint(['id_type'], ['types.id'], ),
+    sa.Column('is_static', sa.Boolean(), nullable=False),
+    sa.ForeignKeyConstraint(['type_id'], ['types.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_property_types_id'), 'property_types', ['id'], unique=False)
     op.create_table('instances',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('type_id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(), nullable=True),
+    sa.Column('parent_id', sa.Integer(), nullable=True),
+    sa.Column('root_id', sa.Integer(), nullable=True),
     sa.Column('object_id', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.ForeignKeyConstraint(['object_id'], ['objects.id'], ),
-    sa.ForeignKeyConstraint(['type_id'], ['types.id'], ),
+    sa.Column('index_of_layer', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['object_id'], ['objects.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['parent_id'], ['instances.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['root_id'], ['instances.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_instances_id'), 'instances', ['id'], unique=False)
+    op.create_index(op.f('ix_instances_parent_id'), 'instances', ['parent_id'], unique=False)
+    op.create_index(op.f('ix_instances_root_id'), 'instances', ['root_id'], unique=False)
     op.create_table('properties',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('property_id', sa.Integer(), nullable=False),
     sa.Column('value', sa.String(), nullable=False),
     sa.Column('object_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['object_id'], ['objects.id'], ),
-    sa.ForeignKeyConstraint(['property_id'], ['property_types.id'], ),
+    sa.ForeignKeyConstraint(['object_id'], ['objects.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['property_id'], ['property_types.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_properties_id'), 'properties', ['id'], unique=False)
@@ -76,7 +88,9 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('value', sa.String(), nullable=False),
     sa.Column('instance_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['instance_id'], ['instances.id'], ),
+    sa.Column('property_type_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['instance_id'], ['instances.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['property_type_id'], ['property_types.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_instance_properties_id'), 'instance_properties', ['id'], unique=False)
@@ -90,12 +104,18 @@ def downgrade() -> None:
     op.drop_table('instance_properties')
     op.drop_index(op.f('ix_properties_id'), table_name='properties')
     op.drop_table('properties')
+    op.drop_index(op.f('ix_instances_root_id'), table_name='instances')
+    op.drop_index(op.f('ix_instances_parent_id'), table_name='instances')
     op.drop_index(op.f('ix_instances_id'), table_name='instances')
     op.drop_table('instances')
     op.drop_index(op.f('ix_property_types_id'), table_name='property_types')
     op.drop_table('property_types')
+    op.drop_index(op.f('ix_objects_root_id'), table_name='objects')
+    op.drop_index(op.f('ix_objects_parent_id'), table_name='objects')
     op.drop_index(op.f('ix_objects_id'), table_name='objects')
     op.drop_table('objects')
+    op.drop_index(op.f('ix_types_root_id'), table_name='types')
+    op.drop_index(op.f('ix_types_parent_id'), table_name='types')
     op.drop_index(op.f('ix_types_id'), table_name='types')
     op.drop_table('types')
     # ### end Alembic commands ###

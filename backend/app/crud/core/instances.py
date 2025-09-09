@@ -3,6 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
 from sqlalchemy.sql import and_
+
+from app.crud.core.default import DefaultQueries
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
@@ -11,9 +13,11 @@ from fastapi import HTTPException
 # Get all available instances with optional filters
 async def get_instances(
     db: AsyncSession,
-    object_id: Optional[int] = None,
     name: Optional[str] = None,
-    tree_id: Optional[int] = None,
+    object_id: Optional[int] = None,
+    root_id: Optional[int] = None,
+    parent_id: Optional[int] = None,
+    index_of_layer: Optional[int] = None,
     is_active: Optional[bool] = None
 ) -> list[dict]:
     # Основной запрос с outer join, чтобы получить все Instances, даже если нет записей в InstanceTreeMap
@@ -22,11 +26,11 @@ async def get_instances(
             Instances.id,
             Instances.name,
             Instances.object_id,
-            Instances.is_active,
-            InstanceTreeMap.tree_id
+            Instances.root_id,
+            Instances.parent_id,
+            Instances.index_of_layer,
+            Instances.is_active
         )
-        .join(InstanceTreeMap, InstanceTreeMap.instance_id == Instances.id)
-        .distinct()  # Убираем дубликаты, если join даёт несколько строк
     )
 
     # Формируем фильтры
@@ -35,10 +39,14 @@ async def get_instances(
         filters.append(Instances.name == name)
     if object_id is not None:
         filters.append(Instances.object_id == object_id)
+    if root_id is not None:
+        filters.append(Instances.root_id == root_id)
+    if parent_id is not None:
+        filters.append(Instances.parent_id == parent_id)
+    if index_of_layer is not None:
+        filters.append(Instances.index_of_layer == index_of_layer)
     if is_active is not None:
         filters.append(Instances.is_active == is_active)
-    if tree_id is not None:
-        filters.append(InstanceTreeMap.tree_id == tree_id)
 
 
     # Применяем фильтры
@@ -56,27 +64,39 @@ async def get_instance(db: AsyncSession, instance_id: int) -> Optional[Instances
     return result.scalar_one_or_none()
 
 async def create_instance(db: AsyncSession, data: InstancesCreate):
+    #creating both id
+    index_of_layer = 1
+    root_id = None
+
     # Checking that the object exists
+    print(data.object_id)
     obj = await db.get(Objects, data.object_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Object not found")
 
+    #if parent_id present - getting the index of layer and adding 1, root = parent.root
+    if data.parent_id:
+        parent_instance = await db.get(Instances, data.parent_id)
+        if not parent_instance:
+            raise HTTPException(status_code=404, detail="Parent Instance not found")
+        
+        index_of_layer = parent_instance.index_of_layer + 1
+        root_id = parent_instance.root_id
+    
+
     # Creating the instance
     instance = Instances(
-        object_id=data.object_id,
-        is_active=data.is_active,
-        name=data.name
+        **data.dict(),
+        index_of_layer=index_of_layer,
+        root_id = root_id
     )
+
     db.add(instance)
     await db.flush()
 
-    # Creating a link to the "Tree"
-    tree_map = InstanceTreeMap(
-        tree_id=data.tree_id,  # saving what's transmitted by the user
-        instance_id=instance.id,
-        is_active=True
-    )
-    db.add(tree_map)
+    if data.parent_id is None:
+        instance.root_id = instance.id
+        await db.flush()
 
     await db.commit()
     await db.refresh(instance)
@@ -90,3 +110,6 @@ async def delete_instance(db: AsyncSession, instance_id: int) -> None:
 
     await db.delete(instance)
     await db.commit()
+
+async def update_instance(session: AsyncSession, instance_id: int, data: InstancesUpdate) -> Instances | None:
+    return await DefaultQueries.update(session, Instances, instance_id, data)
