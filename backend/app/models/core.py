@@ -12,7 +12,7 @@ class Types(Base):
 
     name: Mapped[str] = mapped_column(String)
 
-    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"))
+    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"), index = True)
     parent: Mapped[Optional["Types"]] = relationship(
         "Types",
         foreign_keys=[parent_id],
@@ -102,7 +102,7 @@ class Instances(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[Optional[str]] = mapped_column(String)
 
-    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), index=True)
+    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"))
     parent: Mapped[Optional["Instances"]] = relationship(
         "Instances",
         foreign_keys=[parent_id],

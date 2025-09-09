@@ -47,6 +47,13 @@ async def generate_types_and_objects(session: AsyncSession):
     tranz_type_4 = await create_type(session, TypesCreate(name="Транзистор 4", parent_id=chip_type_4.id))
     tranz_type_5 = await create_type(session, TypesCreate(name="Транзистор 5", parent_id=chip_type_5.id))
     tranz_type_6 = await create_type(session, TypesCreate(name="Транзистор 6", parent_id=chip_type_6.id))
+    silicon_type_1 = await create_type(session, TypesCreate(name="Транзистор 1", parent_id=tranz_type_1.id))
+    silicon_type_2 = await create_type(session, TypesCreate(name="Транзистор 2", parent_id=tranz_type_2.id))
+    silicon_type_3 = await create_type(session, TypesCreate(name="Транзистор 3", parent_id=tranz_type_3.id))
+    silicon_type_4 = await create_type(session, TypesCreate(name="Транзистор 4", parent_id=tranz_type_4.id))
+    silicon_type_5 = await create_type(session, TypesCreate(name="Транзистор 5", parent_id=tranz_type_5.id))
+    silicon_type_6 = await create_type(session, TypesCreate(name="Транзистор 6", parent_id=tranz_type_6.id))
+
 
     # Objects
     bark_obj = await create_object(session, ObjectsCreate(name="БАРК", type_id=bark_type.id))
@@ -65,6 +72,12 @@ async def generate_types_and_objects(session: AsyncSession):
     tranz_4 = await create_object(session, ObjectsCreate(name="Транзистор 4", type_id=tranz_type_4.id, parent_id=chip_4.id))
     tranz_5 = await create_object(session, ObjectsCreate(name="Транзистор 5", type_id=tranz_type_5.id, parent_id=chip_5.id))
     tranz_6 = await create_object(session, ObjectsCreate(name="Транзистор 6", type_id=tranz_type_6.id, parent_id=chip_6.id))
+    silicon_1 = await create_object(session, ObjectsCreate(name="Транзистор 1", type_id=silicon_type_1.id, parent_id=tranz_1.id))
+    silicon_2 = await create_object(session, ObjectsCreate(name="Транзистор 2", type_id=silicon_type_2.id, parent_id=tranz_2.id))
+    silicon_3 = await create_object(session, ObjectsCreate(name="Транзистор 3", type_id=silicon_type_3.id, parent_id=tranz_3.id))
+    silicon_4 = await create_object(session, ObjectsCreate(name="Транзистор 4", type_id=silicon_type_4.id, parent_id=tranz_4.id))
+    silicon_5 = await create_object(session, ObjectsCreate(name="Транзистор 5", type_id=silicon_type_5.id, parent_id=tranz_5.id))
+    silicon_6 = await create_object(session, ObjectsCreate(name="Транзистор 6", type_id=silicon_type_6.id, parent_id=tranz_6.id))
 
     print("Types + Objects generated ✅")
     return bark_obj.id
