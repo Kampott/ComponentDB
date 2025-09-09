@@ -1,8 +1,8 @@
-"""init
+"""no key
 
-Revision ID: 553ee669646d
+Revision ID: 3d51f25ccac2
 Revises: 
-Create Date: 2025-08-20 17:41:28.139243
+Create Date: 2025-08-22 10:43:20.889821
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '553ee669646d'
+revision: str = '3d51f25ccac2'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -33,7 +33,6 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_types_id'), 'types', ['id'], unique=False)
     op.create_index(op.f('ix_types_parent_id'), 'types', ['parent_id'], unique=False)
-    op.create_index(op.f('ix_types_root_id'), 'types', ['root_id'], unique=False)
     op.create_table('objects',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=True),
@@ -47,8 +46,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_objects_id'), 'objects', ['id'], unique=False)
-    op.create_index(op.f('ix_objects_parent_id'), 'objects', ['parent_id'], unique=False)
-    op.create_index(op.f('ix_objects_root_id'), 'objects', ['root_id'], unique=False)
     op.create_table('property_types',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('type_id', sa.Integer(), nullable=False),
@@ -72,8 +69,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_instances_id'), 'instances', ['id'], unique=False)
-    op.create_index(op.f('ix_instances_parent_id'), 'instances', ['parent_id'], unique=False)
-    op.create_index(op.f('ix_instances_root_id'), 'instances', ['root_id'], unique=False)
     op.create_table('properties',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('property_id', sa.Integer(), nullable=False),
@@ -104,17 +99,12 @@ def downgrade() -> None:
     op.drop_table('instance_properties')
     op.drop_index(op.f('ix_properties_id'), table_name='properties')
     op.drop_table('properties')
-    op.drop_index(op.f('ix_instances_root_id'), table_name='instances')
-    op.drop_index(op.f('ix_instances_parent_id'), table_name='instances')
     op.drop_index(op.f('ix_instances_id'), table_name='instances')
     op.drop_table('instances')
     op.drop_index(op.f('ix_property_types_id'), table_name='property_types')
     op.drop_table('property_types')
-    op.drop_index(op.f('ix_objects_root_id'), table_name='objects')
-    op.drop_index(op.f('ix_objects_parent_id'), table_name='objects')
     op.drop_index(op.f('ix_objects_id'), table_name='objects')
     op.drop_table('objects')
-    op.drop_index(op.f('ix_types_root_id'), table_name='types')
     op.drop_index(op.f('ix_types_parent_id'), table_name='types')
     op.drop_index(op.f('ix_types_id'), table_name='types')
     op.drop_table('types')
