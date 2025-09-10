@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.api.v1.test import router as test_router
 from app.api.v1.db.core import objects, types, property_types, properties, instances, instanceproperties, data_manip
+from app.api.auth import login
 from fastapi.middleware.cors import CORSMiddleware
 
 
