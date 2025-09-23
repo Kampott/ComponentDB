@@ -16,10 +16,9 @@ async def read_instances(
         object_id: Optional[int] = Query(None),
         root_id: Optional[int] = Query(None),
         parent_id: Optional[int] = Query(None),
-        index_of_layer: Optional[int] = Query(None),
         is_active: Optional[bool] = Query(None)
 ):
-    return await db.get_instances(session, name, object_id, root_id, parent_id, index_of_layer, is_active)
+    return await db.get_instances(session, name, object_id, root_id, parent_id, is_active)
 
 
 @router.get("/{instance_id}", response_model=InstancesRead)

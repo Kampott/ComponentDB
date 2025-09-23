@@ -49,8 +49,7 @@ async def create_type(db: AsyncSession, data: TypesCreate):
             raise HTTPException(status_code=404, detail="Parent type not found")
 
         type_ = Types(
-            **data.dict(),
-            index_of_layer=parent_type.index_of_layer + 1,
+            **data.model_dump(),
             root_id=parent_type.root_id
         )
         db.add(type_)
@@ -65,8 +64,7 @@ async def create_type(db: AsyncSession, data: TypesCreate):
 
         type_ = Types(
             id=next_id,
-            **data.dict(),
-            index_of_layer=1,
+            **data.model_dump(),
             root_id=next_id
         )
         db.add(type_)
