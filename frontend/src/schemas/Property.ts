@@ -7,3 +7,7 @@ export interface PropertyAdd {
 export interface Property extends PropertyAdd {
     id: number
 }
+
+export interface PropertyUpdate {
+    value: number
+}

@@ -1,5 +1,5 @@
 import type RestApiClient from "../../http/RestApiClient.ts";
-import type {InstanceProperty, InstancePropertyAdd} from "../../schemas/InstanceProperty.ts";
+import type {InstanceProperty, InstancePropertyAdd, InstancePropertyUpdate} from "../../schemas/InstanceProperty.ts";
 import type IInstancesPropertiesService from "./IInstancesPropertiesService.ts";
 
 export default class InstancesPropertiesService implements IInstancesPropertiesService {
@@ -19,6 +19,10 @@ export default class InstancesPropertiesService implements IInstancesPropertiesS
 
     public async addInstanceProperty(object: InstancePropertyAdd): Promise<InstancePropertyAdd> {
         return await this.client.post<InstancePropertyAdd, InstancePropertyAdd>("/instanceproperties/", object);
+    }
+
+    public async updateInstanceProperty(id: number, data: InstancePropertyUpdate): Promise<InstanceProperty> {
+        return await this.client.patch<InstancePropertyUpdate, InstanceProperty>(`/instanceproperties/${id}`, data);
     }
 
     public async deleteInstanceProperty(id: number): Promise<null> {
