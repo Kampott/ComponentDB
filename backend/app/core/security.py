@@ -5,46 +5,47 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.future import select
 from app.db.session import async_session
+from app.db.database import get_async_session
 from app.models.auth import User
 from fastapi import Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 import os
 
 
 from .config import settings
-# Настройка хэширования паролей
+# Configuring password hash
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# путь до эндпойнта логина
+# Path from endpoint to login
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-# Секрет и алгоритм для JWT
-SECRET_KEY = os.getenv("SECRET_KEY")  # лучше хранить в .env
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
-REFRESH_TOKEN_EXPIRE_DAYS = os.getenv("REFRESH_TOKEN_EXPIRE_DAYS")
+# Secret and algorithm for JWT
+SECRET_KEY = settings.secret_key  # better store in .env
+ALGORITHM = settings.JWT_ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
+REFRESH_TOKEN_EXPIRE_DAYS = settings.refresh_token_expire_days
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(db: AsyncSession = Depends(get_async_session), token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
 
-    async with async_session_maker() as session:
-        result = await session.execute(select(User).where(User.email == email))
-        user = result.scalar_one_or_none()
-        if user is None:
-            raise credentials_exception
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise credentials_exception
     return user
 
 # ---------------- Пароли ----------------
@@ -62,10 +63,9 @@ def get_password_hash(password: str) -> str:
 # ---------------- JWT ----------------
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Creating access token"""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "sub": str(data["sub"])})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -73,7 +73,7 @@ def create_refresh_token(data: dict) -> str:
     """Creating refresh token"""
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode = data.copy()
-    to_encode.update({"exp": expire, "scope": "refresh_token"})
+    to_encode.update({"exp": expire, "scope": "refresh_token", "sub": str(data["sub"])})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -83,4 +83,4 @@ def decode_token(token: str) -> dict:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except JWTError:
-        return {}
+        return None

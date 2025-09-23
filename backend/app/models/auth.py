@@ -31,6 +31,11 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    instance_access: Mapped[List["UserInstanceAccess"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
 class Role(Base):
     __tablename__ = "roles"
 
@@ -56,6 +61,7 @@ class Permission(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
+    scope: Mapped[Optional[str]] = mapped_column(String)
 
     roles: Mapped[List["Role"]] = relationship(
         secondary="role_permissions",
@@ -83,6 +89,9 @@ class RolePermission(Base):
 # --- Refresh tokens ---
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
+    __table_args__ = (
+        Index("ix_refresh_tokens_user_revoked", "user_id", "revoked"),
+    )   
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -97,5 +106,23 @@ class RefreshToken(Base):
 
     user: Mapped["User"] = relationship(back_populates="refresh_tokens")
 
+    
 
 
+# --- User Instance Access ---
+class UserInstanceAccess(Base):
+    __tablename__ = "user_instance_access"
+    __table_args__ = (UniqueConstraint("user_id", "root_id"),)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    root_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("instances.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    can_read: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    can_write: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="instance_access")
+    instance: Mapped["Instance"] = relationship(back_populates="user_access")
