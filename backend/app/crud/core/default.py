@@ -1,6 +1,6 @@
 from typing import TypeVar
 from pydantic import BaseModel
-from sqlalchemy import update
+from sqlalchemy import update, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,12 +15,18 @@ class DefaultQueries:
             -> type[ORMModel] | None:
         update_data: dict = data.model_dump(exclude_unset=True)
 
-        query = (
-            update(orm)
-            .where(orm.id == id)
-            .values(**update_data)
-            .returning(orm)
-        )
+        if update_data:
+            query = (
+                update(orm)
+                .where(orm.id == id)
+                .values(**update_data)
+                .returning(orm)
+            )
+        else:
+            query = (
+                select(orm)
+                .where(orm.id == id)
+            )
 
         try:
             updated_orm: orm | None = (await session.execute(query)).scalar_one_or_none()

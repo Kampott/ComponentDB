@@ -1,0 +1,14 @@
+export interface ObjectInstanceAdd {
+    object_id: number
+    is_active: boolean
+}
+
+export interface ObjectInstance extends ObjectInstanceAdd {
+    id: number
+    type_id: number
+}
+
+export interface ObjectInstanceUpdate {
+    name: string
+    is_active: boolean
+}

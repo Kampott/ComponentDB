@@ -1,0 +1,174 @@
+classDiagram
+%% Rest API Client
+	class RestApiClient {
+		<<abstract>>
+		+get<ReturnData>(url: string, query?): Promise<ReturnData>
+		+post<PostData, ReturnData>(url: string, data: PostData, query?): Promise<ReturnData>
+		+patch<PatchData, ReturnData>(url: string, data: PatchData, query?): Promise<ReturnData>
+		+put<PutData, ReturnData>(url: string, data: PutData, query?): Promise<ReturnData>
+		+delete<ReturnData>(url: string, query?): Promise<ReturnData>
+	}
+	class AxiosClient {
+		-baseUrl: string
+		-headers: Record<string,string>
+		-refreshUrl: string
+		+constructor(baseUrl: string, headers: Record<string,string>, refreshUrl: string)
+	}
+	RestApiClient <|-- AxiosClient
+
+%% Auth Service
+	class IAuthService {
+		<<abstract>>
+		+login(userData: LoginRequest): Promise<LoginResponse>
+		+register(userData: RegisterRequest): Promise<RegisterResponse>
+		+logout(): Promise<void>
+		+refresh(): Promise<LoginResponse>
+		+me(): Promise<User>
+	}
+	class AuthService {
+		-client: RestApiClient
+		+constructor(client: RestApiClient)
+		+login(...)
+		+register(...)
+		+logout()
+		+refresh()
+		+me()
+	}
+	IAuthService <|-- AuthService
+	AuthService o-- RestApiClient : uses
+
+%% Properties Types
+	class IPropertiesTypesService {
+		<<abstract>>
+		+getTypes(): Promise<PropertyType[]>
+		+getTypeById(id: int): Promise<PropertyType>
+		+addType(object: PropertyTypeAdd): Promise<PropertyTypeAdd>
+		+deleteType(id: int): Promise<null>
+		+getPropertyTypesByTypeId(typeId: int): Promise<PropertyType[]>
+	}
+	class PropertiesTypesService {
+		-client: RestApiClient
+		+constructor(client: RestApiClient)
+	}
+	IPropertiesTypesService <|-- PropertiesTypesService
+	PropertiesTypesService o-- RestApiClient : uses
+
+%% Properties
+	class IPropertiesService {
+		<<abstract>>
+		+getProperties(): Promise<Property[]>
+		+getPropertyById(id: int): Promise<Property>
+		+addProperty(object: PropertyAdd): Promise<PropertyAdd>
+		+deleteProperty(id: int): Promise<null>
+		+getPropertiesByObjectId(objectId: int): Promise<Property[]>
+	}
+	class PropertiesService {
+		-client: RestApiClient
+		+constructor(client: RestApiClient)
+	}
+	IPropertiesService <|-- PropertiesService
+	PropertiesService o-- RestApiClient : uses
+
+%% Objects Types
+	class IObjectsTypesService {
+		<<abstract>>
+		+getTypes(): Promise<ObjectType[]>
+		+getTypeById(id: int): Promise<ObjectType>
+		+addType(object: ObjectTypeAdd): Promise<ObjectTypeAdd>
+		+deleteType(id: int): Promise<null>
+		+getTypesByParentId(parentId: int): Promise<ObjectType[]>
+	}
+	class ObjectsTypesService {
+		-client: RestApiClient
+		+constructor(client: RestApiClient)
+	}
+	IObjectsTypesService <|-- ObjectsTypesService
+	ObjectsTypesService o-- RestApiClient : uses
+
+%% Objects Instances
+	class IObjectsInstancesService {
+		<<abstract>>
+		+getInstances(): Promise<ObjectInstance[]>
+		+getInstanceById(id: int): Promise<ObjectInstance>
+		+addInstance(object: ObjectInstanceAdd): Promise<ObjectInstanceAdd>
+		+deleteInstance(id: int): Promise<null>
+		+getInstancesByObjectId(objectId: int): Promise<ObjectInstance[]>
+		+getInstancesByParentId(parentId: int): Promise<ObjectInstance[]>
+	}
+	class ObjectsInstancesService {
+		-client: RestApiClient
+		+constructor(client: RestApiClient)
+	}
+	IObjectsInstancesService <|-- ObjectsInstancesService
+	ObjectsInstancesService o-- RestApiClient : uses
+
+%% Objects
+	class IObjectsService {
+		<<abstract>>
+		+getObjects(): Promise<Object[]>
+		+getObjectById(id: int): Promise<Object>
+		+addObject(object: ObjectAdd): Promise<ObjectAdd>
+		+deleteObject(id: int): Promise<null>
+		+getObjectsByParentId(parentId: int): Promise<Object[]>
+	}
+	class ObjectsService {
+		-client: RestApiClient
+		+constructor(client: RestApiClient)
+	}
+	IObjectsService <|-- ObjectsService
+	ObjectsService o-- RestApiClient : uses
+
+%% Instances Properties
+	class IInstancesPropertiesService {
+		<<abstract>>
+		+getInstances(): Promise<InstanceProperty[]>
+		+getInstanceById(id: int): Promise<InstanceProperty>
+		+addInstance(object: InstancePropertyAdd): Promise<InstancePropertyAdd>
+		+deleteInstance(id: int): Promise<null>
+		getInstancesByObjectId(objectId: int): Promise<InstanceProperty[]>
+	}
+	class InstancesPropertiesService {
+		-client: RestApiClient
+		+constructor(client: RestApiClient)
+	}
+	IInstancesPropertiesService <|-- InstancesPropertiesService
+	InstancesPropertiesService o-- RestApiClient : uses
+
+%% Aggregator Services
+	class Services {
+		+restApiClient: RestApiClient
+		+authService: IAuthService
+		+instancesPropertiesService: IInstancesPropertiesService
+		+objectService: IObjectsService
+		+objectsInstancesService: IObjectsInstancesService
+		+objectsTypesService: IObjectsTypesService
+		+propertiesService: IPropertiesService
+		+propertiesTypesService: IPropertiesTypesService
+		+constructor()
+	}
+	Services o-- RestApiClient
+	Services o-- AuthService
+	Services o-- InstancesPropertiesService
+	Services o-- ObjectsService
+	Services o-- ObjectsInstancesService
+	Services o-- ObjectsTypesService
+	Services o-- PropertiesService
+	Services o-- PropertiesTypesService
+
+%% Store
+	class IStore {
+		+services: Services
+		+user: User
+		+isAuthenticated: boolean
+		+setUser(user: User): void
+		+setAuth(isAuthenticated: boolean): void
+		+login(userData: LoginRequest): Promise<void>
+		+logout(): Promise<void>
+		+checkAuth(): Promise<void>
+	}
+	class useStore {
+		+store: IStore
+	}
+	useStore ..> IStore : returns
+	IStore o-- Services : stores
+```
