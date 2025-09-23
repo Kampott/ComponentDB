@@ -2,7 +2,7 @@ import {type ReactNode, useEffect, useState} from "react";
 
 import Form from "react-bootstrap/Form";
 
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import DefaultList from "../../Common/DefaultList.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import type {Object} from "../../../schemas/Object.ts";
@@ -21,7 +21,7 @@ interface Props {
 }
 
 function ObjectPropertiesTab({object}: Props): ReactNode {
-    const services = useStore((state) => state.services);
+    const services = useServicesStore((state) => state.services);
 
     const [objectProperties, setObjectProperties] = useState<ObjectProperty[] | null>(null);
 

@@ -6,7 +6,7 @@ import Col from "react-bootstrap/Col";
 
 import type {ObjectType} from "../../../schemas/ObjectType.ts";
 import type {Object} from "../../../schemas/Object.ts";
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import {Link} from "react-router-dom";
 import objectToString from "../../../utility/object_to_string.ts";
@@ -19,7 +19,7 @@ interface Props {
 
 function TypeMainInfo({objectType}: Props): ReactNode {
 
-    const services = useStore((state) => state.services)
+    const services = useServicesStore((state) => state.services)
 
     const [rootObject, setRootObject] = useState<Object | null>(null);
     const [rootType, setRootType] = useState<ObjectType | null>(null);

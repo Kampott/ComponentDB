@@ -9,7 +9,7 @@ import Tabs from "react-bootstrap/Tabs";
 import Tab from "react-bootstrap/Tab";
 
 import type {ObjectType} from "../../../schemas/ObjectType.ts";
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import {RestApiError} from "../../../http/RestApiClient.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import TypeObjectsTab from "./TypeObjectsTab.tsx";
@@ -22,7 +22,7 @@ function TypePage() {
     const {typeId} = useParams();
     const navigate = useNavigate();
 
-    const services = useStore((state) => state.services)
+    const services = useServicesStore((state) => state.services)
 
     const id: number = Number(typeId)
 

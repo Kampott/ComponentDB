@@ -3,7 +3,7 @@ import {useNavigate} from "react-router-dom";
 
 import Button from "react-bootstrap/Button";
 
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import FileSystemTreeView, {type DataNode} from "../../Common/FileSystemTreeView.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import type {ObjectType, ObjectTypeAdd} from "../../../schemas/ObjectType.ts";
@@ -18,7 +18,7 @@ interface Props {
 function TypeTreeView({objectType}: Props) {
     const navigate = useNavigate();
 
-    const services = useStore((state) => state.services)
+    const services = useServicesStore((state) => state.services)
 
     const [typeTree, setTypeTree] = useState<DataNode<ObjectType>[] | null>(null);
 

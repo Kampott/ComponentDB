@@ -1,7 +1,7 @@
 import {type ReactNode, useEffect, useState} from "react";
 
 import type {ObjectInstance} from "../../../schemas/ObjectInstance.ts";
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import DefaultList from "../../Common/DefaultList.tsx";
 import {useNavigate} from "react-router-dom";
 import LoadEffect from "../../Common/LoadEffect.tsx";
@@ -16,7 +16,7 @@ interface Props {
 function ObjectInstancesTab({object}: Props): ReactNode {
     const navigate = useNavigate();
 
-    const services = useStore((state) => state.services);
+    const services = useServicesStore((state) => state.services);
 
     const [objectInstances, setObjectInstances] = useState<ObjectInstance[] | null>(null);
 
