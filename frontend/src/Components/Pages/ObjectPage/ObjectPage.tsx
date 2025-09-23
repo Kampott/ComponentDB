@@ -18,6 +18,7 @@ import ObjectDocumentsTab from "./ObjectDocumentsTab.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import ObjectMainInfo from "./ObjectMainInfo.tsx";
 import objectToString from "../../../utility/object_to_string.ts";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
 
 function ObjectPage() {
     const {objectId} = useParams()
@@ -29,32 +30,27 @@ function ObjectPage() {
 
     const id: number = Number(objectId)
 
-    async function loadObject() {
-        if (isNaN(id)) {
-            navigate("/404")
-            return
-        }
-
-        try {
-            setObject(await services.objectService.getObjectById(id))
-        } catch (error) {
-            if (error instanceof RestApiError) {
-                const apiError: RestApiError = error as RestApiError
-                if (apiError.statusCode && apiError.statusCode == 404) {
-                    navigate("/404")
-                    return
-                }
-            }
-            if (error instanceof Error) {
-                console.log(error)
-            }
-        }
-    }
-
     useEffect(() => {
-        setObject(null);
+        async function loadObject() {
+            setObject(null);
+
+            if (isNaN(id)) {
+                navigate("/404")
+                return
+            }
+
+            try {
+                setObject(await services.objectService.getObjectById(id))
+            } catch (error) {
+                handleApiError(error as RestApiError, {
+                    navigate,
+                    showToast: (m) => alert(m)
+                });
+            }
+        }
+
         loadObject();
-    }, [objectId])
+    }, [services.objectService, id, navigate, objectId])
 
     return (
         <Container className="mt-4">

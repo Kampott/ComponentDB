@@ -9,6 +9,8 @@ import type {Object, ObjectAdd} from "../../../schemas/Object.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import AddObjectForm from "../../Forms/AddObjectForm.tsx";
 import objectToString from "../../../utility/object_to_string.ts";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
+import {RestApiError} from "../../../http/RestApiClient.ts";
 
 interface Props {
     object: Object;
@@ -29,15 +31,23 @@ function ObjectTreeView({object}: Props) {
     async function loadObjectChildren(id: number): Promise<DataNode<Object>[]> {
         setLoadingIds((prev) => new Set(prev).add(id))
 
-        const children: Object[] = await services.objectService.getObjectsByParentId(id)
+        try {
+            const children: Object[] = await services.objectService.getObjectsByParentId(id)
 
-        return children.map((element: Object) => {
-            return {
-                id: element.id,
-                data: element,
-                children: null,
-            } as DataNode<Object>
-        })
+            return children.map((element: Object) => {
+                return {
+                    id: element.id,
+                    data: element,
+                    children: null,
+                } as DataNode<Object>
+            })
+        } catch (error) {
+            handleApiError(error as RestApiError, {
+                navigate,
+                showToast: (m) => alert(m)
+            });
+            return [];
+        }
     }
 
     useEffect(() => {

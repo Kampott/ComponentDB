@@ -8,6 +8,8 @@ import LoadEffect from "../../Common/LoadEffect.tsx";
 import type {Object} from "../../../schemas/Object.ts";
 import type {ObjectType} from "../../../schemas/ObjectType.ts";
 import objectToString from "../../../utility/object_to_string.ts";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
+import {RestApiError} from "../../../http/RestApiClient.ts";
 
 interface Props {
     objectType: ObjectType;
@@ -20,14 +22,21 @@ function TypeObjectsTab({objectType}: Props): ReactNode {
 
     const [objects, setObjects] = useState<Object[] | null>(null);
 
-    async function loadObjects(): Promise<void> {
-        setObjects(await services.objectService.getObjectsByTypeId(objectType.id));
-    }
-
     useEffect(() => {
-        setObjects(null);
+        async function loadObjects(): Promise<void> {
+            setObjects(null);
+            try {
+                setObjects(await services.objectService.getObjectsByTypeId(objectType.id));
+            } catch (error) {
+                handleApiError(error as RestApiError, {
+                    navigate,
+                    showToast: (m) => alert(m)
+                });
+            }
+        }
+
         loadObjects();
-    }, [objectType])
+    }, [navigate, services.objectService, objectType])
 
     function renderObject(object: Object): ReactNode {
         return (

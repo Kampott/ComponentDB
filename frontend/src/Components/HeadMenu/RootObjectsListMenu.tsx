@@ -9,6 +9,8 @@ import {useNavigate} from "react-router-dom";
 import LoadEffect from "../Common/LoadEffect.tsx";
 import DefaultList from "../Common/DefaultList.tsx";
 import AddObjectTypeForm from "../Forms/AddObjectTypeForm.tsx";
+import {handleApiError} from "../../utility/handle_api_error.ts";
+import {RestApiError} from "../../http/RestApiClient.ts";
 
 
 interface Props {
@@ -29,12 +31,14 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
     }
 
     async function loadRootObjectTypes() {
+        setRootObjectTypes(null)
         try {
             setRootObjectTypes(await services.objectsTypesService.getRootTypes())
         } catch (error) {
-            if (error instanceof Error) {
-                console.log(error)
-            }
+            handleApiError(error as RestApiError, {
+                navigate,
+                showToast: (m) => alert(m)
+            });
         }
     }
 
