@@ -126,6 +126,12 @@ class Instances(Base):
     is_active: Mapped[bool] = mapped_column(nullable=False)
     index_of_layer: Mapped[int] = mapped_column(Integer)
 
+    user_access: Mapped[List["UserInstanceAccess"]] = relationship(
+        back_populates="instance",
+        cascade="all, delete-orphan"
+    )
+
+
 
 class InstanceProperties(Base): 
     __tablename__ = "instance_properties"
