@@ -17,7 +17,6 @@ async def get_instances(
     object_id: Optional[int] = None,
     root_id: Optional[int] = None,
     parent_id: Optional[int] = None,
-    index_of_layer: Optional[int] = None,
     is_active: Optional[bool] = None
 ) -> list[dict]:
     # Основной запрос с outer join, чтобы получить все Instances, даже если нет записей в InstanceTreeMap
@@ -28,7 +27,6 @@ async def get_instances(
             Instances.object_id,
             Instances.root_id,
             Instances.parent_id,
-            Instances.index_of_layer,
             Instances.is_active
         )
     )
@@ -43,8 +41,6 @@ async def get_instances(
         filters.append(Instances.root_id == root_id)
     if parent_id is not None:
         filters.append(Instances.parent_id == parent_id)
-    if index_of_layer is not None:
-        filters.append(Instances.index_of_layer == index_of_layer)
     if is_active is not None:
         filters.append(Instances.is_active == is_active)
 
@@ -58,18 +54,16 @@ async def get_instances(
     result = await db.execute(query)
     return result.mappings().all()
 
-#Get one type using the instances's id
+#Get one type using the instances' id
 async def get_instance(db: AsyncSession, instance_id: int) -> Optional[Instances]:
     result = await db.execute(select(Instances).where(Instances.id == instance_id))
     return result.scalar_one_or_none()
 
 async def create_instance(db: AsyncSession, data: InstancesCreate):
     #creating both id
-    index_of_layer = 1
     root_id = None
 
     # Checking that the object exists
-    print(data.object_id)
     obj = await db.get(Objects, data.object_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Object not found")
@@ -79,15 +73,12 @@ async def create_instance(db: AsyncSession, data: InstancesCreate):
         parent_instance = await db.get(Instances, data.parent_id)
         if not parent_instance:
             raise HTTPException(status_code=404, detail="Parent Instance not found")
-        
-        index_of_layer = parent_instance.index_of_layer + 1
         root_id = parent_instance.root_id
     
 
     # Creating the instance
     instance = Instances(
-        **data.dict(),
-        index_of_layer=index_of_layer,
+        **data.model_dump(),
         root_id = root_id
     )
 

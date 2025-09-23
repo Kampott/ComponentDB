@@ -11,12 +11,11 @@ from typing import List, Optional
 from fastapi import HTTPException
 
 
-# Get all of the available types
+# Get all the available types
 async def get_types(db: AsyncSession,
                     name: Optional[str] = None,
                     parent_id: Optional[int] = None,
                     root_id: Optional[int] = None,
-                    index_of_layer: Optional[int] = None
                     ) -> List[Types]:
     query = select(Types)
 
@@ -27,8 +26,6 @@ async def get_types(db: AsyncSession,
         filters.append(Types.parent_id == parent_id)
     if root_id is not None:
         filters.append(Types.root_id == root_id)
-    if index_of_layer is not None:
-        filters.append(Types.index_of_layer == index_of_layer)
 
     if filters:
         query = query.where(and_(*filters))
