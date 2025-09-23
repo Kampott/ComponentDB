@@ -1,5 +1,6 @@
 
 export interface ObjectAdd {
+    name: string
     type_id: number
     parent_id: number | null
 }

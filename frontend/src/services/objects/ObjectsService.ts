@@ -28,4 +28,8 @@ export default class ObjectsService implements IObjectsService {
     public async getObjectsByParentId(parentId: number): Promise<Object[]> {
         return await this.client.get<Object[]>("/objects/", {parent_id: parentId})
     }
+
+    public async getObjectsByTypeId(typeId: number): Promise<Object[]> {
+        return await this.client.get<Object[]>("/objects/", {type_id: typeId})
+    }
 }

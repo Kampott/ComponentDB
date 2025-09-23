@@ -1,5 +1,6 @@
 export interface PropertyTypeAdd {
     type_id: number
+    is_static: boolean
     name: string
 }
 

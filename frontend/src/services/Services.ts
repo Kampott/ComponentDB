@@ -27,7 +27,7 @@ export default class Services {
     public readonly propertiesTypesService: IPropertiesTypesService
 
     public constructor() {
-        this.restApiClient = new AxiosClient("http://localhost:8080", {}, "http://localhost:8080/refresh")
+        this.restApiClient = new AxiosClient(import.meta.env.VITE_API_BASE_URL, {}, `${import.meta.env.VITE_API_BASE_URL}/refresh`)
 
         this.authService = new AuthService(this.restApiClient)
         this.instancesPropertiesService = new InstancesPropertiesService(this.restApiClient)

@@ -25,7 +25,7 @@ export default class PropertiesTypesService implements IPropertiesTypesService {
         return await this.client.delete(`/property_types/${id}`);
     }
 
-    public async getPropertyTypesByTypeId(typeId: number): Promise<PropertyType[]> {
-        return await this.client.get<PropertyType[]>("/property_types/", {type_id: typeId});
+    public async getPropertyTypesByTypeId(typeId: number, isStatic: boolean): Promise<PropertyType[]> {
+        return await this.client.get<PropertyType[]>("/property_types/", {type_id: typeId, is_static: `${isStatic}`});
     }
 }
