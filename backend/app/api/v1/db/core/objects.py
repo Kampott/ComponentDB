@@ -11,12 +11,13 @@ router = APIRouter(prefix="/objects", tags=["DB: Core: Objects"])
 @router.get("/", response_model=list[ObjectsRead])
 async def read_objects(
     db: AsyncSession = Depends(get_async_session),
+    name: Optional[str] = None,
     type_id: Optional[int] = Query(None),
     parent_id: Optional[int] = Query(None),
     root_id: Optional[int] = Query(None),
     index_of_layer: Optional[int] = Query(None)
 ):
-    return await get_objects(db, type_id, parent_id, root_id, index_of_layer)
+    return await get_objects(db, name, type_id, parent_id, root_id, index_of_layer)
 
 @router.get("/{object_id}", response_model=ObjectsRead)
 async def read_object(object_id: int, db: AsyncSession = Depends(get_async_session)):
