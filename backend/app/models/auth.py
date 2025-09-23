@@ -23,7 +23,8 @@ class User(Base):
     roles: Mapped[List["Role"]] = relationship(
         secondary="user_roles",
         back_populates="users",
-        lazy="joined"
+        # TODO выяснить, нужен ли, так как хзхз
+        # lazy="joined"
     )
 
     refresh_tokens: Mapped[List["RefreshToken"]] = relationship(
@@ -125,4 +126,4 @@ class UserInstanceAccess(Base):
     can_write: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="instance_access")
-    instance: Mapped["Instance"] = relationship(back_populates="user_access")
+    instance: Mapped["Instances"] = relationship(back_populates="user_access")

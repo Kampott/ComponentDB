@@ -10,8 +10,9 @@ class Types(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String)
-
     parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"))
+    root_id: Mapped[int] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"), nullable=True)
+
     parent: Mapped[Optional["Types"]] = relationship(
         "Types",
         foreign_keys=[parent_id],
@@ -36,13 +37,8 @@ class Objects(Base):
     type_id: Mapped[int] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"))
     parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
     root_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"), nullable=True)
-    index_of_layer: Mapped[int]
 
-    type_: Mapped["Types"] = relationship(
-        "Types",
-        remote_side="Types.id",
-        passive_deletes=True
-    )
+    type_: Mapped["Types"] = relationship("Types", remote_side="Types.id", passive_deletes=True)
     parent: Mapped[Optional["Objects"]] = relationship(
         "Objects",
         foreign_keys=[parent_id],
@@ -72,14 +68,8 @@ class Properties(Base):
     value: Mapped[str] = mapped_column(String)
     object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
 
-    property: Mapped["PropertyTypes"] = relationship(
-        "PropertyTypes",
-        passive_deletes=True
-    )
-    object_: Mapped["Objects"] = relationship(
-        "Objects",
-        passive_deletes=True
-    )
+    property: Mapped["PropertyTypes"] = relationship("PropertyTypes", passive_deletes=True)
+    object_: Mapped["Objects"] = relationship("Objects", passive_deletes=True)
 
 
 class PropertyTypes(Base):
@@ -90,10 +80,7 @@ class PropertyTypes(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     is_static: Mapped[bool] = mapped_column(nullable=False)
 
-    type_: Mapped["Types"] = relationship(
-        "Types",
-        passive_deletes=True
-    )
+    type_: Mapped["Types"] = relationship("Types", passive_deletes=True)
 
 
 class Instances(Base):
@@ -101,8 +88,11 @@ class Instances(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[Optional[str]] = mapped_column(String)
-
     parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), index=True)
+    root_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), nullable=True)
+    object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
+    is_active: Mapped[bool] = mapped_column(nullable=False)
+
     parent: Mapped[Optional["Instances"]] = relationship(
         "Instances",
         foreign_keys=[parent_id],
@@ -117,17 +107,11 @@ class Instances(Base):
         backref=backref("root_children", passive_deletes=True),
         passive_deletes=True
     )
-    object_: Mapped["Objects"] = relationship(
-        "Objects",
-        back_populates="instances",
-        passive_deletes=True
-    )
-
-    user_access: Mapped[List["UserInstanceAccess"]] = relationship(
+    object_: Mapped["Objects"] = relationship("Objects", back_populates="instances", passive_deletes=True)
+    user_access: Mapped[list["UserInstanceAccess"]] = relationship(
+        "UserInstanceAccess",
         back_populates="instance",
-        cascade="all, delete-orphan"
     )
-
 
 
 class InstanceProperties(Base):
@@ -138,11 +122,5 @@ class InstanceProperties(Base):
     instance_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"))
     property_type_id: Mapped[int] = mapped_column(ForeignKey("property_types.id", ondelete="CASCADE"))
 
-    instance: Mapped["Instances"] = relationship(
-        "Instances",
-        passive_deletes=True
-    )
-    property_type: Mapped["PropertyTypes"] = relationship(
-        "PropertyTypes",
-        passive_deletes=True
-    )
+    instance: Mapped["Instances"] = relationship("Instances", passive_deletes=True)
+    property_type: Mapped["PropertyTypes"] = relationship("PropertyTypes", passive_deletes=True)
