@@ -10,10 +10,8 @@ class Types(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String)
-    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"))
-    root_id: Mapped[int] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"), nullable=True)
-    index_of_layer: Mapped[int]
 
+    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("types.id", ondelete="CASCADE"))
     parent: Mapped[Optional["Types"]] = relationship(
         "Types",
         foreign_keys=[parent_id],
@@ -103,12 +101,8 @@ class Instances(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[Optional[str]] = mapped_column(String)
-    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), index=True)
-    root_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), nullable=True)
-    object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
-    is_active: Mapped[bool] = mapped_column(nullable=False)
-    index_of_layer: Mapped[int] = mapped_column(Integer)
 
+    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), index=True)
     parent: Mapped[Optional["Instances"]] = relationship(
         "Instances",
         foreign_keys=[parent_id],
@@ -128,6 +122,12 @@ class Instances(Base):
         back_populates="instances",
         passive_deletes=True
     )
+
+    user_access: Mapped[List["UserInstanceAccess"]] = relationship(
+        back_populates="instance",
+        cascade="all, delete-orphan"
+    )
+
 
 
 class InstanceProperties(Base):

@@ -2,13 +2,17 @@ import asyncio
 from logging.config import fileConfig
 
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.ext.asyncio import AsyncConnection
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
+from sqlalchemy.future import select
+from passlib.hash import bcrypt
+import uuid
 from sqlalchemy import pool
 from alembic import context
 from dotenv import load_dotenv
 from app.db.base import Base
 from app.models import *
 from app.models import core
+from app.models import auth
 import os
 
 load_dotenv()
@@ -18,9 +22,12 @@ config = context.config
 fileConfig(config.config_file_name)
 target_metadata = Base.metadata
 
-# Берём URL из переменной окружения
+# Loading environmental variables
 ASYNC_DATABASE_URL = os.getenv("DATABASE_URL")
 SYNC_DATABASE_URL = ASYNC_DATABASE_URL.replace("asyncpg", "psycopg2")
+SUPERUSER_EMAIL = os.getenv("SUPERUSER_EMAIL", "root@example.com")
+SUPERUSER_PASSWORD = os.getenv("SUPERUSER_PASSWORD", "changeme")
+
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode."""
@@ -32,6 +39,8 @@ def run_migrations_offline():
     )
     with context.begin_transaction():
         context.run_migrations()
+
+
 
 async def run_migrations_online():
     """Run migrations in 'online' mode."""
