@@ -3,6 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
 from sqlalchemy.sql import and_
+
+from app.crud.core.default import DefaultQueries
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
@@ -108,3 +110,6 @@ async def delete_instance(db: AsyncSession, instance_id: int) -> None:
 
     await db.delete(instance)
     await db.commit()
+
+async def update_instance(session: AsyncSession, instance_id: int, data: InstancesUpdate) -> Instances | None:
+    return await DefaultQueries.update(session, Instances, instance_id, data)

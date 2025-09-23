@@ -3,17 +3,20 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
 from sqlalchemy.sql import and_
+
+from app.crud.core.default import DefaultQueries
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
 from fastapi import HTTPException
 
-#Get all of the available properties
+
+# Get all of the available properties
 async def get_properties(db: AsyncSession,
-    property_id: Optional[int] = None,
-    value: Optional[str] = None,
-    object_id: Optional[int] = None
-) -> List[Properties]:
+                         property_id: Optional[int] = None,
+                         value: Optional[str] = None,
+                         object_id: Optional[int] = None
+                         ) -> List[Properties]:
     query = select(Properties)
 
     filters = []
@@ -29,30 +32,33 @@ async def get_properties(db: AsyncSession,
 
     result = await db.execute(query)
     return result.scalars().all()
-#Get one type using the property's id
+
+
+# Get one type using the property's id
 async def get_property(db: AsyncSession, property_id: int) -> Optional[Properties]:
     result = await db.execute(select(Properties).where(Properties.id == property_id))
     return result.scalar_one_or_none()
 
-#Create a property
-async def create_property(db: AsyncSession, data: PropertiesCreate):
 
+# Create a property
+async def create_property(db: AsyncSession, data: PropertiesCreate):
     property_type = await db.get(PropertyTypes, data.property_id)
     if not property_type:
-        raise HTTPException(status_code = 404, detail="Property type not found")
+        raise HTTPException(status_code=404, detail="Property type not found")
 
     obj = await db.get(Objects, data.object_id)
     if not obj:
-        raise HTTPException(status_code = 404, detail="Object not found")
+        raise HTTPException(status_code=404, detail="Object not found")
 
     property_ = Properties(**data.dict())
 
     db.add(property_)
-    
+
     await db.commit()
     await db.refresh(property_)
-    
+
     return property_
+
 
 async def delete_property(db: AsyncSession, property_id: int) -> None:
     result = await db.execute(select(Properties).where(Properties.id == property_id))
@@ -64,3 +70,7 @@ async def delete_property(db: AsyncSession, property_id: int) -> None:
     await db.delete(property)
     await db.commit()
 
+
+async def update_property(session: AsyncSession, property_id: int,
+                          data: PropertiesUpdate) -> Properties | None:
+    return await DefaultQueries.update(session, Properties, property_id, data)
