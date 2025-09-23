@@ -14,10 +14,9 @@ async def read_types(
         session: AsyncSession = Depends(get_async_session),
         name: Optional[str] = Query(None),
         parent_id: Optional[int] = Query(None),
-        root_id: Optional[int] = Query(None),
-        index_of_layer: Optional[int] = Query(None)
+        root_id: Optional[int] = Query(None)
 ):
-    return await db.get_types(session, name, parent_id, root_id, index_of_layer)
+    return await db.get_types(session, name, parent_id, root_id)
 
 
 @router.get("/{type_id}", response_model=TypesRead)

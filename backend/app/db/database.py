@@ -9,7 +9,7 @@ DATABASE_URL = settings.DATABASE_URL
 
 
 #Starting asynchronous SQLAlchemy engine
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(DATABASE_URL, echo=False)
 
 #Object to connect with the DB, using the async session
 async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

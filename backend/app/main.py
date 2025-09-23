@@ -4,7 +4,6 @@ from app.api.v1.db.core import objects, types, property_types, properties, insta
 from app.api.v1.auth import auth
 from fastapi.middleware.cors import CORSMiddleware
 
-
 app = FastAPI()
 
 origins = [

@@ -121,19 +121,24 @@ async def create_instance_for_sub_tree(session: AsyncSession, object_parent_id: 
     )
     objects = (await session.execute(query)).scalars().all()
 
-    instances_add: list[InstancesCreate] = []
+    if len(objects) == 0:
+        return None
+
+    instances_add: list[dict] = []
     for obj in objects:
-        instances_add.append(InstancesCreate(
-            name=obj.name,
-            root_id=instance_root_id,
-            object_id=obj.id,
-            parent_id=instance_parent_id,
-            is_active=True,
-        ))
+        instances_add.append({
+            'name': obj.name,
+            'root_id': instance_root_id,
+            'object_id': obj.id,
+            'parent_id': instance_parent_id,
+            'is_active': True,
+        })
+
+    logger.info(instances_add)
 
     query = (
         insert(Instances)
-        .values([instance.model_dump() for instance in instances_add])
+        .values(instances_add)
         .returning(Instances.id)
     )
 
@@ -179,4 +184,6 @@ async def create_instance_from_object_tree(session: AsyncSession, object_root_id
     if err:
         logger.warning(err)
         return None
+
+    await session.commit()
     return root_instance_add

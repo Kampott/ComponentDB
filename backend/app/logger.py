@@ -6,6 +6,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 LOGGING_CONFIG = {
     "version": 1,
+    "disable_existing_loggers": False,
     "formatters": {
         "default": {
             "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -15,7 +16,7 @@ LOGGING_CONFIG = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "level": "DEBUG",
+            "level": "INFO",
             "formatter": "default",
         },
         "file": {
@@ -26,12 +27,16 @@ LOGGING_CONFIG = {
             "encoding": "utf-8",
         },
     },
+    "root": {  # Корневой логгер для всех модулей
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
     "loggers": {
         "app": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
             "propagate": False,
-        }
+        },
     }
 }
 

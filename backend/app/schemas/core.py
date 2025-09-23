@@ -20,7 +20,6 @@ class ObjectsUpdate(BaseModel):
 
 class ObjectsRead(ObjectsBase):
     id: int
-    index_of_layer: int
     root_id: int
 
     class Config:
@@ -43,7 +42,6 @@ class TypesUpdate(BaseModel):
 
 class TypesRead(TypesBase):
     id: int
-    index_of_layer: int
     root_id: int
 
     class Config:
@@ -114,7 +112,6 @@ class InstanceCreated(BaseModel):
     parent_id: int | None = None
     root_id: int
     is_active: bool
-    index_of_layer: int
 
 
 class InstancesUpdate(BaseModel):
@@ -128,7 +125,6 @@ class InstancesRead(BaseModel):
     root_id: int
     parent_id: int | None = None
     object_id: int
-    index_of_layer: int
     is_active: bool
 
     class Config:
