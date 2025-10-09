@@ -15,6 +15,8 @@ export function handleApiError(err: unknown, handlers: Handlers = {}) {
         return;
     }
 
+    console.log(err.status)
+
     switch (err.status) {
         case 404:
             handlers.navigate?.("/404");

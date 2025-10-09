@@ -1,5 +1,5 @@
 export interface LoginRequest {
-    username: string;
+    email: string;
     password: string;
 }
 
@@ -9,7 +9,7 @@ export interface LoginResponse {
 }
 
 export interface RegisterRequest {
-    username: string;
+    email: string;
     password: string;
     level: number;
 }
@@ -20,6 +20,6 @@ export interface RegisterResponse {
 
 export interface User {
     id: number;
-    username: string;
+    email: string;
     level: number;
 }

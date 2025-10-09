@@ -1,5 +1,6 @@
 import type {ObjectType, ObjectTypeAdd} from "../../schemas/ObjectType.ts";
-import DefaultForm, {type FormField} from "../Common/DefaultForm.tsx";
+import DefaultForm from "../Common/Form/DefaultForm.tsx";
+import type {FormField} from "../Common/Form/FormTypes.ts";
 
 
 interface Props {

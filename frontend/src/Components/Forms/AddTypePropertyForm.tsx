@@ -1,4 +1,5 @@
-import DefaultForm, {type FormField} from "../Common/DefaultForm.tsx";
+import DefaultForm from "../Common/Form/DefaultForm.tsx";
+import type {FormField} from "../Common/Form/FormTypes.ts";
 import type {PropertyTypeAdd} from "../../schemas/PropertyType.ts";
 import type {ObjectType} from "../../schemas/ObjectType.ts";
 

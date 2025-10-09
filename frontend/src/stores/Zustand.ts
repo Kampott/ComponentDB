@@ -1,6 +1,6 @@
 import {create} from "zustand/react";
 
-import type {LoginRequest, User} from "../models/auth.ts";
+import type {LoginRequest, User} from "../schemas/Auth.ts";
 import type IServicesStore from "./IServicesStore.ts";
 import logError from "../log_error.ts";
 import Services from "../services/Services.ts";
@@ -24,14 +24,10 @@ export const useUserStore = create<IUserStore>((set) => ({
     },
 
     async login(userData: LoginRequest) {
-        try {
-            const response = await useServicesStore.getState().services.authService.login(userData);
-            localStorage.setItem("token", response.access_token);
-            this.setAuth(true)
-            this.setUser(await useServicesStore.getState().services.authService.me())
-        } catch (e) {
-            logError(e)
-        }
+        const response = await useServicesStore.getState().services.authService.login(userData);
+        localStorage.setItem("token", response.access_token);
+        this.setAuth(true)
+        this.setUser(await useServicesStore.getState().services.authService.me())
     },
 
     async logout() {
@@ -63,7 +59,7 @@ export const useToastStore = create<IToastsStore>((set) => ({
 
     addToast(header: string, message: string) {
         set((state) => ({
-            toasts: [...state.toasts, { id: Date.now(), header: header, message: message }],
+            toasts: [...state.toasts, {id: Date.now(), header: header, message: message}],
         }))
     },
 

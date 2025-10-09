@@ -27,7 +27,7 @@ export default class Services {
     public readonly propertiesTypesService: IPropertiesTypesService
 
     public constructor() {
-        this.restApiClient = new AxiosClient(import.meta.env.VITE_API_BASE_URL, {}, `${import.meta.env.VITE_API_BASE_URL}/refresh`)
+        this.restApiClient = new AxiosClient(import.meta.env.VITE_API_BASE_URL, {}, `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`)
 
         this.authService = new AuthService(this.restApiClient)
         this.instancesPropertiesService = new InstancesPropertiesService(this.restApiClient)

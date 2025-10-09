@@ -2,7 +2,7 @@ import {type AxiosInstance, type AxiosResponse, default as axios} from "axios"
 
 import {RestApiError} from "./RestApiClient.ts"
 import type RestApiClient from "./RestApiClient.ts";
-import type {LoginResponse} from "../models/auth.ts";
+import type {LoginResponse} from "../schemas/Auth.ts";
 import logError from "../log_error.ts";
 
 export default class AxiosClient implements RestApiClient {
