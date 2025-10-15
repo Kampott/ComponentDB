@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # adds /app to path
 import asyncio
 import csv
 import statistics
@@ -15,12 +19,14 @@ from app.schemas.core import InstancesCreate
 from app.crud.core.instances import create_instance as crud_create_instance, delete_instance as crud_delete_instance
 
 
+
 CSV_OUT = f"benchmark_results_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.csv"
 SAMPLE_COUNTS = [10000]
 BRANCHING = (1, 10, 100, 100)  # уровни: root, 10, 10*100=1000, 1000*100=100000
 INSTANCE_NUMBER = [10, 100, 1000]
 MAX_LEVEL = len(BRANCHING)  # 4
 ROOT_IDS_CACHE: list[int] = []
+INSTANCE_NUMBER = 100
 
 # ---------- Utilities ----------
 async def get_db_size_mb(session: AsyncSession, dbname: Optional[str] = None) -> float:
@@ -401,7 +407,7 @@ async def main():
 
             for count in SAMPLE_COUNTS:
                 print(f"Generating {count} instance-trees (this may be slow)...")
-                await generate_instances_for_tree(session, root_object_id, 2)
+                await generate_instances_for_tree(session, root_object_id, INSTANCE_NUMBER)
                 print("Generation done.")
 
                 for mode in range(5): #0..4
