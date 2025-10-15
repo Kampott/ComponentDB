@@ -1,13 +1,15 @@
-import type {InstanceProperty, InstancePropertyAdd} from "../../schemas/InstanceProperty.ts";
+import type {InstanceProperty, InstancePropertyAdd, InstancePropertyUpdate} from "../../schemas/InstanceProperty.ts";
 
 export default interface IInstancesPropertiesService {
-    getInstances(): Promise<InstanceProperty[]>
+    getInstancesProperties(): Promise<InstanceProperty[]>
 
-    getInstanceById(id: number): Promise<InstanceProperty>
+    getInstancePropertyById(id: number): Promise<InstanceProperty>
 
-    addInstance(object: InstancePropertyAdd): Promise<InstancePropertyAdd>
+    addInstanceProperty(object: InstancePropertyAdd): Promise<InstancePropertyAdd>
 
-    deleteInstance(id: number): Promise<null>
+    updateInstanceProperty(id: number, data: InstancePropertyUpdate): Promise<InstanceProperty>
 
-    getInstancesByObjectId(objectId: number): Promise<InstanceProperty[]>
+    deleteInstanceProperty(id: number): Promise<null>
+
+    getInstancesPropertiesByInstanceId(objectId: number): Promise<InstanceProperty[]>
 }

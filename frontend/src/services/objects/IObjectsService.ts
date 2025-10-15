@@ -1,4 +1,4 @@
-import type {Object, ObjectAdd} from "../../schemas/Object.ts";
+import type {Object, ObjectAdd, ObjectUpdate} from "../../schemas/Object.ts";
 
 export default interface IObjectsService {
     getObjects(): Promise<Object[]>
@@ -7,7 +7,11 @@ export default interface IObjectsService {
 
     addObject(object: ObjectAdd): Promise<ObjectAdd>
 
+    updateObject(id: number, data: ObjectUpdate): Promise<Object>
+
     deleteObject(id: number): Promise<null>
 
     getObjectsByParentId(parentId: number): Promise<Object[]>
+
+    getObjectsByTypeId(typeId: number): Promise<Object[]>
 }

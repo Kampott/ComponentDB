@@ -1,5 +1,5 @@
 import type RestApiClient from "../../http/RestApiClient.ts";
-import type {ObjectType, ObjectTypeAdd} from "../../schemas/ObjectType.ts";
+import type {ObjectType, ObjectTypeAdd, ObjectTypeUpdate} from "../../schemas/ObjectType.ts";
 import type IObjectsTypesService from "./IObjectsTypesService.ts";
 
 export default class ObjectsTypesService implements IObjectsTypesService {
@@ -9,7 +9,7 @@ export default class ObjectsTypesService implements IObjectsTypesService {
         this.client = client
     }
 
-    public async getTypes(): Promise<ObjectType[]> {
+    public async getRootTypes(): Promise<ObjectType[]> {
         return await this.client.get<ObjectType[]>("/types/")
     }
 
@@ -19,6 +19,10 @@ export default class ObjectsTypesService implements IObjectsTypesService {
 
     public async addType(object: ObjectTypeAdd): Promise<ObjectTypeAdd> {
         return await this.client.post<ObjectTypeAdd, ObjectTypeAdd>("/types/", object)
+    }
+
+    public async updateType(id: number, data: ObjectTypeUpdate): Promise<ObjectType> {
+        return await this.client.patch<ObjectTypeUpdate, ObjectType>(`/types/${id}`, data)
     }
 
     public async deleteType(id: number): Promise<null> {

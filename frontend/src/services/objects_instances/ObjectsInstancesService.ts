@@ -1,5 +1,5 @@
 import type RestApiClient from "../../http/RestApiClient.ts";
-import type {ObjectInstance, ObjectInstanceAdd} from "../../schemas/ObjectInstance.ts";
+import type {ObjectInstance, ObjectInstanceAdd, ObjectInstanceUpdate} from "../../schemas/ObjectInstance.ts";
 import type IObjectsInstancesService from "./IObjectsInstancesService.ts";
 
 export default class ObjectsInstancesService implements IObjectsInstancesService {
@@ -19,6 +19,10 @@ export default class ObjectsInstancesService implements IObjectsInstancesService
 
     public async addInstance(object: ObjectInstanceAdd): Promise<ObjectInstanceAdd> {
         return await this.client.post<ObjectInstanceAdd, ObjectInstanceAdd>("/instances/", object);
+    }
+
+    public async updateInstance(id: number, data: ObjectInstanceUpdate): Promise<ObjectInstance> {
+        return await this.client.patch<ObjectInstanceUpdate, ObjectInstance>(`/instances/${id}`, data);
     }
 
     public async deleteInstance(id: number): Promise<null> {

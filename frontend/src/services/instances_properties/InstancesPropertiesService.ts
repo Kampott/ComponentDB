@@ -1,5 +1,5 @@
 import type RestApiClient from "../../http/RestApiClient.ts";
-import type {InstanceProperty, InstancePropertyAdd} from "../../schemas/InstanceProperty.ts";
+import type {InstanceProperty, InstancePropertyAdd, InstancePropertyUpdate} from "../../schemas/InstanceProperty.ts";
 import type IInstancesPropertiesService from "./IInstancesPropertiesService.ts";
 
 export default class InstancesPropertiesService implements IInstancesPropertiesService {
@@ -9,23 +9,27 @@ export default class InstancesPropertiesService implements IInstancesPropertiesS
         this.client = client
     }
 
-    public async getInstances(): Promise<InstanceProperty[]> {
+    public async getInstancesProperties(): Promise<InstanceProperty[]> {
         return await this.client.get<InstanceProperty[]>("/instanceproperties/")
     }
 
-    public async getInstanceById(id: number): Promise<InstanceProperty> {
+    public async getInstancePropertyById(id: number): Promise<InstanceProperty> {
         return await this.client.get<InstanceProperty>(`/instanceproperties/${id}`);
     }
 
-    public async addInstance(object: InstancePropertyAdd): Promise<InstancePropertyAdd> {
+    public async addInstanceProperty(object: InstancePropertyAdd): Promise<InstancePropertyAdd> {
         return await this.client.post<InstancePropertyAdd, InstancePropertyAdd>("/instanceproperties/", object);
     }
 
-    public async deleteInstance(id: number): Promise<null> {
+    public async updateInstanceProperty(id: number, data: InstancePropertyUpdate): Promise<InstanceProperty> {
+        return await this.client.patch<InstancePropertyUpdate, InstanceProperty>(`/instanceproperties/${id}`, data);
+    }
+
+    public async deleteInstanceProperty(id: number): Promise<null> {
         return await this.client.delete(`/instanceproperties/${id}`);
     }
 
-    public async getInstancesByObjectId(objectId: number): Promise<InstanceProperty[]> {
-        return await this.client.get<InstanceProperty[]>(`/instanceproperties/`, {object_id: objectId});
+    public async getInstancesPropertiesByInstanceId(instanceId: number): Promise<InstanceProperty[]> {
+        return await this.client.get<InstanceProperty[]>(`/instanceproperties/`, {instance_id: instanceId});
     }
 }

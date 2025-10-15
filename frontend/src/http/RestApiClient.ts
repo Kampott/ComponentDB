@@ -1,13 +1,19 @@
-export class RestApiError extends Error {
-    public readonly detail?: string;
+export interface ApiErrorPayload {
+    message?: string;
+    detail?: Record<string, string[] | string>;
+}
 
-    constructor(
-        status?: number,
-        detail?: string,
-    ) {
-        super(`RestApiClient returns status ${status}: ${detail}`);
-        this.detail = detail;
-        this.name = 'ApiError';
+export class RestApiError extends Error {
+    public status?: number;
+    public payload?: ApiErrorPayload;
+    public isNetworkError: boolean;
+
+    constructor(message: string, status?: number, payload?: ApiErrorPayload, isNetworkError = false) {
+        super(message);
+        this.name = "ApiError";
+        this.status = status;
+        this.payload = payload;
+        this.isNetworkError = isNetworkError;
     }
 }
 
