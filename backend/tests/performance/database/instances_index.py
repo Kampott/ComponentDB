@@ -247,7 +247,7 @@ async def generate_instances_for_tree(session: AsyncSession, root_object_id: int
                 inst.root_id = inst.id
             else:
                 inst.root_id = id_to_instance[inst.parent_id].root_id
-        print(f"Flushing and commiting remaining batch. This might take a while..."
+        print(f"Flushing and commiting remaining batch. This might take a while...")
         await session.commit()
 
 
