@@ -67,8 +67,6 @@ async def create_instance(db: AsyncSession, data: InstancesCreate):
     # creating both id
     root_id = None
 
-    # Checking that the object exists
-    print(data.object_id)
     obj = await db.get(Objects, data.object_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Object not found")

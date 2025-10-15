@@ -21,13 +21,13 @@ from app.crud.core.instances import create_instance as crud_create_instance, del
 
 
 CSV_OUT = f"benchmark_results_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.csv"
-SAMPLE_COUNTS = [10000]
+SAMPLE_COUNTS = [100]
 BRANCHING = (1, 10, 100, 100)  # уровни: root, 10, 10*100=1000, 1000*100=100000
 INSTANCE_NUMBER = [10, 100, 1000]
 MAX_LEVEL = len(BRANCHING)  # 4
 ROOT_IDS_CACHE: list[int] = []
 INSTANCE_NUMBER = 100
-BATCH_SIZE = 10
+BATCH_SIZE = 25
 
 # ---------- Utilities ----------
 async def get_db_size_mb(session: AsyncSession, dbname: Optional[str] = None) -> float:
@@ -274,7 +274,7 @@ async def run_bench_for_count(session: AsyncSession, root_obj_id: int, count: in
 
     # Получаем все инстансы с заданным root_obj_id
     r = await session.execute(
-        select(Instances).where(Instances.root_id == root_obj_id).order_by(Instances.id)
+        select(Instances).where(Instances.root_id == 1).order_by(Instances.id)
     )
     all_instances = r.scalars().all()
     if not all_instances:
@@ -285,6 +285,7 @@ async def run_bench_for_count(session: AsyncSession, root_obj_id: int, count: in
 
     # parent_map и функция depth
     parent_map = {inst.id: inst.parent_id for inst in all_instances}
+
 
     def get_depth(inst_id, cache={}):
         if inst_id in cache:
@@ -302,7 +303,6 @@ async def run_bench_for_count(session: AsyncSession, root_obj_id: int, count: in
     for inst in all_instances:
         lvl = get_depth(inst.id)
         pick_by_level.setdefault(lvl, []).append(inst)
-
     # ---------------- INSERT measurement ----------------
     for level, objs in pick_by_level.items():
         for target_inst in objs[:1]:  # ограничение одним на уровень
@@ -352,12 +352,7 @@ async def run_bench_for_count(session: AsyncSession, root_obj_id: int, count: in
             target_root_id = parent_inst.root_id
 
             async def select_children():
-                await session.execute(
-                    select(Instances).where(
-                        (Instances.parent_id == parent_id) &
-                        (Instances.root_id == target_root_id)
-                    )
-                )
+                await session.execute(select(Instances).where(and_(Instances.parent_id == parent_id, Instances.root_id == target_root_id)))
 
             times = await measure_operation_coro(select_children, repeats=count)
             csv_writer.writerow([
@@ -452,7 +447,8 @@ async def main():
                 # await session.commit()
 
                 print(f"Cleanup after count={count} done.")
-
+    await session.execute(delete(Types).where(Types.id == 1))
+    await session.commit()
     print(f"Benchmark finished. Results saved to {CSV_OUT}")
 
 
