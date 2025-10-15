@@ -27,6 +27,7 @@ INSTANCE_NUMBER = [10, 100, 1000]
 MAX_LEVEL = len(BRANCHING)  # 4
 ROOT_IDS_CACHE: list[int] = []
 INSTANCE_NUMBER = 100
+BATCH_SIZE = 10
 
 # ---------- Utilities ----------
 async def get_db_size_mb(session: AsyncSession, dbname: Optional[str] = None) -> float:
@@ -155,7 +156,6 @@ async def generate_instances_for_tree(session: AsyncSession, root_object_id: int
     Creates n_instances copies of a tree of objects for a given root_object_id.
     Uses bulk-insert for optimization. Root_id is set correctly.
     """
-
     print(f"Generating {n_instances} instance-trees (bulk mode)...")
 
     # Загружаем объекты дерева
@@ -176,7 +176,6 @@ async def generate_instances_for_tree(session: AsyncSession, root_object_id: int
     all_instances = []
     temp_parent_links = []  # remembering pairs (child_idx, parent_obj_id)
 
-    # Создаём все инстансы без parent_id и root_id
     for k in range(n_instances):
         print(f"Generating instance number {k}")
         stack = [(root_obj, None)]
@@ -188,7 +187,7 @@ async def generate_instances_for_tree(session: AsyncSession, root_object_id: int
                 name=f"{obj.name}_inst{suffix}",
                 object_id=obj.id,
                 parent_id=None,
-                root_id=None,   # will set later
+                root_id=None,
                 is_active=True
             )
             all_instances.append(inst)
@@ -199,33 +198,57 @@ async def generate_instances_for_tree(session: AsyncSession, root_object_id: int
             for ch in obj_children.get(obj.id, []):
                 stack.append((ch, obj))
 
-    # Bulk add
-    session.add_all(all_instances)
-    await session.flush()  # присвоены все id
+        # If we've reached the batch size, flush and commit
+        if len(all_instances) >= BATCH_SIZE:
+            print(f"Flushing and commiting one batch. This might take a while...")
+            session.add_all(all_instances)
+            await session.flush()
 
-    # Создаём карту: suffix -> object_id -> instance.id
-    instance_map = {}
-    for inst in all_instances:
-        *_, suffix = inst.name.split("_inst")
-        instance_map.setdefault(suffix, {})[inst.object_id] = inst.id
+            # map object_id -> instance.id
+            instance_map = {}
+            for inst in all_instances:
+                *_, suf = inst.name.split("_inst")
+                instance_map.setdefault(suf, {})[inst.object_id] = inst.id
 
-    # Обновляем parent_id
-    for idx, parent_obj_id, suffix in temp_parent_links:
-        parent_id = instance_map[suffix][parent_obj_id]
-        all_instances[idx].parent_id = parent_id
+            # update parent_id
+            for idx, parent_obj_id, suf in temp_parent_links:
+                parent_id = instance_map[suf][parent_obj_id]
+                all_instances[idx].parent_id = parent_id
 
-    # Устанавливаем root_id: у корня root_id = id, у всех остальных берём root_id родителя
-    id_to_instance = {inst.id: inst for inst in all_instances}
-    for inst in all_instances:
-        if inst.parent_id is None:
-            inst.root_id = inst.id
-        else:
-            inst.root_id = id_to_instance[inst.parent_id].root_id
+            # update root_id
+            id_to_instance = {inst.id: inst for inst in all_instances}
+            for inst in all_instances:
+                if inst.parent_id is None:
+                    inst.root_id = inst.id
+                else:
+                    inst.root_id = id_to_instance[inst.parent_id].root_id
 
-    # Коммитим разом
-    print("Committing results. This might be slow!")
-    await session.commit()
-    print(f"Created {len(all_instances)} instances (bulk insert complete).")
+            await session.commit()
+            all_instances.clear()
+            temp_parent_links.clear()
+
+    # commit any remaining instances after loop
+    if all_instances:
+        session.add_all(all_instances)
+        await session.flush()
+        # update parent_id/root_id same as above
+        instance_map = {}
+        for inst in all_instances:
+            *_, suf = inst.name.split("_inst")
+            instance_map.setdefault(suf, {})[inst.object_id] = inst.id
+
+        for idx, parent_obj_id, suf in temp_parent_links:
+            parent_id = instance_map[suf][parent_obj_id]
+            all_instances[idx].parent_id = parent_id
+
+        id_to_instance = {inst.id: inst for inst in all_instances}
+        for inst in all_instances:
+            if inst.parent_id is None:
+                inst.root_id = inst.id
+            else:
+                inst.root_id = id_to_instance[inst.parent_id].root_id
+        print(f"Flushing and commiting remaining batch. This might take a while..."
+        await session.commit()
 
 
 # ---------- Measurement helpers ----------
