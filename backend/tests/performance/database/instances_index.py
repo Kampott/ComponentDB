@@ -9,16 +9,14 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy import text, select, delete, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# импортируем с ваших модулей
 from app.db.database import async_session  # sessionmaker([...], class_=AsyncSession)
 from app.models.core import Types, Objects, Instances
 from app.schemas.core import InstancesCreate
 from app.crud.core.instances import create_instance as crud_create_instance, delete_instance as crud_delete_instance
 
-# CONFIG — подставьте нужные значения
+
 CSV_OUT = f"benchmark_results_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.csv"
-# Осторожно: большие значения создают миллионы строк. Подбирайте под вашу машину.
-SAMPLE_COUNTS = [10000]  # пример. Можно [100, 1000, 10000] если хватит ресурсов
+SAMPLE_COUNTS = [10000]
 BRANCHING = (1, 10, 100, 100)  # уровни: root, 10, 10*100=1000, 1000*100=100000
 INSTANCE_NUMBER = [10, 100, 1000]
 MAX_LEVEL = len(BRANCHING)  # 4
