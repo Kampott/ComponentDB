@@ -175,12 +175,12 @@ async def generate_instances_for_tree(session: AsyncSession, root_object_id: int
 
     all_instances = []
     temp_parent_links = []  # remembering pairs (child_idx, parent_obj_id)
-
+    p = 0
     for k in range(n_instances):
         print(f"Generating instance number {k}")
         stack = [(root_obj, None)]
         suffix = f"_{k}"
-
+        p = p+1
         while stack:
             obj, parent_obj = stack.pop()
             inst = Instances(
@@ -199,7 +199,8 @@ async def generate_instances_for_tree(session: AsyncSession, root_object_id: int
                 stack.append((ch, obj))
 
         # If we've reached the batch size, flush and commit
-        if len(all_instances) >= BATCH_SIZE:
+        if p >= BATCH_SIZE:
+            p = 0
             print(f"Flushing and commiting one batch. This might take a while...")
             session.add_all(all_instances)
             await session.flush()
