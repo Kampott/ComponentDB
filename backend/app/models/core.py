@@ -3,6 +3,7 @@ from app.db.database import Base
 from sqlalchemy import Index, text, UniqueConstraint
 from typing import Optional, List
 from sqlalchemy import ForeignKey, String, Integer, Boolean
+from app.models.auth import UserInstanceAccess
 
 
 class Types(Base):
