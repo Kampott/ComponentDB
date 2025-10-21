@@ -72,9 +72,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def create_refresh_token(data: dict) -> str:
     """Creating refresh token"""
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    jti = str(uuid.uuid4()) #refresh token uuid
     to_encode = data.copy()
-    to_encode.update({"exp": expire, "scope": "refresh_token", "sub": str(data["sub"])})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    to_encode.update({"exp": expire, "scope": "refresh_token", "sub": str(data["sub"]), "jti": jti})
+    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return {"token": token, "jti": jti, "expires_at": expire}
 
 
 def decode_token(token: str) -> dict:

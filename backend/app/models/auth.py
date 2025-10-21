@@ -23,8 +23,7 @@ class User(Base):
     roles: Mapped[List["Role"]] = relationship(
         secondary="user_roles",
         back_populates="users",
-        # TODO выяснить, нужен ли, так как хзхз
-        # lazy="joined"
+        lazy="selectin"
     )
 
     refresh_tokens: Mapped[List["RefreshToken"]] = relationship(
@@ -51,7 +50,8 @@ class Role(Base):
 
     permissions: Mapped[List["Permission"]] = relationship(
         secondary="role_permissions",
-        back_populates="roles"
+        back_populates="roles",
+        lazy="joined"
     )
 
 
