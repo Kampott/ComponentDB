@@ -2,7 +2,7 @@ import {type ReactNode, useEffect, useState} from "react";
 
 import Button from "react-bootstrap/Button";
 
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import DefaultList from "../../Common/DefaultList.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import type {PropertyType, PropertyTypeAdd} from "../../../schemas/PropertyType.ts";
@@ -16,7 +16,7 @@ interface Props {
 }
 
 function TypePropertiesTab({objectType}: Props): ReactNode {
-    const services = useStore((state) => state.services);
+    const services = useServicesStore((state) => state.services);
 
     const [objectProperties, setObjectProperties] = useState<PropertyType[] | null>(null);
     const [instanceProperties, setInstanceProperties] = useState<PropertyType[] | null>(null);

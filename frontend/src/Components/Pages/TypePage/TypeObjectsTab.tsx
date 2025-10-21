@@ -2,7 +2,7 @@ import {type ReactNode, useEffect, useState} from "react";
 
 import {useNavigate} from "react-router-dom";
 
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import DefaultList from "../../Common/DefaultList.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import type {Object} from "../../../schemas/Object.ts";
@@ -18,7 +18,7 @@ interface Props {
 function TypeObjectsTab({objectType}: Props): ReactNode {
     const navigate = useNavigate();
 
-    const services = useStore((state) => state.services);
+    const services = useServicesStore((state) => state.services);
 
     const [objects, setObjects] = useState<Object[] | null>(null);
 

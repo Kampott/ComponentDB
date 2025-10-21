@@ -9,7 +9,7 @@ import Tabs from "react-bootstrap/Tabs";
 import Tab from "react-bootstrap/Tab";
 
 import ObjectTreeView from "./ObjectTreeView.tsx";
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import {RestApiError} from "../../../http/RestApiClient.ts";
 import type {Object} from "../../../schemas/Object.ts";
 import ObjectInstancesTab from "./ObjectInstancesTab.tsx";
@@ -24,7 +24,7 @@ function ObjectPage() {
     const {objectId} = useParams()
     const navigate = useNavigate()
 
-    const services = useStore((state) => state.services)
+    const services = useServicesStore((state) => state.services)
 
     const [object, setObject] = useState<Object | null>(null);
 

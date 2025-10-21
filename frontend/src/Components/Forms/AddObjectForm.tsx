@@ -2,7 +2,7 @@ import type {Object, ObjectAdd} from "../../schemas/Object.ts";
 import DefaultForm, {type FormField} from "../Common/DefaultForm.tsx";
 import {useEffect, useState} from "react";
 import type {ObjectType} from "../../schemas/ObjectType.ts";
-import {useStore} from "../../store/Zustand.ts";
+import {useServicesStore} from "../../stores/Zustand.ts";
 import LoadEffect from "../Common/LoadEffect.tsx";
 
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 function AddObjectTypeForm({parentObject, submitCallback}: Props) {
-    const services = useStore((state) => state.services);
+    const services = useServicesStore((state) => state.services);
 
     const [defaultData, setDefaultData] = useState<ObjectAdd>({} as ObjectAdd);
 

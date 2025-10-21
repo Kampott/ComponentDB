@@ -3,7 +3,7 @@ import Offcanvas from "react-bootstrap/Offcanvas";
 import {type ReactNode, useEffect, useState} from "react";
 
 import type {ObjectType, ObjectTypeAdd} from "../../schemas/ObjectType.ts";
-import {useStore} from "../../store/Zustand.ts";
+import {useServicesStore} from "../../stores/Zustand.ts";
 import Button from "react-bootstrap/Button";
 import {useNavigate} from "react-router-dom";
 import LoadEffect from "../Common/LoadEffect.tsx";
@@ -21,7 +21,7 @@ interface Props {
 function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
     const navigate = useNavigate();
 
-    const services = useStore((state) => state.services)
+    const services = useServicesStore((state) => state.services)
 
     const [rootObjectTypes, setRootObjectTypes] = useState<ObjectType[] | null>(null);
     const [formShow, setFormShow] = useState(false)
