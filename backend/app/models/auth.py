@@ -5,7 +5,7 @@ from app.db.database import Base
 from typing import Optional, List
 from sqlalchemy import Index, ForeignKey, String, Integer, Boolean, DateTime, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
-
+from sqlalchemy.sql import func
 
 
 
@@ -118,7 +118,7 @@ class UserInstanceAccess(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
-    root_id: Mapped[uuid.UUID] = mapped_column(
+    root_id: Mapped[int] = mapped_column(
         ForeignKey("instances.id", ondelete="CASCADE"), primary_key=True
     )
 
@@ -126,4 +126,6 @@ class UserInstanceAccess(Base):
     can_write: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="instance_access")
-    instance: Mapped["Instances"] = relationship(back_populates="user_access")
+    instance: Mapped["Instances"] = relationship(
+        back_populates="user_access"
+    )

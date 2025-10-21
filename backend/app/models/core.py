@@ -3,6 +3,7 @@ from app.db.database import Base
 from sqlalchemy import Index, text, UniqueConstraint
 from typing import Optional, List
 from sqlalchemy import ForeignKey, String, Integer, Boolean
+from app.models.auth import UserInstanceAccess
 
 
 class Types(Base):
@@ -92,7 +93,6 @@ class Instances(Base):
     root_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), nullable=True)
     object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
     is_active: Mapped[bool] = mapped_column(nullable=False)
-
     parent: Mapped[Optional["Instances"]] = relationship(
         "Instances",
         foreign_keys=[parent_id],
@@ -112,7 +112,6 @@ class Instances(Base):
         "UserInstanceAccess",
         back_populates="instance",
     )
-
 
 class InstanceProperties(Base):
     __tablename__ = "instance_properties"

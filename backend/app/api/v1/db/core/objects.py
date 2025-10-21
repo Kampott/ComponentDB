@@ -20,7 +20,6 @@ async def read_objects(
 ):
     return await db_objects.get_objects(session, name, type_id, parent_id, root_id)
 
-
 @router.get("/{object_id}", response_model=ObjectsRead)
 async def read_object(object_id: int, session: AsyncSession = Depends(get_async_session)):
     obj = await db_objects.get_object(session, object_id)
