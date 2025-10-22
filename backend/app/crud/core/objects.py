@@ -49,6 +49,7 @@ async def create_object(db: AsyncSession, data: ObjectsCreate):
     # receiving parent, if parent_id is given
     root_id = None
 
+
     # checking if type exists
     type_obj = await db.get(Types, data.type_id)
     if not type_obj:

@@ -10,7 +10,8 @@ from app.logger import logger
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
+
 
 
 # Get all available instances with optional filters
@@ -58,16 +59,19 @@ async def get_instances(
 
 
 # Get one type using the instances's id
-async def get_instance(db: AsyncSession, instance_id: int) -> Optional[Instances]:
+async def get_instance(db: AsyncSession, 
+    instance_id: int) -> Optional[Instances]:
     result = await db.execute(select(Instances).where(Instances.id == instance_id))
     return result.scalar_one_or_none()
 
 
-async def create_instance(db: AsyncSession, data: InstancesCreate):
+async def create_instance(
+    db: AsyncSession,
+    data: InstancesCreate
+    ):
     # creating both id
     root_id = None
 
-    # Checking that the object exists
     obj = await db.get(Objects, data.object_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Object not found")
@@ -77,7 +81,6 @@ async def create_instance(db: AsyncSession, data: InstancesCreate):
         parent_instance = await db.get(Instances, data.parent_id)
         if not parent_instance:
             raise HTTPException(status_code=404, detail="Parent Instance not found")
-
         root_id = parent_instance.root_id
 
     # Creating the instance
@@ -99,7 +102,9 @@ async def create_instance(db: AsyncSession, data: InstancesCreate):
     return instance
 
 
-async def delete_instance(db: AsyncSession, instance_id: int) -> None:
+async def delete_instance(db: AsyncSession, 
+    instance_id: int
+    ) -> None:
     instance = await db.get(Instances, instance_id)
     if instance is None:
         raise HTTPException(status_code=404, detail="Instance not found")
@@ -108,12 +113,19 @@ async def delete_instance(db: AsyncSession, instance_id: int) -> None:
     await db.commit()
 
 
-async def update_instance(session: AsyncSession, instance_id: int, data: InstancesUpdate) -> Instances | None:
+async def update_instance(
+    session: AsyncSession, 
+    instance_id: int, 
+    data: InstancesUpdate
+    ) -> Instances | None:
     return await DefaultQueries.update(session, Instances, instance_id, data)
 
 
-async def create_instance_for_sub_tree(session: AsyncSession, object_parent_id: int,
-                                       instance_parent_id: int, instance_root_id: int) -> str | None:
+async def create_instance_for_sub_tree(
+    session: AsyncSession, 
+    object_parent_id: int,
+    instance_parent_id: int, 
+    instance_root_id: int) -> str | None:
     logger.debug("Adding another layer for instances...")
     query = (
         select(Objects)

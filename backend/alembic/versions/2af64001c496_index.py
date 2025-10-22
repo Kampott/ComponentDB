@@ -1,8 +1,8 @@
-"""empty message
+"""index
 
-Revision ID: d0e312e8748d
+Revision ID: 2af64001c496
 Revises: 
-Create Date: 2025-09-23 22:25:16.706566
+Create Date: 2025-10-21 19:18:42.510604
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd0e312e8748d'
+revision: str = '2af64001c496'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -119,6 +119,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['root_id'], ['instances.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index('idx_instances_root_parent', 'instances', ['root_id', 'parent_id'], unique=False)
     op.create_index(op.f('ix_instances_id'), 'instances', ['id'], unique=False)
     op.create_index(op.f('ix_instances_parent_id'), 'instances', ['parent_id'], unique=False)
     op.create_table('properties',
@@ -151,15 +152,8 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('user_id', 'root_id'),
     sa.UniqueConstraint('user_id', 'root_id')
     )
-
-    op.create_unique_constraint(None, 'role_permissions', ['role_id', 'permission_id'])
-    op.create_unique_constraint(None, 'user_instance_access', ['user_id', 'root_id'])
-    op.create_unique_constraint(None, 'user_roles', ['user_id', 'role_id'])
-
-    op.drop_constraint(None, 'user_roles', type_='unique')
-    op.drop_constraint(None, 'user_instance_access', type_='unique')
-    op.drop_constraint(None, 'role_permissions', type_='unique')
     # ### end Alembic commands ###
+
 
 def downgrade() -> None:
     """Downgrade schema."""
@@ -171,6 +165,7 @@ def downgrade() -> None:
     op.drop_table('properties')
     op.drop_index(op.f('ix_instances_parent_id'), table_name='instances')
     op.drop_index(op.f('ix_instances_id'), table_name='instances')
+    op.drop_index('idx_instances_root_parent', table_name='instances')
     op.drop_table('instances')
     op.drop_table('user_roles')
     op.drop_table('role_permissions')
