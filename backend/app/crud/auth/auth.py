@@ -113,7 +113,7 @@ async def user_has_permission(db: AsyncSession, user: User, permission_name: str
     return False
 
 
-def require_permissions(*permissions: str):
+def require_permission(permission: str):
     async def dependency(
         current_user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_async_session)
@@ -130,8 +130,8 @@ def require_permissions(*permissions: str):
             raise HTTPException(status_code=401, detail="User not found")
 
         user_perms = {perm.name for role in user.roles for perm in role.permissions}
-        if not any(p in user_perms for p in permissions):
-            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        if permission not in user_perms:
+            raise HTTPException(status_code=403, detail=f"Missing permission: {permission}")
         return user
     return dependency
 
@@ -178,7 +178,7 @@ def require_instance_permission(
         if instance_root_id_getter is None:
             raise RuntimeError("instance_root_id_getter is required")
 
-        root_id = await instance_root_id_getter(**kwargs)  # await работает здесь
+        root_id = await instance_root_id_getter(**kwargs)
         if write:
             if not await user_can_write_instance(db, current_user, root_id):
                 raise HTTPException(status_code=403, detail="No write access to this instance")
