@@ -113,6 +113,10 @@ class Instances(Base):
         back_populates="instance",
     )
 
+    __table_args__ = (
+        Index("idx_instances_root_parent", "root_id", "parent_id"),
+    )
+
 class InstanceProperties(Base):
     __tablename__ = "instance_properties"
 
