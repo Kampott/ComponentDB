@@ -2,32 +2,41 @@ import {type ReactNode, useEffect, useState} from "react";
 
 import Button from "react-bootstrap/Button";
 
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import DefaultList from "../../Common/DefaultList.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import type {PropertyType, PropertyTypeAdd} from "../../../schemas/PropertyType.ts";
 import type {ObjectType} from "../../../schemas/ObjectType.ts";
 import AddTypePropertyForm from "../../Forms/AddTypePropertyForm.tsx";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
+import {RestApiError} from "../../../http/RestApiClient.ts";
 
 interface Props {
     objectType: ObjectType;
 }
 
 function TypePropertiesTab({objectType}: Props): ReactNode {
-    const services = useStore((state) => state.services);
+    const services = useServicesStore((state) => state.services);
 
     const [objectProperties, setObjectProperties] = useState<PropertyType[] | null>(null);
     const [instanceProperties, setInstanceProperties] = useState<PropertyType[] | null>(null);
     const [formShow, setFormShow] = useState(false)
 
     async function loadProperties(): Promise<void> {
-        setObjectProperties(await services.propertiesTypesService.getPropertyTypesByTypeId(objectType.id, true));
-        setInstanceProperties(await services.propertiesTypesService.getPropertyTypesByTypeId(objectType.id, false));
+        setObjectProperties(null);
+        setInstanceProperties(null);
+
+        try {
+            setObjectProperties(await services.propertiesTypesService.getPropertyTypesByTypeId(objectType.id, true));
+            setInstanceProperties(await services.propertiesTypesService.getPropertyTypesByTypeId(objectType.id, false));
+        } catch (error) {
+            handleApiError(error as RestApiError, {
+                showToast: (m) => alert(m)
+            });
+        }
     }
 
     useEffect(() => {
-        setObjectProperties(null);
-        setInstanceProperties(null);
         loadProperties();
     }, [objectType])
 
@@ -49,9 +58,10 @@ function TypePropertiesTab({objectType}: Props): ReactNode {
         try {
             await services.propertiesTypesService.addPropertyType(data)
         } catch (error) {
-            if (error instanceof Error) {
-                console.log(error)
-            }
+            handleApiError(error as RestApiError, {
+                setFormErrors: (errors) => alert(errors),
+                showToast: (m) => alert(m)
+            });
         } finally {
             setFormShow(false)
             await loadProperties()

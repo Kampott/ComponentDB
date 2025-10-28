@@ -6,3 +6,7 @@ export interface InstancePropertyAdd {
 export interface InstanceProperty extends InstancePropertyAdd {
     id: number
 }
+
+export interface InstancePropertyUpdate {
+    value: string
+}

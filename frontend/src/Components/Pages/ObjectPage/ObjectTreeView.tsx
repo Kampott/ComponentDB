@@ -3,12 +3,14 @@ import {useNavigate} from "react-router-dom";
 
 import Button from "react-bootstrap/Button";
 
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import FileSystemTreeView, {type DataNode} from "../../Common/FileSystemTreeView.tsx";
 import type {Object, ObjectAdd} from "../../../schemas/Object.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import AddObjectForm from "../../Forms/AddObjectForm.tsx";
-import objectToString from "../../../utility/object_to_string.ts";
+import {toString} from "../../../utility/to_string.ts";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
+import {RestApiError} from "../../../http/RestApiClient.ts";
 
 interface Props {
     object: Object;
@@ -17,7 +19,7 @@ interface Props {
 function ObjectTreeView({object}: Props) {
     const navigate = useNavigate();
 
-    const services = useStore((state) => state.services)
+    const services = useServicesStore((state) => state.services)
 
     const [objectTree, setObjectTree] = useState<DataNode<Object>[] | null>(null);
 
@@ -29,15 +31,23 @@ function ObjectTreeView({object}: Props) {
     async function loadObjectChildren(id: number): Promise<DataNode<Object>[]> {
         setLoadingIds((prev) => new Set(prev).add(id))
 
-        const children: Object[] = await services.objectService.getObjectsByParentId(id)
+        try {
+            const children: Object[] = await services.objectService.getObjectsByParentId(id)
 
-        return children.map((element: Object) => {
-            return {
-                id: element.id,
-                data: element,
-                children: null,
-            } as DataNode<Object>
-        })
+            return children.map((element: Object) => {
+                return {
+                    id: element.id,
+                    data: element,
+                    children: null,
+                } as DataNode<Object>
+            })
+        } catch (error) {
+            handleApiError(error as RestApiError, {
+                navigate,
+                showToast: (m) => alert(m)
+            });
+            return [];
+        }
     }
 
     useEffect(() => {
@@ -90,7 +100,7 @@ function ObjectTreeView({object}: Props) {
                 className="ms-2 text-primary"
                 role="button"
                 style={{cursor: 'pointer'}}
-            >{objectToString(node.data)}</span>
+            >{toString(node.data)}</span>
         )
     }
 

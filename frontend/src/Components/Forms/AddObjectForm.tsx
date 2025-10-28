@@ -1,8 +1,10 @@
-import type {Object, ObjectAdd} from "../../schemas/Object.ts";
-import DefaultForm, {type FormField} from "../Common/DefaultForm.tsx";
 import {useEffect, useState} from "react";
+
+import type {Object, ObjectAdd} from "../../schemas/Object.ts";
+import DefaultForm from "../Common/Form/DefaultForm.tsx";
+import type {FormField} from "../Common/Form/FormTypes.ts";
 import type {ObjectType} from "../../schemas/ObjectType.ts";
-import {useStore} from "../../store/Zustand.ts";
+import {useServicesStore} from "../../stores/Zustand.ts";
 import LoadEffect from "../Common/LoadEffect.tsx";
 
 
@@ -11,8 +13,8 @@ interface Props {
     submitCallback: (data: ObjectAdd | null) => void;
 }
 
-function AddObjectTypeForm({parentObject, submitCallback}: Props) {
-    const services = useStore((state) => state.services);
+function AddObjectForm({parentObject, submitCallback}: Props) {
+    const services = useServicesStore((state) => state.services);
 
     const [defaultData, setDefaultData] = useState<ObjectAdd>({} as ObjectAdd);
 
@@ -35,7 +37,7 @@ function AddObjectTypeForm({parentObject, submitCallback}: Props) {
             {
                 bindData: "name",
                 label: "Название объекта",
-                type: "string",
+                type: "text",
                 placeholder: "Введите название",
                 validator: nameValidator
             },
@@ -86,4 +88,4 @@ function AddObjectTypeForm({parentObject, submitCallback}: Props) {
     );
 }
 
-export default AddObjectTypeForm;
+export default AddObjectForm;

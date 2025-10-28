@@ -3,29 +3,45 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
 from app.schemas.core import PropertiesRead, PropertiesCreate, PropertiesUpdate
-from app.crud.core.properties import create_property, get_properties, get_property
+import app.crud.core.properties as db
 from app.db.database import get_async_session
 
 router = APIRouter(prefix="/properties", tags=["DB: Core: Properties"])
 
+
 @router.get("/", response_model=list[PropertiesRead])
-async def read_properties(db: AsyncSession = Depends(get_async_session),
-    property_id: Optional[int] = Query(None),
-    value: Optional[str] = Query(None),
-    object_id: Optional[int] = Query(None)):
-    return await get_properties(db, property_id, value, object_id)
+async def read_properties(session: AsyncSession = Depends(get_async_session),
+                          property_id: Optional[int] = Query(None),
+                          value: Optional[str] = Query(None),
+                          object_id: Optional[int] = Query(None)):
+    return await db.get_properties(session, property_id, value, object_id)
+
 
 @router.get("/{property_id}", response_model=PropertiesRead)
-async def read_type(property_id: int, db: AsyncSession = Depends(get_async_session)):
-    property_ = await get_property(db, property_id)
+async def read_type(property_id: int, session: AsyncSession = Depends(get_async_session)):
+    property_ = await db.get_property(session, property_id)
     if not property_:
         raise HTTPException(status_code=404, detail="Property not found")
     return property_
 
+
 @router.post("/", response_model=PropertiesCreate)
-async def add_properties(data: PropertiesCreate, db: AsyncSession = Depends(get_async_session)):
-    return await create_property(db, data)
+async def add_properties(data: PropertiesCreate, session: AsyncSession = Depends(get_async_session)):
+    return await db.create_property(session, data)
+
 
 @router.delete("/{property_id}", status_code=204)
-async def delete_properties(object_id: int, db: AsyncSession = Depends(get_async_session)):
-    await delete_property(db, property_id)
+async def delete_properties(property_id: int, session: AsyncSession = Depends(get_async_session)):
+    await db.delete_property(session, property_id)
+
+
+@router.patch("/{property_id}")
+async def update_property(property_id: int, data: PropertiesUpdate,
+                               session: AsyncSession = Depends(get_async_session)) -> PropertiesRead:
+    updated_property: PropertiesRead | None = await db.update_property(session, property_id, data)
+    if not updated_property:
+        raise HTTPException(
+            status_code=404,
+            detail="Значение свойства не найдено"
+        )
+    return updated_property

@@ -1,4 +1,4 @@
-import type {LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User} from "../../models/auth.ts";
+import type {LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User} from "../../schemas/Auth.ts";
 
 export default interface IAuthService {
     login(userData: LoginRequest): Promise<LoginResponse>;

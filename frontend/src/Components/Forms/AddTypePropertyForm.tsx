@@ -1,4 +1,5 @@
-import DefaultForm, {type FormField} from "../Common/DefaultForm.tsx";
+import DefaultForm from "../Common/Form/DefaultForm.tsx";
+import type {FormField} from "../Common/Form/FormTypes.ts";
 import type {PropertyTypeAdd} from "../../schemas/PropertyType.ts";
 import type {ObjectType} from "../../schemas/ObjectType.ts";
 
@@ -23,7 +24,7 @@ function AddTypePropertyForm({objectType, submitCallback}: Props) {
         {
             bindData: "name",
             label: "Название свойства",
-            type: "string",
+            type: "text",
             placeholder: "Введите название",
             validator: nameValidator
         },

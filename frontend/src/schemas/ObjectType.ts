@@ -9,8 +9,6 @@ export interface ObjectType extends ObjectTypeAdd {
     root_id: number
 }
 
-export interface TypeWithChildren {
-    id: number
-    name: string
-    children: TypeWithChildren[]
+export interface ObjectTypeUpdate {
+    name?: string
 }

@@ -156,7 +156,7 @@ classDiagram
 	Services o-- PropertiesTypesService
 
 %% Store
-	class IStore {
+	class IServicesStore {
 		+services: Services
 		+user: User
 		+isAuthenticated: boolean
@@ -167,8 +167,8 @@ classDiagram
 		+checkAuth(): Promise<void>
 	}
 	class useStore {
-		+store: IStore
+		+store: IServicesStore
 	}
-	useStore ..> IStore : returns
-	IStore o-- Services : stores
+	useStore ..> IServicesStore : returns
+	IServicesStore o-- Services : stores
 ```

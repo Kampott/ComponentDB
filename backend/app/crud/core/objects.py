@@ -1,27 +1,24 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload
-from sqlalchemy.future import select
+from sqlalchemy import select, update
 from sqlalchemy.sql import and_
+
+from app.crud.core.default import DefaultQueries
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
 from fastapi import HTTPException
 
 
-
 ############ Objects
 
-#Get all of the available objects
+# Get all the available objects
 async def get_objects(
-    db: AsyncSession,
-    name: Optional[int] = None,
-    type_id: Optional[int] = None,
-    parent_id: Optional[int] = None,
-    root_id: Optional[int] = None,
-    index_of_layer: Optional[int] = None
+        db: AsyncSession,
+        name: Optional[str] = None,
+        type_id: Optional[int] = None,
+        parent_id: Optional[int] = None,
+        root_id: Optional[int] = None,
 ) -> List[Objects]:
-
     query = select(Objects)
 
     filters = []
@@ -33,58 +30,54 @@ async def get_objects(
         filters.append(Objects.parent_id == parent_id)
     if root_id is not None:
         filters.append(Objects.root_id == root_id)
-    if index_of_layer is not None:
-        filters.append(Objects.index_of_layer == index_of_layer)
 
     if filters:
         query = query.where(and_(*filters))
 
     result = await db.execute(query)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
-#Get one object using the object's id
+
+# Get one object using the object's id
 async def get_object(db: AsyncSession, object_id: int) -> Optional[Objects]:
     result = await db.execute(select(Objects).where(Objects.id == object_id))
     return result.scalar_one_or_none()
 
 
-#Create an object
+# Create an object
 async def create_object(db: AsyncSession, data: ObjectsCreate):
-    #recieving parent, if parent_id is given
-    index_of_layer = 1
+    # receiving parent, if parent_id is given
     root_id = None
 
-    #if parent_id present - getting the index of layer and adding 1, root = parent.root
-    if data.parent_id:
-        parent_obj = await db.get(Objects, data.parent_id)
-        if not parent_obj:
-            raise HTTPException(status_code=404, detail="Parent object not found")
-        
-        index_of_layer = parent_obj.index_of_layer + 1
-        root_id = parent_obj.root_id
-    
-    #checking if type exists
+
+    # checking if type exists
     type_obj = await db.get(Types, data.type_id)
     if not type_obj:
         raise HTTPException(status_code=404, detail="Type not found")
 
+    if data.parent_id:
+        parent_obj = await db.get(Objects, data.parent_id)
+        if not parent_obj:
+            raise HTTPException(status_code=404, detail="Parent object not found")
+        root_id = parent_obj.root_id
+
     obj = Objects(
-        **data.dict(),
-        index_of_layer=index_of_layer,
+        **data.model_dump(),
         root_id=root_id
     )
 
     db.add(obj)
-    await db.flush() # flushing in order to prevent data corruption (and null root_id)
+    await db.flush()  # flushing in order to prevent data corruption (and null root_id)
 
     if data.parent_id is None:
         obj.root_id = obj.id
         await db.flush()
-    
+
     await db.commit()
     await db.refresh(obj)
-    
+
     return obj
+
 
 async def delete_object(db: AsyncSession, object_id: int) -> None:
     result = await db.execute(select(Objects).where(Objects.id == object_id))
@@ -95,3 +88,7 @@ async def delete_object(db: AsyncSession, object_id: int) -> None:
 
     await db.delete(obj)
     await db.commit()
+
+
+async def update_object(session: AsyncSession, object_id: int, data: ObjectsUpdate) -> Objects | None:
+    return await DefaultQueries.update(session, Objects, object_id, data)

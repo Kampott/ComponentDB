@@ -7,3 +7,8 @@ export interface PropertyTypeAdd {
 export interface PropertyType extends PropertyTypeAdd {
     id: number
 }
+
+export interface PropertyTypeUpdate {
+    name: string
+    is_static: boolean
+}

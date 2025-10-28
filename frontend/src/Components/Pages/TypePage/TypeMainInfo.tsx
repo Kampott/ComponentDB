@@ -1,4 +1,4 @@
-import {type ReactNode, useEffect, useState} from "react";
+import {type ReactNode, useCallback, useEffect, useState} from "react";
 
 import Card from "react-bootstrap/Card";
 import Row from "react-bootstrap/Row";
@@ -6,10 +6,12 @@ import Col from "react-bootstrap/Col";
 
 import type {ObjectType} from "../../../schemas/ObjectType.ts";
 import type {Object} from "../../../schemas/Object.ts";
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import {Link} from "react-router-dom";
-import objectToString from "../../../utility/object_to_string.ts";
+import {toString} from "../../../utility/to_string.ts";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
+import {RestApiError} from "../../../http/RestApiClient.ts";
 
 interface Props {
     objectType: ObjectType
@@ -17,12 +19,13 @@ interface Props {
 
 function TypeMainInfo({objectType}: Props): ReactNode {
 
-    const services = useStore((state) => state.services)
+    const services = useServicesStore((state) => state.services)
 
     const [rootObject, setRootObject] = useState<Object | null>(null);
     const [rootType, setRootType] = useState<ObjectType | null>(null);
 
-    async function loadRootObject() {
+    const loadRootObject = useCallback(async () => {
+        setRootObject(null);
         try {
             const rootObjects: Object[] = await services.objectService.getObjectsByTypeId(objectType.id)
             if (rootObjects.length == 0) {
@@ -34,30 +37,29 @@ function TypeMainInfo({objectType}: Props): ReactNode {
 
             setRootObject(rootObjects[0]);
         } catch (error) {
-            if (error instanceof Error) {
-                console.log(error)
-            }
+            handleApiError(error as RestApiError, {
+                showToast: (m) => alert(m)
+            });
         }
-    }
-
-    async function loadRootType() {
-        try {
-            setRootType(await services.objectsTypesService.getTypeById(objectType.root_id));
-        } catch (error) {
-            if (error instanceof Error) {
-                console.log(error)
-            }
-        }
-    }
+    }, [services.objectService, objectType]);
 
     useEffect(() => {
-        setRootObject(null);
-        setRootType(null);
+        async function loadRootType() {
+            setRootType(null);
+            try {
+                setRootType(await services.objectsTypesService.getTypeById(objectType.root_id));
+            } catch (error) {
+                handleApiError(error as RestApiError, {
+                    showToast: (m) => alert(m)
+                });
+            }
+        }
+
         if (objectType.parent_id == null) {
             loadRootObject();
         }
         loadRootType();
-    }, [objectType]);
+    }, [services.objectsTypesService, objectType]);
 
 
     async function addRootObject() {
@@ -101,7 +103,7 @@ function TypeMainInfo({objectType}: Props): ReactNode {
                                         {rootObject ? (
                                             <Link to={`/objects/${rootObject.id}`}
                                                className="fw-bold text-decoration-none">
-                                                {objectToString(rootObject)}
+                                                {toString(rootObject)}
                                             </Link>
                                         ) : (
                                             <>

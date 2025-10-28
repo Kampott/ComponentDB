@@ -2,151 +2,150 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 
-#Objects
+# Objects
 class ObjectsBase(BaseModel):
-    name: Optional[str] = None
+    name: str | None = None
     type_id: int
-    parent_id: Optional[int] = None
+    parent_id: int | None = None
+
 
 class ObjectsCreate(ObjectsBase):
     pass
 
+
 class ObjectsUpdate(BaseModel):
-    name: Optional[str] = None
-    type_id: Optional[int] = None
-    parent_id: Optional[int] = None
+    name: str | None = None
+    type_id: int | None = None
+
 
 class ObjectsRead(ObjectsBase):
     id: int
-    index_of_layer: int
     root_id: int
 
     class Config:
         from_attributes = True
 
-class ObjectsDelete(BaseModel):
-    id: int
 
-
-#Types
+# Types
 class TypesBase(BaseModel):
     name: str
-    parent_id: Optional[int] = None
+    parent_id: int | None = None
+
 
 class TypesCreate(TypesBase):
     pass
 
-class TypesUpdate(TypesBase):
-    name: Optional[str] = None
-    parent_id: Optional[int] = None
+
+class TypesUpdate(BaseModel):
+    name: str | None = None
+
 
 class TypesRead(TypesBase):
     id: int
-    index_of_layer: int
     root_id: int
 
     class Config:
         from_attributes = True
 
-class TypesDelete(BaseModel):
-    id: int
 
-#PropertyTypes
+# PropertyTypes
 class PropertyTypesBase(BaseModel):
     type_id: int
     name: str
     is_static: bool
 
+
 class PropertyTypesCreate(PropertyTypesBase):
     pass
 
+
 class PropertyTypesUpdate(BaseModel):
-    type_id: Optional[int] = None
-    name: Optional[int] = None
-    is_static: Optional[bool] = None
- 
+    name: int | None = None
+    is_static: bool | None = None
+
+
 class PropertyTypesRead(PropertyTypesBase):
     id: int
 
     class Config:
         from_attributes = True
 
-class PropertyTypesDelete(BaseModel):
-    id: int
 
-
-
-#Properties
+# Properties
 class PropertiesBase(BaseModel):
     property_id: int
     value: str
     object_id: int
 
+
 class PropertiesCreate(PropertiesBase):
     pass
 
+
 class PropertiesUpdate(BaseModel):
-    property_id: Optional[int] = None
-    value: Optional[str] = None
-    object_id: Optional[str] = None
+    value: str | None = None
+
 
 class PropertiesRead(PropertiesBase):
     id: int
 
     class Config:
         from_attributes = True
-class PropertiesDelete(BaseModel):
-    id: int
 
 
-#Instances
-
+# Instances
 class InstancesBase(BaseModel):
-    name: Optional[str] = None
+    name: str | None = None
     object_id: int
+    parent_id: int | None = None
     is_active: bool
 
+
 class InstancesCreate(InstancesBase):
-    tree_id: int
+    pass
 
 class InstanceCreated(BaseModel):
     id: int
-    name: Optional[str] = None
+    name: str | None = None
     object_id: int
+    parent_id: int | None = None
+    root_id: int
     is_active: bool
+    index_of_layer: int
+
 
 class InstancesUpdate(BaseModel):
-    name: Optional[int] = None
-    object_id: Optional[int] = None
-    is_active: Optional[bool] = None
+    name: int | None = None
+    is_active: bool | None = None
+
 
 class InstancesRead(BaseModel):
     id: int
-    name: Optional[str] = None
+    name: str | None = None
+    root_id: int
+    parent_id: int | None = None
     object_id: int
+    index_of_layer: int
     is_active: bool
-    tree_id: int
 
     class Config:
         from_attributes = True
 
-class InstancesDelete(BaseModel):
-    id: int
 
-#Instance Properties
-
+# Instance Properties
 class InstancePropertiesBase(BaseModel):
     value: str
     instance_id: int
     property_type_id: int
 
+
 class InstancePropertiesCreate(InstancePropertiesBase):
     pass
 
+
 class InstancePropertiesUpdate(BaseModel):
-    value: Optional[str] = None
-    instance_id: Optional[int] = None
-    property_type_id: Optional[int] = None
+    value: str | None = None
+
 
 class InstancePropertiesRead(InstancePropertiesBase):
     id: int
@@ -154,31 +153,8 @@ class InstancePropertiesRead(InstancePropertiesBase):
     class Config:
         from_attributes = True
 
-class InstancePropertiesDelete(BaseModel):
-    id: int
 
-#InstanceTreeMap
-class InstanceTreeMapBase(BaseModel):
-    tree_id: int
-    instance_id: int
-    is_active: bool
-
-class InstanceTreeMapCreate(InstanceTreeMapBase):
-    pass
-
-class InstanceTreeMapUpdate(InstanceTreeMapBase):
-    tree_id: Optional[int] = None
-    instance_id: Optional[int] = None
-    is_active: Optional[int] = None
-
-class InstanceTreeMapRead(InstanceTreeMapBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-#DataTree
-
+# DataTree
 class TypeTree(BaseModel):
     id: int
     name: str
@@ -186,6 +162,7 @@ class TypeTree(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class ObjectNode(BaseModel):
     id: int
@@ -196,7 +173,9 @@ class ObjectNode(BaseModel):
     class Config:
         from_attributes = True
 
-ObjectNode.update_forward_refs()
+
+ObjectNode.model_rebuild()
+
 
 class InstanceOut(BaseModel):
     id: int
@@ -206,6 +185,7 @@ class InstanceOut(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class ObjectInstanceTree(BaseModel):
     id: int
@@ -217,8 +197,5 @@ class ObjectInstanceTree(BaseModel):
     class Config:
         from_attributes = True
 
-ObjectInstanceTree.update_forward_refs()
 
-
-
-
+ObjectInstanceTree.model_rebuild()

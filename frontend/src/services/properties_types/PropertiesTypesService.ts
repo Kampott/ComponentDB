@@ -1,5 +1,5 @@
 import type RestApiClient from "../../http/RestApiClient.ts";
-import type {PropertyType, PropertyTypeAdd} from "../../schemas/PropertyType.ts";
+import type {PropertyType, PropertyTypeAdd, PropertyTypeUpdate} from "../../schemas/PropertyType.ts";
 import type IPropertiesTypesService from "./IPropertiesTypesService.ts";
 
 export default class PropertiesTypesService implements IPropertiesTypesService {
@@ -19,6 +19,10 @@ export default class PropertiesTypesService implements IPropertiesTypesService {
 
     public async addPropertyType(object: PropertyTypeAdd): Promise<PropertyTypeAdd> {
         return await this.client.post<PropertyTypeAdd, PropertyTypeAdd>("/property_types/", object);
+    }
+
+    public async updatePropertyType(id: number, data: PropertyTypeUpdate): Promise<PropertyType> {
+        return await this.client.patch<PropertyTypeUpdate, PropertyType>(`/property_types/${id}`, data);
     }
 
     public async deletePropertyType(id: number): Promise<null> {

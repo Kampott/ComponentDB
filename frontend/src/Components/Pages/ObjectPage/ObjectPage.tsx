@@ -9,7 +9,7 @@ import Tabs from "react-bootstrap/Tabs";
 import Tab from "react-bootstrap/Tab";
 
 import ObjectTreeView from "./ObjectTreeView.tsx";
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import {RestApiError} from "../../../http/RestApiClient.ts";
 import type {Object} from "../../../schemas/Object.ts";
 import ObjectInstancesTab from "./ObjectInstancesTab.tsx";
@@ -17,44 +17,40 @@ import ObjectPropertiesTab from "./ObjectPropertiesTab.tsx";
 import ObjectDocumentsTab from "./ObjectDocumentsTab.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import ObjectMainInfo from "./ObjectMainInfo.tsx";
-import objectToString from "../../../utility/object_to_string.ts";
+import {toString} from "../../../utility/to_string.ts";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
 
 function ObjectPage() {
     const {objectId} = useParams()
     const navigate = useNavigate()
 
-    const services = useStore((state) => state.services)
+    const services = useServicesStore((state) => state.services)
 
     const [object, setObject] = useState<Object | null>(null);
 
     const id: number = Number(objectId)
 
-    async function loadObject() {
-        if (isNaN(id)) {
-            navigate("/404")
-            return
-        }
-
-        try {
-            setObject(await services.objectService.getObjectById(id))
-        } catch (error) {
-            if (error instanceof RestApiError) {
-                const apiError: RestApiError = error as RestApiError
-                if (apiError.statusCode && apiError.statusCode == 404) {
-                    navigate("/404")
-                    return
-                }
-            }
-            if (error instanceof Error) {
-                console.log(error)
-            }
-        }
-    }
-
     useEffect(() => {
-        setObject(null);
+        async function loadObject() {
+            setObject(null);
+
+            if (isNaN(id)) {
+                navigate("/404")
+                return
+            }
+
+            try {
+                setObject(await services.objectService.getObjectById(id))
+            } catch (error) {
+                handleApiError(error as RestApiError, {
+                    navigate,
+                    showToast: (m) => alert(m)
+                });
+            }
+        }
+
         loadObject();
-    }, [objectId])
+    }, [services.objectService, id, navigate, objectId])
 
     return (
         <Container className="mt-4">
@@ -67,7 +63,7 @@ function ObjectPage() {
                         </LoadEffect>
                     </Breadcrumb>
                     <LoadEffect data={object} contentSize={{height: "20px", width: "100%"}}>
-                        <h1 className="text-center mb-5">Объект "{objectToString(object)}"</h1>
+                        <h1 className="text-center mb-5">Объект "{toString(object)}"</h1>
 
                         {object && <ObjectMainInfo object={object} />}
                     </LoadEffect>

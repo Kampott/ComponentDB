@@ -2,12 +2,14 @@ import {type ReactNode, useEffect, useState} from "react";
 
 import Form from "react-bootstrap/Form";
 
-import {useStore} from "../../../store/Zustand.ts";
+import {useServicesStore} from "../../../stores/Zustand.ts";
 import DefaultList from "../../Common/DefaultList.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import type {Object} from "../../../schemas/Object.ts";
 import type {PropertyType} from "../../../schemas/PropertyType.ts";
 import type {Property} from "../../../schemas/Property.ts";
+import {handleApiError} from "../../../utility/handle_api_error.ts";
+import {RestApiError} from "../../../http/RestApiClient.ts";
 
 interface ObjectProperty {
     type: PropertyType;
@@ -19,7 +21,7 @@ interface Props {
 }
 
 function ObjectPropertiesTab({object}: Props): ReactNode {
-    const services = useStore((state) => state.services);
+    const services = useServicesStore((state) => state.services);
 
     const [objectProperties, setObjectProperties] = useState<ObjectProperty[] | null>(null);
 
@@ -41,24 +43,31 @@ function ObjectPropertiesTab({object}: Props): ReactNode {
         }
     }
 
-    async function loadProperties(): Promise<void> {
-        const propertiesTypes: PropertyType[] = await services.propertiesTypesService.getPropertyTypesByTypeId(object.type_id, true);
-        const propertiesValues: Property[] = await services.propertiesService.getPropertiesByObjectId(object.id);
-
-        setObjectProperties(propertiesTypes.map(propertyType => {
-            let value: string | null = null;
-            for (const propertyValue of propertiesValues) {
-                if (propertyValue.property_id == propertyType.id) {
-                    value = propertyValue.value;
-                    break;
-                }
-            }
-            return {type: propertyType, value: value} as ObjectProperty;
-        }));
-    }
-
     useEffect(() => {
-        setObjectProperties(null);
+        async function loadProperties(): Promise<void> {
+            setObjectProperties(null);
+
+            try {
+                const propertiesTypes: PropertyType[] = await services.propertiesTypesService.getPropertyTypesByTypeId(object.type_id, true);
+                const propertiesValues: Property[] = await services.propertiesService.getPropertiesByObjectId(object.id);
+
+                setObjectProperties(propertiesTypes.map(propertyType => {
+                    let value: string | null = null;
+                    for (const propertyValue of propertiesValues) {
+                        if (propertyValue.property_id == propertyType.id) {
+                            value = propertyValue.value;
+                            break;
+                        }
+                    }
+                    return {type: propertyType, value: value} as ObjectProperty;
+                }));
+            } catch (error) {
+                handleApiError(error as RestApiError, {
+                    showToast: (m) => alert(m)
+                });
+            }
+        }
+
         loadProperties();
     }, [object])
 

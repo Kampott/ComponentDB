@@ -3,12 +3,14 @@ import Offcanvas from "react-bootstrap/Offcanvas";
 import {type ReactNode, useEffect, useState} from "react";
 
 import type {ObjectType, ObjectTypeAdd} from "../../schemas/ObjectType.ts";
-import {useStore} from "../../store/Zustand.ts";
+import {useServicesStore} from "../../stores/Zustand.ts";
 import Button from "react-bootstrap/Button";
 import {useNavigate} from "react-router-dom";
 import LoadEffect from "../Common/LoadEffect.tsx";
 import DefaultList from "../Common/DefaultList.tsx";
 import AddObjectTypeForm from "../Forms/AddObjectTypeForm.tsx";
+import {handleApiError} from "../../utility/handle_api_error.ts";
+import {RestApiError} from "../../http/RestApiClient.ts";
 
 
 interface Props {
@@ -19,7 +21,7 @@ interface Props {
 function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
     const navigate = useNavigate();
 
-    const services = useStore((state) => state.services)
+    const services = useServicesStore((state) => state.services)
 
     const [rootObjectTypes, setRootObjectTypes] = useState<ObjectType[] | null>(null);
     const [formShow, setFormShow] = useState(false)
@@ -29,12 +31,14 @@ function RootObjectsListMenu({showObjectsMenu, handleClose}: Props) {
     }
 
     async function loadRootObjectTypes() {
+        setRootObjectTypes(null)
         try {
             setRootObjectTypes(await services.objectsTypesService.getRootTypes())
         } catch (error) {
-            if (error instanceof Error) {
-                console.log(error)
-            }
+            handleApiError(error as RestApiError, {
+                navigate,
+                showToast: (m) => alert(m)
+            });
         }
     }
 

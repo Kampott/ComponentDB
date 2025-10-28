@@ -11,10 +11,7 @@ export interface Object extends ObjectAdd {
     root_id: number
 }
 
-export interface ObjectWithChildren {
-    id: number
-    type_id: number
-    type_name: string
-    children: ObjectWithChildren[];
+export interface ObjectUpdate {
+    name?: string
+    type_id?: number
 }
-
