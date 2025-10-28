@@ -23,7 +23,7 @@ function AddObjectTypeForm({parentObjectType, submitCallback}: Props) {
         {
             bindData: "name",
             label: "Название типа",
-            type: "string",
+            type: "text",
             placeholder: "Введите название",
             validator: nameValidator
         }

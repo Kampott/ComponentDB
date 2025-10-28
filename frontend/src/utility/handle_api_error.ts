@@ -39,6 +39,11 @@ export function handleApiError(err: unknown, handlers: Handlers = {}) {
             handlers.setGlobalError?.("Ошибка сервера");
             break;
 
+        case 401:
+            console.info("Received 401 on api error, navigating to /login");
+            handlers.navigate?.("/login")
+            break;
+
         default:
             if (err.isNetworkError) {
                 handlers.showToast?.("Нет соединения с сервером");

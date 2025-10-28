@@ -40,14 +40,14 @@ function LoginForm({submitCallback}: Props) {
         {
             bindData: "email",
             label: "",
-            type: "string",
+            type: "text",
             placeholder: "Имя пользователя",
             validator: usernameValidator
         },
         {
             bindData: "password",
             label: "",
-            type: "string",
+            type: "password",
             placeholder: "Пароль",
             validator: passwordValidator
         }

@@ -8,7 +8,7 @@ import FileSystemTreeView, {type DataNode} from "../../Common/FileSystemTreeView
 import type {Object, ObjectAdd} from "../../../schemas/Object.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import AddObjectForm from "../../Forms/AddObjectForm.tsx";
-import objectToString from "../../../utility/object_to_string.ts";
+import {toString} from "../../../utility/to_string.ts";
 import {handleApiError} from "../../../utility/handle_api_error.ts";
 import {RestApiError} from "../../../http/RestApiClient.ts";
 
@@ -100,7 +100,7 @@ function ObjectTreeView({object}: Props) {
                 className="ms-2 text-primary"
                 role="button"
                 style={{cursor: 'pointer'}}
-            >{objectToString(node.data)}</span>
+            >{toString(node.data)}</span>
         )
     }
 

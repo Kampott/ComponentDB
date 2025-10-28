@@ -9,7 +9,7 @@ import type {Object} from "../../../schemas/Object.ts";
 import {useServicesStore} from "../../../stores/Zustand.ts";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import {Link} from "react-router-dom";
-import objectToString from "../../../utility/object_to_string.ts";
+import {toString} from "../../../utility/to_string.ts";
 import {handleApiError} from "../../../utility/handle_api_error.ts";
 import {RestApiError} from "../../../http/RestApiClient.ts";
 
@@ -103,7 +103,7 @@ function TypeMainInfo({objectType}: Props): ReactNode {
                                         {rootObject ? (
                                             <Link to={`/objects/${rootObject.id}`}
                                                className="fw-bold text-decoration-none">
-                                                {objectToString(rootObject)}
+                                                {toString(rootObject)}
                                             </Link>
                                         ) : (
                                             <>

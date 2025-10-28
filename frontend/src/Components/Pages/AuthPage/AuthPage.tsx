@@ -1,6 +1,8 @@
 import {type ReactElement, useState} from "react";
 import {useNavigate} from "react-router-dom";
 
+import Button from "react-bootstrap/Button";
+
 import RegisterForm from "../../Forms/RegisterForm.tsx";
 import LoginForm from "../../Forms/LoginForm.tsx";
 import type {LoginRequest} from "../../../schemas/Auth.ts";
@@ -34,10 +36,21 @@ function AuthPage() {
 
     let content: ReactElement;
     if (isRegister) {
-        content = <RegisterForm/>;
+        content = (
+            <>
+                <RegisterForm/>
+                <Button onClick={() => setIsRegister(false)}>Есть аккаунт?</Button>
+            </>
+        );
     } else {
-        content = <LoginForm submitCallback={confirmLogin}/>;
+        content = (
+            <>
+                <LoginForm submitCallback={confirmLogin}/>;
+                <Button onClick={() => setIsRegister(true)}>Зарегистрироваться</Button>
+            </>
+        );
     }
+
     return (
         content
     );

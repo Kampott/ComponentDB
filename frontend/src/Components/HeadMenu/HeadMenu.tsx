@@ -4,7 +4,7 @@ import Container from "react-bootstrap/Container";
 import NavDropdown from "react-bootstrap/NavDropdown"
 import RootObjectsListMenu from "./RootObjectsListMenu.tsx";
 import {useState} from "react";
-import {Link, useNavigate} from "react-router-dom";
+import {Link} from "react-router-dom";
 
 
 function HeadMenu() {

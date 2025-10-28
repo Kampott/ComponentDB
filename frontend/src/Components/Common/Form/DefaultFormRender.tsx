@@ -73,7 +73,7 @@ function DefaultFormRender<T>({data, setData, errors, setErrors, fields}: Props<
                     ) : (
                         <>
                             <Form.Control
-                                type={field.type === "number" ? "number" : "text"}
+                                type={field.type}
                                 placeholder={field.placeholder}
                                 value={getField(field.bindData) as any}
                                 onChange={(e) => handleChange(field, e.target.value)}

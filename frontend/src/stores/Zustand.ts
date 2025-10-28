@@ -11,7 +11,7 @@ export const useServicesStore = create<IServicesStore>(() => ({
     services: new Services(),
 }));
 
-export const useUserStore = create<IUserStore>((set) => ({
+export const useUserStore = create<IUserStore>((set, get) => ({
     user: {} as User,
     isAuthenticated: false,
 
@@ -26,16 +26,20 @@ export const useUserStore = create<IUserStore>((set) => ({
     async login(userData: LoginRequest) {
         const response = await useServicesStore.getState().services.authService.login(userData);
         localStorage.setItem("token", response.access_token);
-        this.setAuth(true)
-        this.setUser(await useServicesStore.getState().services.authService.me())
+
+        const store = get();
+        store.setAuth(true)
+        store.setUser(await useServicesStore.getState().services.authService.me())
     },
 
     async logout() {
         try {
             await useServicesStore.getState().services.authService.logout();
             localStorage.removeItem("token");
-            this.setAuth(false)
-            this.setUser({} as User)
+
+            const store = get();
+            store.setAuth(false)
+            store.setUser({} as User)
         } catch (e: unknown) {
             logError(e)
         }
@@ -45,8 +49,9 @@ export const useUserStore = create<IUserStore>((set) => ({
         try {
             const response = await useServicesStore.getState().services.authService.refresh()
             localStorage.setItem("token", response.access_token);
-            this.setAuth(true)
-            this.setUser(await useServicesStore.getState().services.authService.me())
+            const store = get();
+            store.setAuth(true);
+            store.setUser(await useServicesStore.getState().services.authService.me());
         } catch (e) {
             logError(e)
         }

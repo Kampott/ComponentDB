@@ -1,4 +1,4 @@
-export type FieldType = "string" | "number" | "boolean" | "select";
+export type FieldType = "text" | "number" | "boolean" | "select" | "password";
 
 export interface FormFieldOption<T> {
     label: string;

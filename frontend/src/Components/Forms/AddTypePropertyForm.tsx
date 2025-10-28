@@ -24,7 +24,7 @@ function AddTypePropertyForm({objectType, submitCallback}: Props) {
         {
             bindData: "name",
             label: "Название свойства",
-            type: "string",
+            type: "text",
             placeholder: "Введите название",
             validator: nameValidator
         },
