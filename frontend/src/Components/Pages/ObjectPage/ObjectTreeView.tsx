@@ -28,13 +28,10 @@ function ObjectTreeView({ object }: Props) {
     )
 
     const [openIds, setOpenIds] = useState<Set<number>>(new Set())
-    const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set())
 
     const [formShow, setFormShow] = useState(false)
 
     async function loadObjectChildren(id: number): Promise<DataNode<Object>[]> {
-        setLoadingIds(prev => new Set(prev).add(id))
-
         try {
             const children: Object[] =
                 await services.objectService.getObjectsByParentId(id)
@@ -88,11 +85,6 @@ function ObjectTreeView({ object }: Props) {
         }
 
         setObjectTree(prev => prev && attachChildren(prev))
-        setLoadingIds(prev => {
-            const next = new Set(prev)
-            next.delete(id)
-            return next
-        })
     }
 
     function onObjectChildrenClick(id: number) {
@@ -145,7 +137,6 @@ function ObjectTreeView({ object }: Props) {
                     renderItem={renderItem}
                     onRequestChildren={loadObjectChildren}
                     onChildrenLoaded={onObjectChildrenLoaded}
-                    loadingIds={loadingIds}
                 />
             </LoadEffect>
 

@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 
+import ContextMenu from '@/Components/DefaultLayout/ContextMenu.tsx'
 import HeadMenu from '../HeadMenu/HeadMenu.tsx'
 import GlobalToaster from './GlobalToaster.tsx'
 
@@ -9,6 +10,7 @@ function DefaultLayout() {
             <HeadMenu />
             <Outlet />
             <GlobalToaster />
+            <ContextMenu />
         </>
     )
 }

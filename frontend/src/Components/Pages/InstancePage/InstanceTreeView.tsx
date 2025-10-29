@@ -25,13 +25,10 @@ function InstanceTreeView({ instance }: Props) {
     >(null)
 
     const [openIds, setOpenIds] = useState<Set<number>>(new Set())
-    const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set())
 
     async function loadInstanceChildren(
         id: number,
     ): Promise<DataNode<ObjectInstance>[]> {
-        setLoadingIds(prev => new Set(prev).add(id))
-
         try {
             const children: ObjectInstance[] =
                 await services.objectsInstancesService.getInstancesByParentId(
@@ -90,15 +87,22 @@ function InstanceTreeView({ instance }: Props) {
         }
 
         setInstanceTree(prev => prev && attachChildren(prev))
-        setLoadingIds(prev => {
-            const next = new Set(prev)
-            next.delete(id)
-            return next
-        })
     }
 
     function onInstanceChildrenClick(id: number) {
         navigate(`/instances/${id}`)
+    }
+
+    function handleAddChildRequest(objectInstance: ObjectInstance) {
+        console.log(objectInstance)
+    }
+
+    function handleChangeRequest(objectInstance: ObjectInstance) {
+        console.log(objectInstance)
+    }
+
+    function handleDeleteRequest(objectInstance: ObjectInstance) {
+        console.log(objectInstance)
     }
 
     function renderItem(node: DataNode<ObjectInstance>) {
@@ -127,7 +131,9 @@ function InstanceTreeView({ instance }: Props) {
                     renderItem={renderItem}
                     onRequestChildren={loadInstanceChildren}
                     onChildrenLoaded={onInstanceChildrenLoaded}
-                    loadingIds={loadingIds}
+                    onAddChildRequest={handleAddChildRequest}
+                    onChangeRequest={handleChangeRequest}
+                    onDeleteRequest={handleDeleteRequest}
                 />
             </LoadEffect>
         </>

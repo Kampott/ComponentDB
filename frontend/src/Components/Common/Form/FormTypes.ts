@@ -1,3 +1,5 @@
+import type { ValidationResult } from '@/Validators/Types.ts'
+
 export type FieldType = 'text' | 'number' | 'boolean' | 'select' | 'password'
 
 export interface FormFieldOption<T> {
@@ -11,5 +13,5 @@ export interface FormField<T, K extends keyof T> {
     type: FieldType
     placeholder?: string
     options?: FormFieldOption<T[K]>[]
-    validator?: (value: T[K]) => string | null
+    validator?: (value: T[K]) => ValidationResult
 }

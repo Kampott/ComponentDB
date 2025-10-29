@@ -100,12 +100,14 @@ export const useContextMenuStore = create<IContextMenuStore>(set => ({
         elementData: T,
         contextMenuOptions: ContextMenuOptions<T>,
     ) => {
+        console.info('onContextMenuCall called')
         e.preventDefault()
         set({
             visible: true,
             position: position,
             elementData: elementData,
-            contextMenuOptions: contextMenuOptions as ContextMenuOptions<unknown>,
+            contextMenuOptions:
+                contextMenuOptions as ContextMenuOptions<unknown>,
         })
     },
     hideMenu: () =>

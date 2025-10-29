@@ -113,7 +113,6 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
                 ) : (
                     <DefaultList
                         data={objectProperties ? objectProperties : []}
-                        onClick={null}
                         renderItem={renderProperty}
                         onChangeRequest={handleChangeRequest}
                         onDeleteRequest={handleDeleteRequest}
@@ -134,7 +133,6 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
                 ) : (
                     <DefaultList
                         data={instanceProperties ? instanceProperties : []}
-                        onClick={null}
                         renderItem={renderProperty}
                         onChangeRequest={handleChangeRequest}
                         onDeleteRequest={handleDeleteRequest}

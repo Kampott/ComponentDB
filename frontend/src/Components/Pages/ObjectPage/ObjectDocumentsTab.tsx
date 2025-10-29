@@ -65,7 +65,6 @@ function ObjectDocumentsTab({ object }: Props): ReactNode {
             >
                 <DefaultList
                     data={documents ? documents : []}
-                    onClick={null}
                     renderItem={renderDocument}
                 />
             </LoadEffect>

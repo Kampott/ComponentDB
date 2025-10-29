@@ -25,6 +25,8 @@ function ContextMenu() {
             document.removeEventListener('mousedown', handleClickOutside)
     }, [hideMenu])
 
+    console.log('hii')
+
     function handleOptionClick(option: string) {
         const action = contextMenuOptions![option]
         if (action) {
@@ -37,16 +39,22 @@ function ContextMenu() {
         <Dropdown.Menu
             show={visible}
             ref={menuRef}
-            style={{ position: 'absolute', left: position.x, top: position.y }}
+            style={{
+                position: 'absolute',
+                left: position.x,
+                top: position.y,
+                zIndex: 9999,
+            }}
         >
-            {Object.keys(contextMenuOptions!).map((option, idx) => (
-                <Dropdown.Item
-                    key={idx}
-                    onClick={() => handleOptionClick(option)}
-                >
-                    {option}
-                </Dropdown.Item>
-            ))}
+            {contextMenuOptions &&
+                Object.keys(contextMenuOptions).map((option, idx) => (
+                    <Dropdown.Item
+                        key={idx}
+                        onClick={() => handleOptionClick(option)}
+                    >
+                        {option}
+                    </Dropdown.Item>
+                ))}
             <Dropdown.Divider />
             <Dropdown.Item onClick={() => hideMenu()}>Закрыть</Dropdown.Item>
         </Dropdown.Menu>

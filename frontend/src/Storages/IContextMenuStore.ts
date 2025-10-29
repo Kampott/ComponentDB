@@ -1,7 +1,10 @@
 import type { MouseEvent } from 'react'
 
 export type OnObjectActionFunc<T> = (element: T) => void
-export type ContextMenuOptions<T> = Record<string, OnObjectActionFunc<T> | undefined>
+export type ContextMenuOptions<T> = Record<
+    string,
+    OnObjectActionFunc<T> | undefined
+>
 
 export default interface IContextMenuStore {
     visible: boolean

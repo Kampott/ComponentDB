@@ -140,7 +140,6 @@ function ObjectPropertiesTab({ object }: Props): ReactNode {
             >
                 <DefaultList
                     data={objectProperties ? objectProperties : []}
-                    onClick={null}
                     renderItem={RenderObjectProperty}
                 />
             </LoadEffect>

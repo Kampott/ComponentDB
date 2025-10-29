@@ -24,6 +24,7 @@ export interface Props<T> {
     onRequestChildren?: (id: number) => Promise<DataNode<T>[]>
     onChildrenLoaded?: (id: number, children: DataNode<T>[]) => void
 
+    onAddChildRequest?: OnObjectActionFunc<T>
     onChangeRequest?: OnObjectActionFunc<T>
     onDeleteRequest?: OnObjectActionFunc<T>
 }
@@ -35,12 +36,14 @@ function FileSystemTreeView<T>({
     renderItem,
     onRequestChildren,
     onChildrenLoaded,
+    onAddChildRequest,
     onChangeRequest,
     onDeleteRequest,
 }: Props<T>) {
     const { onContextMenuCall } = useContextMenuStore()
 
     const contextMenuOptions: ContextMenuOptions<T> = {
+        Добавить: onAddChildRequest,
         Изменить: onChangeRequest,
         Удалить: onDeleteRequest,
     }

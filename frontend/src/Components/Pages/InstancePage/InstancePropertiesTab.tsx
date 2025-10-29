@@ -148,7 +148,6 @@ function InstancePropertiesTab({ instance }: Props): ReactNode {
             >
                 <DefaultList
                     data={instanceProperties ? instanceProperties : []}
-                    onClick={null}
                     renderItem={RenderInstanceProperty}
                 />
             </LoadEffect>
