@@ -1,7 +1,7 @@
-import {Outlet} from "react-router-dom";
+import { Outlet } from 'react-router-dom'
 
-import HeadMenu from "../HeadMenu/HeadMenu.tsx";
-import GlobalToaster from "./GlobalToaster.tsx";
+import HeadMenu from '../HeadMenu/HeadMenu.tsx'
+import GlobalToaster from './GlobalToaster.tsx'
 
 function DefaultLayout() {
     return (
@@ -10,7 +10,7 @@ function DefaultLayout() {
             <Outlet />
             <GlobalToaster />
         </>
-    );
+    )
 }
 
-export default DefaultLayout;
+export default DefaultLayout

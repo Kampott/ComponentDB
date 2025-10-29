@@ -1,34 +1,41 @@
-import {useEffect, useState} from 'react';
-import {useNavigate} from "react-router-dom";
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import Button from "react-bootstrap/Button";
+import Button from 'react-bootstrap/Button'
 
-import {useServicesStore} from "../../../stores/Zustand.ts";
-import FileSystemTreeView, {type DataNode} from "../../Common/FileSystemTreeView.tsx";
-import LoadEffect from "../../Common/LoadEffect.tsx";
-import type {ObjectType, ObjectTypeAdd} from "../../../schemas/ObjectType.ts";
-import AddObjectTypeForm from "../../Forms/AddObjectTypeForm.tsx";
-import {handleApiError} from "../../../utility/handle_api_error.ts";
-import {RestApiError} from "../../../http/RestApiClient.ts";
+import { RestApiError } from '@/Http/RestApiClient.ts'
+import type { ObjectType, ObjectTypeAdd } from '@/Schemas/ObjectType.ts'
+import { useServicesStore } from '@/Storages/Zustand.ts'
+import { handleApiError } from '@/Utility/handle_api_error.ts'
+import FileSystemTreeView, {
+    type DataNode,
+} from '../../Common/FileSystemTreeView.tsx'
+import LoadEffect from '../../Common/LoadEffect.tsx'
+import AddObjectTypeForm from '../../Forms/AddObjectTypeForm.tsx'
 
 interface Props {
-    objectType: ObjectType;
+    objectType: ObjectType
 }
 
-function TypeTreeView({objectType}: Props) {
-    const navigate = useNavigate();
+function TypeTreeView({ objectType }: Props) {
+    const navigate = useNavigate()
 
-    const services = useServicesStore((state) => state.services)
+    const services = useServicesStore(state => state.services)
 
-    const [typeTree, setTypeTree] = useState<DataNode<ObjectType>[] | null>(null);
+    const [typeTree, setTypeTree] = useState<DataNode<ObjectType>[] | null>(
+        null,
+    )
 
-    const [openIds, setOpenIds] = useState<Set<number>>(new Set());
+    const [openIds, setOpenIds] = useState<Set<number>>(new Set())
 
-    const [formShow, setFormShow] = useState(false);
+    const [formShow, setFormShow] = useState(false)
 
-    async function loadObjectTypeChildren(id: number): Promise<DataNode<ObjectType>[]> {
+    async function loadObjectTypeChildren(
+        id: number,
+    ): Promise<DataNode<ObjectType>[]> {
         try {
-            const children: ObjectType[] = await services.objectsTypesService.getTypesByParentId(id)
+            const children: ObjectType[] =
+                await services.objectsTypesService.getTypesByParentId(id)
 
             return children.map((element: ObjectType) => {
                 return {
@@ -40,17 +47,16 @@ function TypeTreeView({objectType}: Props) {
         } catch (error) {
             handleApiError(error as RestApiError, {
                 navigate,
-                showToast: (m) => alert(m)
-            });
+                showToast: m => alert(m),
+            })
             return []
         }
     }
 
     useEffect(() => {
-        setTypeTree(null);
-        loadObjectTypeChildren(objectType.id)
-            .then((data) => setTypeTree(data));
-    }, [objectType]);
+        setTypeTree(null)
+        loadObjectTypeChildren(objectType.id).then(data => setTypeTree(data))
+    }, [objectType])
 
     async function onObjectChildrenToggle(id: number): Promise<void> {
         setOpenIds((prev: Set<number>): Set<number> => {
@@ -60,24 +66,29 @@ function TypeTreeView({objectType}: Props) {
             } else {
                 next.add(id)
             }
-            return next;
+            return next
         })
     }
 
-    function onObjectChildrenLoaded(id: number, children: DataNode<ObjectType>[]) {
-        const attachChildren = (nodes: DataNode<ObjectType>[]): DataNode<ObjectType>[] => {
-            return nodes.map((n) => {
+    function onObjectChildrenLoaded(
+        id: number,
+        children: DataNode<ObjectType>[],
+    ) {
+        const attachChildren = (
+            nodes: DataNode<ObjectType>[],
+        ): DataNode<ObjectType>[] => {
+            return nodes.map(n => {
                 if (n.id === id) {
-                    return {...n, children, childrenLoaded: true}
+                    return { ...n, children, childrenLoaded: true }
                 }
                 if (n.children) {
-                    return {...n, children: attachChildren(n.children)}
+                    return { ...n, children: attachChildren(n.children) }
                 }
                 return n
             })
         }
 
-        setTypeTree((prev) => prev && attachChildren(prev));
+        setTypeTree(prev => prev && attachChildren(prev))
     }
 
     async function onTypeChildrenClick(id: number): Promise<void> {
@@ -88,10 +99,12 @@ function TypeTreeView({objectType}: Props) {
         return (
             <span
                 onClick={() => onTypeChildrenClick(node.id)}
-                className="ms-2 text-primary"
-                role="button"
-                style={{cursor: 'pointer'}}
-            >{node.data.name}</span>
+                className='ms-2 text-primary'
+                role='button'
+                style={{ cursor: 'pointer' }}
+            >
+                {node.data.name}
+            </span>
         )
     }
 
@@ -108,8 +121,17 @@ function TypeTreeView({objectType}: Props) {
 
     return (
         <>
-            <Button variant="primary" className="mt-4" onClick={() => setFormShow(true)}>Добавить тип</Button>
-            <LoadEffect data={typeTree} contentSize={{height: "20px", width: "100%"}}>
+            <Button
+                variant='primary'
+                className='mt-4'
+                onClick={() => setFormShow(true)}
+            >
+                Добавить тип
+            </Button>
+            <LoadEffect
+                data={typeTree}
+                contentSize={{ height: '20px', width: '100%' }}
+            >
                 <FileSystemTreeView
                     data={typeTree ? typeTree : []}
                     openIds={openIds}
@@ -120,7 +142,12 @@ function TypeTreeView({objectType}: Props) {
                 />
             </LoadEffect>
 
-            {formShow && <AddObjectTypeForm parentObjectType={objectType} submitCallback={confirmAddType}/>}
+            {formShow && (
+                <AddObjectTypeForm
+                    parentObjectType={objectType}
+                    submitCallback={confirmAddType}
+                />
+            )}
         </>
     )
 }

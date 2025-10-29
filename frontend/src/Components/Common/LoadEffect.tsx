@@ -1,9 +1,9 @@
-import type {ReactNode} from "react";
+import type { ReactNode } from 'react'
 
-import Placeholder from "react-bootstrap/Placeholder";
+import Placeholder from 'react-bootstrap/Placeholder'
 
 type ContentSize = {
-    width: string,
+    width: string
     height: string
 }
 
@@ -13,18 +13,25 @@ interface Props<T> {
     contentSize: ContentSize
 }
 
-function LoadEffect<T>({data, children, contentSize}: Props<T>) {
+function LoadEffect<T>({ data, children, contentSize }: Props<T>) {
     return (
         <>
             {data == null ? (
-                <Placeholder as="div" animation="glow">
-                    <Placeholder xs={12} style={{height: contentSize.height, width: contentSize.width, borderRadius: "4px"}}/>
+                <Placeholder as='div' animation='glow'>
+                    <Placeholder
+                        xs={12}
+                        style={{
+                            height: contentSize.height,
+                            width: contentSize.width,
+                            borderRadius: '4px',
+                        }}
+                    />
                 </Placeholder>
             ) : (
                 children
             )}
         </>
-    );
+    )
 }
 
 export default LoadEffect

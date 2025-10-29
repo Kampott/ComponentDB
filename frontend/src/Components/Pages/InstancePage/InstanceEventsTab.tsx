@@ -1,13 +1,13 @@
-import {type ReactNode} from "react";
+import { type ReactNode } from 'react'
 
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
+import Col from 'react-bootstrap/Col'
+import Row from 'react-bootstrap/Row'
 
 // import type {ObjectInstance} from "../../../schemas/ObjectInstance.ts";
 // import {useServicesStore} from "../../../stores/Zustand.ts";
-import DefaultList from "../../Common/DefaultList.tsx";
-import {useNavigate} from "react-router-dom";
-import LoadEffect from "../../Common/LoadEffect.tsx";
+import { useNavigate } from 'react-router-dom'
+import DefaultList from '../../Common/DefaultList.tsx'
+import LoadEffect from '../../Common/LoadEffect.tsx'
 
 // interface Props {
 //     instance: ObjectInstance;
@@ -20,47 +20,51 @@ interface EventDummy {
 }
 
 function InstanceEventsTab(/*{instance}: Props*/): ReactNode {
-    const navigate = useNavigate();
+    const navigate = useNavigate()
 
     // const services = useServicesStore((state) => state.services);
 
     const events: EventDummy[] = [
         {
             id: 1,
-            type: "Замена",
+            type: 'Замена',
             date: new Date(),
         },
         {
             id: 2,
-            type: "Восставновление",
+            type: 'Восставновление',
             date: new Date(),
         },
-    ];
+    ]
 
     function renderEvent(event: EventDummy): ReactNode {
         return (
-            <Row className="w-100">
+            <Row className='w-100'>
                 <Col>{event.id}</Col>
                 <Col>{event.type}</Col>
                 <Col>{event.date.toLocaleDateString()}</Col>
             </Row>
-        );
+        )
     }
 
     function navigateToEventPage(event: EventDummy): void {
-        navigate(`/events/${event.id}`);
+        navigate(`/events/${event.id}`)
     }
 
     return (
         <>
-            <LoadEffect data={events} contentSize={{height: "20px", width: "100%"}}>
-                <DefaultList data={events}
-                             onClick={navigateToEventPage}
-                             renderItem={renderEvent}
+            <LoadEffect
+                data={events}
+                contentSize={{ height: '20px', width: '100%' }}
+            >
+                <DefaultList
+                    data={events}
+                    onClick={navigateToEventPage}
+                    renderItem={renderEvent}
                 />
             </LoadEffect>
         </>
-    );
+    )
 }
 
-export default InstanceEventsTab;
+export default InstanceEventsTab

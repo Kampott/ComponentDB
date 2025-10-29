@@ -1,127 +1,159 @@
-import {type ReactNode, useEffect, useState} from "react";
+import { type ReactNode, useEffect, useState } from 'react'
 
-import Form from "react-bootstrap/Form";
+import Form from 'react-bootstrap/Form'
 
-import {useServicesStore} from "../../../stores/Zustand.ts";
-import DefaultList from "../../Common/DefaultList.tsx";
-import LoadEffect from "../../Common/LoadEffect.tsx";
-import type {PropertyType} from "../../../schemas/PropertyType.ts";
-import type {Property} from "../../../schemas/Property.ts";
-import {handleApiError} from "../../../utility/handle_api_error.ts";
-import {RestApiError} from "../../../http/RestApiClient.ts";
-import type {ObjectInstance} from "../../../schemas/ObjectInstance.ts";
+import { RestApiError } from '@/Http/RestApiClient.ts'
+import type { ObjectInstance } from '@/Schemas/ObjectInstance.ts'
+import type { Property } from '@/Schemas/Property.ts'
+import type { PropertyType } from '@/Schemas/PropertyType.ts'
+import { useServicesStore } from '@/Storages/Zustand.ts'
+import { handleApiError } from '@/Utility/handle_api_error.ts'
+import DefaultList from '../../Common/DefaultList.tsx'
+import LoadEffect from '../../Common/LoadEffect.tsx'
 
 interface InstanceProperty {
-    type: PropertyType;
-    value: string | null;
+    type: PropertyType
+    value: string | null
 }
 
 interface Props {
-    instance: ObjectInstance;
+    instance: ObjectInstance
 }
 
-function InstancePropertiesTab({instance}: Props): ReactNode {
-    const services = useServicesStore((state) => state.services);
+function InstancePropertiesTab({ instance }: Props): ReactNode {
+    const services = useServicesStore(state => state.services)
 
-    const [instanceProperties, setInstanceProperties] = useState<InstanceProperty[] | null>(null);
+    const [instanceProperties, setInstanceProperties] = useState<
+        InstanceProperty[] | null
+    >(null)
 
     async function updateProperty(updatedProp: InstanceProperty) {
         setInstanceProperties(prev =>
-            prev ? prev.map(prop => {
-                return prop.type.name === updatedProp.type.name ? updatedProp : prop
-            }) : prev
-        );
+            prev
+                ? prev.map(prop => {
+                      return prop.type.name === updatedProp.type.name
+                          ? updatedProp
+                          : prop
+                  })
+                : prev,
+        )
 
         if (updatedProp.value) {
             await services.propertiesService.addProperty({
                 property_id: updatedProp.type.id,
                 object_id: instance.id,
-                value: updatedProp.value
+                value: updatedProp.value,
             })
         } else {
-            console.log("Something went wrong after value update");
+            console.log('Something went wrong after value update')
         }
     }
 
     useEffect(() => {
         async function loadProperties(): Promise<void> {
-            setInstanceProperties(null);
+            setInstanceProperties(null)
 
             try {
-                const object = await services.objectService.getObjectById(instance.object_id);
-                const propertiesTypes: PropertyType[] = await services.propertiesTypesService.getPropertyTypesByTypeId(object.type_id, false);
-                const propertiesValues: Property[] = await services.propertiesService.getPropertiesByInstanceId(instance.id);
+                const object = await services.objectService.getObjectById(
+                    instance.object_id,
+                )
+                const propertiesTypes: PropertyType[] =
+                    await services.propertiesTypesService.getPropertyTypesByTypeId(
+                        object.type_id,
+                        false,
+                    )
+                const propertiesValues: Property[] =
+                    await services.propertiesService.getPropertiesByInstanceId(
+                        instance.id,
+                    )
 
-                setInstanceProperties(propertiesTypes.map(propertyType => {
-                    let value: string | null = null;
-                    for (const propertyValue of propertiesValues) {
-                        if (propertyValue.property_id == propertyType.id) {
-                            value = propertyValue.value;
-                            break;
+                setInstanceProperties(
+                    propertiesTypes.map(propertyType => {
+                        let value: string | null = null
+                        for (const propertyValue of propertiesValues) {
+                            if (propertyValue.property_id == propertyType.id) {
+                                value = propertyValue.value
+                                break
+                            }
                         }
-                    }
-                    return {type: propertyType, value: value} as InstanceProperty;
-                }));
+                        return {
+                            type: propertyType,
+                            value: value,
+                        } as InstanceProperty
+                    }),
+                )
             } catch (error) {
                 handleApiError(error as RestApiError, {
-                    showToast: (m) => alert(m)
-                });
+                    showToast: m => alert(m),
+                })
             }
         }
 
-        loadProperties();
-    }, [instance, services.objectService, services.propertiesService, services.propertiesTypesService])
+        loadProperties()
+    }, [
+        instance,
+        services.objectService,
+        services.propertiesService,
+        services.propertiesTypesService,
+    ])
 
     function RenderInstanceProperty(property: InstanceProperty): ReactNode {
-        const [isEditing, setIsEditing] = useState(false);
-        const [editValue, setEditValue] = useState(property.value || "");
+        const [isEditing, setIsEditing] = useState(false)
+        const [editValue, setEditValue] = useState(property.value || '')
 
         const handleDoubleClick = () => {
-            setEditValue(property.value || "");
-            setIsEditing(true);
-        };
+            setEditValue(property.value || '')
+            setIsEditing(true)
+        }
 
         const handleKeyDown = (key: string) => {
-            if (key === "Enter") {
-                setIsEditing(false);
-                property.value = editValue;
-                updateProperty(property);
+            if (key === 'Enter') {
+                setIsEditing(false)
+                property.value = editValue
+                updateProperty(property)
             }
-        };
+        }
 
         return (
             <>
-                <div className="w-50 text-start">{property.type.name}</div>
-                <div className="w-50 text-start" onDoubleClick={handleDoubleClick}>
+                <div className='w-50 text-start'>{property.type.name}</div>
+                <div
+                    className='w-50 text-start'
+                    onDoubleClick={handleDoubleClick}
+                >
                     {isEditing ? (
                         <Form.Control
-                            type="text"
+                            type='text'
                             value={editValue}
                             autoFocus
-                            size="sm" // компактнее
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(e.key)}
+                            size='sm' // компактнее
+                            onChange={e => setEditValue(e.target.value)}
+                            onKeyDown={e => handleKeyDown(e.key)}
                             onBlur={() => setIsEditing(false)}
-                            placeholder="Введите значение"
+                            placeholder='Введите значение'
                         />
                     ) : (
-                        property.value || "Свойство не задано"
+                        property.value || 'Свойство не задано'
                     )}
                 </div>
             </>
-        );
+        )
     }
 
     return (
         <>
-            <LoadEffect data={instanceProperties} contentSize={{height: "20px", width: "100%"}}>
-                <DefaultList data={instanceProperties ? instanceProperties : []}
-                             onClick={null}
-                             renderItem={RenderInstanceProperty}
+            <LoadEffect
+                data={instanceProperties}
+                contentSize={{ height: '20px', width: '100%' }}
+            >
+                <DefaultList
+                    data={instanceProperties ? instanceProperties : []}
+                    onClick={null}
+                    renderItem={RenderInstanceProperty}
                 />
             </LoadEffect>
         </>
-    );
+    )
 }
 
-export default InstancePropertiesTab;
+export default InstancePropertiesTab

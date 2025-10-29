@@ -1,4 +1,4 @@
-import {AxiosError} from "axios";
+import { AxiosError } from 'axios'
 
 export default function logError(e: unknown): void {
     if (e instanceof AxiosError) {

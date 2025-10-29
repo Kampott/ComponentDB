@@ -1,7 +1,5 @@
 function RegisterForm() {
-    return (
-        <div></div>
-    );
+    return <div></div>
 }
 
-export default RegisterForm;
+export default RegisterForm

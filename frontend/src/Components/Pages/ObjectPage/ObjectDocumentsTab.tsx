@@ -1,47 +1,53 @@
-import {type ReactNode} from "react";
+import { type ReactNode } from 'react'
 
-import Button from "react-bootstrap/Button";
-import Image from "react-bootstrap/Image";
+import Button from 'react-bootstrap/Button'
+import Image from 'react-bootstrap/Image'
 
-import DefaultList from "../../Common/DefaultList.tsx";
-import LoadEffect from "../../Common/LoadEffect.tsx";
-import type {Object} from "../../../schemas/Object.ts";
+import type { Object } from '@/Schemas/Object.ts'
+import DefaultList from '../../Common/DefaultList.tsx'
+import LoadEffect from '../../Common/LoadEffect.tsx'
 
 interface Props {
-    object: Object;
+    object: Object
 }
 
-function ObjectDocumentsTab({object}: Props): ReactNode {
+function ObjectDocumentsTab({ object }: Props): ReactNode {
     const documents = [
         `Документ${object.id}.pdf`,
         'Отчет_апрель.docx',
-        'Спецификация.xlsx'
-    ];
+        'Спецификация.xlsx',
+    ]
 
     function renderDocument(doc: string): ReactNode {
         return (
             <>
                 <Button
-                    variant="link"
-                    className="p-0"
+                    variant='link'
+                    className='p-0'
                     onClick={() => console.log(`Скачать ${doc}`)}
                     aria-label={`Перейти к ${doc}`}
-                >{doc}</Button>
+                >
+                    {doc}
+                </Button>
                 <Button
-                    variant="link"
-                    className="p-0"
+                    variant='link'
+                    className='p-0'
                     onClick={() => console.log(`Скачать ${doc}`)}
                     aria-label={`Скачать ${doc}`}
                 >
                     <Image
-                        src="/download_icon.svg"
-                        alt="Скачать"
+                        src='/download_icon.svg'
+                        alt='Скачать'
                         width={24}
                         height={24}
-                        style={{cursor: 'pointer'}}
-                        className="opacity-75"
-                        onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-                        onMouseLeave={e => (e.currentTarget.style.opacity = '0.75')}
+                        style={{ cursor: 'pointer' }}
+                        className='opacity-75'
+                        onMouseEnter={e =>
+                            (e.currentTarget.style.opacity = '1')
+                        }
+                        onMouseLeave={e =>
+                            (e.currentTarget.style.opacity = '0.75')
+                        }
                     />
                 </Button>
             </>
@@ -50,15 +56,21 @@ function ObjectDocumentsTab({object}: Props): ReactNode {
 
     return (
         <>
-            <Button variant="primary" className="mt-4">Добавить документ</Button>
-            <LoadEffect data={documents} contentSize={{height: "20px", width: "100%"}}>
-                <DefaultList data={documents ? documents : []}
-                             onClick={null}
-                             renderItem={renderDocument}
+            <Button variant='primary' className='mt-4'>
+                Добавить документ
+            </Button>
+            <LoadEffect
+                data={documents}
+                contentSize={{ height: '20px', width: '100%' }}
+            >
+                <DefaultList
+                    data={documents ? documents : []}
+                    onClick={null}
+                    renderItem={renderDocument}
                 />
             </LoadEffect>
         </>
-    );
+    )
 }
 
-export default ObjectDocumentsTab;
+export default ObjectDocumentsTab

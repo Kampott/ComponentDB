@@ -1,126 +1,151 @@
-import {type ReactNode, useEffect, useState} from "react";
+import { type ReactNode, useEffect, useState } from 'react'
 
-import Form from "react-bootstrap/Form";
+import Form from 'react-bootstrap/Form'
 
-import {useServicesStore} from "../../../stores/Zustand.ts";
-import DefaultList from "../../Common/DefaultList.tsx";
-import LoadEffect from "../../Common/LoadEffect.tsx";
-import type {Object} from "../../../schemas/Object.ts";
-import type {PropertyType} from "../../../schemas/PropertyType.ts";
-import type {Property} from "../../../schemas/Property.ts";
-import {handleApiError} from "../../../utility/handle_api_error.ts";
-import {RestApiError} from "../../../http/RestApiClient.ts";
+import { RestApiError } from '@/Http/RestApiClient.ts'
+import type { Object } from '@/Schemas/Object.ts'
+import type { Property } from '@/Schemas/Property.ts'
+import type { PropertyType } from '@/Schemas/PropertyType.ts'
+import { useServicesStore } from '@/Storages/Zustand.ts'
+import { handleApiError } from '@/Utility/handle_api_error.ts'
+import DefaultList from '../../Common/DefaultList.tsx'
+import LoadEffect from '../../Common/LoadEffect.tsx'
 
 interface ObjectProperty {
-    type: PropertyType;
-    value: string | null;
+    type: PropertyType
+    value: string | null
 }
 
 interface Props {
-    object: Object;
+    object: Object
 }
 
-function ObjectPropertiesTab({object}: Props): ReactNode {
-    const services = useServicesStore((state) => state.services);
+function ObjectPropertiesTab({ object }: Props): ReactNode {
+    const services = useServicesStore(state => state.services)
 
-    const [objectProperties, setObjectProperties] = useState<ObjectProperty[] | null>(null);
+    const [objectProperties, setObjectProperties] = useState<
+        ObjectProperty[] | null
+    >(null)
 
     async function updateProperty(updatedProp: ObjectProperty) {
         setObjectProperties(prev =>
-            prev ? prev.map(prop => {
-                return prop.type.name === updatedProp.type.name ? updatedProp : prop
-            }) : prev
-        );
+            prev
+                ? prev.map(prop => {
+                      return prop.type.name === updatedProp.type.name
+                          ? updatedProp
+                          : prop
+                  })
+                : prev,
+        )
 
         if (updatedProp.value) {
             await services.propertiesService.addProperty({
                 property_id: updatedProp.type.id,
                 object_id: object.id,
-                value: updatedProp.value
+                value: updatedProp.value,
             })
         } else {
-            console.log("Something went wrong after value update");
+            console.log('Something went wrong after value update')
         }
     }
 
     useEffect(() => {
         async function loadProperties(): Promise<void> {
-            setObjectProperties(null);
+            setObjectProperties(null)
 
             try {
-                const propertiesTypes: PropertyType[] = await services.propertiesTypesService.getPropertyTypesByTypeId(object.type_id, true);
-                const propertiesValues: Property[] = await services.propertiesService.getPropertiesByObjectId(object.id);
+                const propertiesTypes: PropertyType[] =
+                    await services.propertiesTypesService.getPropertyTypesByTypeId(
+                        object.type_id,
+                        true,
+                    )
+                const propertiesValues: Property[] =
+                    await services.propertiesService.getPropertiesByObjectId(
+                        object.id,
+                    )
 
-                setObjectProperties(propertiesTypes.map(propertyType => {
-                    let value: string | null = null;
-                    for (const propertyValue of propertiesValues) {
-                        if (propertyValue.property_id == propertyType.id) {
-                            value = propertyValue.value;
-                            break;
+                setObjectProperties(
+                    propertiesTypes.map(propertyType => {
+                        let value: string | null = null
+                        for (const propertyValue of propertiesValues) {
+                            if (propertyValue.property_id == propertyType.id) {
+                                value = propertyValue.value
+                                break
+                            }
                         }
-                    }
-                    return {type: propertyType, value: value} as ObjectProperty;
-                }));
+                        return {
+                            type: propertyType,
+                            value: value,
+                        } as ObjectProperty
+                    }),
+                )
             } catch (error) {
                 handleApiError(error as RestApiError, {
-                    showToast: (m) => alert(m)
-                });
+                    showToast: m => alert(m),
+                })
             }
         }
 
-        loadProperties();
+        loadProperties()
     }, [object])
 
     function RenderObjectProperty(property: ObjectProperty): ReactNode {
-        const [isEditing, setIsEditing] = useState(false);
-        const [editValue, setEditValue] = useState(property.value || "");
+        const [isEditing, setIsEditing] = useState(false)
+        const [editValue, setEditValue] = useState(property.value || '')
 
         const handleDoubleClick = () => {
-            setEditValue(property.value || "");
-            setIsEditing(true);
-        };
+            setEditValue(property.value || '')
+            setIsEditing(true)
+        }
 
         const handleKeyDown = (key: string) => {
-            if (key === "Enter") {
-                setIsEditing(false);
-                property.value = editValue;
-                updateProperty(property);
+            if (key === 'Enter') {
+                setIsEditing(false)
+                property.value = editValue
+                updateProperty(property)
             }
-        };
+        }
 
         return (
             <>
-                <div className="w-50 text-start">{property.type.name}</div>
-                <div className="w-50 text-start" onDoubleClick={handleDoubleClick}>
+                <div className='w-50 text-start'>{property.type.name}</div>
+                <div
+                    className='w-50 text-start'
+                    onDoubleClick={handleDoubleClick}
+                >
                     {isEditing ? (
                         <Form.Control
-                            type="text"
+                            type='text'
                             value={editValue}
                             autoFocus
-                            size="sm" // компактнее
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(e.key)}
+                            size='sm' // компактнее
+                            onChange={e => setEditValue(e.target.value)}
+                            onKeyDown={e => handleKeyDown(e.key)}
                             onBlur={() => setIsEditing(false)}
-                            placeholder="Введите значение"
+                            placeholder='Введите значение'
                         />
                     ) : (
-                        property.value || "Свойство не задано"
+                        property.value || 'Свойство не задано'
                     )}
                 </div>
             </>
-        );
+        )
     }
 
     return (
         <>
-            <LoadEffect data={objectProperties} contentSize={{height: "20px", width: "100%"}}>
-                <DefaultList data={objectProperties ? objectProperties : []}
-                             onClick={null}
-                             renderItem={RenderObjectProperty}
+            <LoadEffect
+                data={objectProperties}
+                contentSize={{ height: '20px', width: '100%' }}
+            >
+                <DefaultList
+                    data={objectProperties ? objectProperties : []}
+                    onClick={null}
+                    renderItem={RenderObjectProperty}
                 />
             </LoadEffect>
         </>
-    );
+    )
 }
 
-export default ObjectPropertiesTab;
+export default ObjectPropertiesTab

@@ -1,84 +1,102 @@
-import {type ReactNode, useEffect, useState} from "react";
+import { type ReactNode, useEffect, useState } from 'react'
 
-import Card from "react-bootstrap/Card";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
+import Card from 'react-bootstrap/Card'
+import Col from 'react-bootstrap/Col'
+import Row from 'react-bootstrap/Row'
 
-import type {ObjectType} from "../../../schemas/ObjectType.ts";
-import type {Object} from "../../../schemas/Object.ts";
-import {useServicesStore, useToastStore} from "../../../stores/Zustand.ts";
-import LoadEffect from "../../Common/LoadEffect.tsx";
-import {Link} from "react-router-dom";
-import {handleApiError} from "../../../utility/handle_api_error.ts";
-import {RestApiError} from "../../../http/RestApiClient.ts";
-import Button from "react-bootstrap/Button";
-import type {ObjectInstance} from "../../../schemas/ObjectInstance.ts";
+import { RestApiError } from '@/Http/RestApiClient.ts'
+import type { Object } from '@/Schemas/Object.ts'
+import type { ObjectInstance } from '@/Schemas/ObjectInstance.ts'
+import type { ObjectType } from '@/Schemas/ObjectType.ts'
+import { useServicesStore, useToastStore } from '@/Storages/Zustand.ts'
+import { handleApiError } from '@/Utility/handle_api_error.ts'
+import Button from 'react-bootstrap/Button'
+import { Link } from 'react-router-dom'
+import LoadEffect from '../../Common/LoadEffect.tsx'
 
 interface Props {
     object: Object
 }
 
-function ObjectMainInfo({object}: Props): ReactNode {
-    const services = useServicesStore((state) => state.services)
+function ObjectMainInfo({ object }: Props): ReactNode {
+    const services = useServicesStore(state => state.services)
 
-    const [rootObject, setRootObject] = useState<Object | null>(null);
-    const [objectType, setObjectType] = useState<ObjectType | null>(null);
+    const [rootObject, setRootObject] = useState<Object | null>(null)
+    const [objectType, setObjectType] = useState<ObjectType | null>(null)
 
-    const addToast = useToastStore((state) => state.addToast);
+    const addToast = useToastStore(state => state.addToast)
 
     useEffect(() => {
         async function loadRootObject() {
-            setRootObject(null);
+            setRootObject(null)
             try {
-                const rootObject: Object = await services.objectService.getObjectById(object.root_id)
-                setRootObject(rootObject);
+                const rootObject: Object =
+                    await services.objectService.getObjectById(object.root_id)
+                setRootObject(rootObject)
             } catch (error) {
                 handleApiError(error as RestApiError, {
-                    showToast: (m) => alert(m)
-                });
+                    showToast: m => alert(m),
+                })
             }
         }
 
         async function loadObjectType() {
-            setObjectType(null);
+            setObjectType(null)
             try {
-                setObjectType(await services.objectsTypesService.getTypeById(object.type_id));
+                setObjectType(
+                    await services.objectsTypesService.getTypeById(
+                        object.type_id,
+                    ),
+                )
             } catch (error) {
                 handleApiError(error as RestApiError, {
-                    showToast: (m) => alert(m)
-                });
+                    showToast: m => alert(m),
+                })
             }
         }
 
-        loadRootObject();
-        loadObjectType();
-    }, [services.objectService, services.objectsTypesService, object]);
+        loadRootObject()
+        loadObjectType()
+    }, [services.objectService, services.objectsTypesService, object])
 
     async function createObjectInstance() {
         try {
-            const instance: ObjectInstance = await services.objectService.createInstance(object.id);
-            addToast("Экземпляр добавлен", `id ${instance.id}`)
+            const instance: ObjectInstance =
+                await services.objectService.createInstance(object.id)
+            addToast('Экземпляр добавлен', `id ${instance.id}`)
         } catch (error) {
             handleApiError(error as RestApiError, {
-                showToast: (m) => alert(m)
-            });
+                showToast: m => alert(m),
+            })
         }
     }
 
     return (
-        <div className="mb-4">
-            <Card className="shadow-sm border-0">
+        <div className='mb-4'>
+            <Card className='shadow-sm border-0'>
                 <Card.Body>
-                    <Row className="g-3 align-items-center">
+                    <Row className='g-3 align-items-center'>
                         <Col xs={12} md={6}>
-                            <div className="d-flex align-items-center p-2 rounded hover-shadow"
-                                 style={{transition: "all 0.2s"}}>
-                                <i className="bi bi-bookmark-fill me-2 text-primary fs-4"></i>
+                            <div
+                                className='d-flex align-items-center p-2 rounded hover-shadow'
+                                style={{ transition: 'all 0.2s' }}
+                            >
+                                <i className='bi bi-bookmark-fill me-2 text-primary fs-4'></i>
                                 <div>
-                                    <div className="text-muted small">Корневой объект</div>
-                                    <LoadEffect data={rootObject} contentSize={{width: "30%", height: "15px"}}>
-                                        <Link to={`/objects/${rootObject?.id}`}
-                                              className="fw-bold text-decoration-none">
+                                    <div className='text-muted small'>
+                                        Корневой объект
+                                    </div>
+                                    <LoadEffect
+                                        data={rootObject}
+                                        contentSize={{
+                                            width: '30%',
+                                            height: '15px',
+                                        }}
+                                    >
+                                        <Link
+                                            to={`/objects/${rootObject?.id}`}
+                                            className='fw-bold text-decoration-none'
+                                        >
                                             {rootObject?.name}
                                         </Link>
                                     </LoadEffect>
@@ -87,15 +105,27 @@ function ObjectMainInfo({object}: Props): ReactNode {
                         </Col>
 
                         <Col xs={12} md={6}>
-                            <div className="d-flex align-items-center justify-content-between p-2 rounded hover-shadow"
-                                 style={{transition: "all 0.2s"}}>
-                                <div className="d-flex align-items-center">
-                                    <i className="bi bi-box-seam me-2 text-success fs-4"></i>
+                            <div
+                                className='d-flex align-items-center justify-content-between p-2 rounded hover-shadow'
+                                style={{ transition: 'all 0.2s' }}
+                            >
+                                <div className='d-flex align-items-center'>
+                                    <i className='bi bi-box-seam me-2 text-success fs-4'></i>
                                     <div>
-                                        <div className="text-muted small">Тип</div>
-                                        <LoadEffect data={objectType} contentSize={{width: "30%", height: "15px"}}>
-                                            <Link to={`/types/${objectType?.id}`}
-                                                  className="fw-bold text-decoration-none">
+                                        <div className='text-muted small'>
+                                            Тип
+                                        </div>
+                                        <LoadEffect
+                                            data={objectType}
+                                            contentSize={{
+                                                width: '30%',
+                                                height: '15px',
+                                            }}
+                                        >
+                                            <Link
+                                                to={`/types/${objectType?.id}`}
+                                                className='fw-bold text-decoration-none'
+                                            >
                                                 {objectType?.name}
                                             </Link>
                                         </LoadEffect>
@@ -104,19 +134,27 @@ function ObjectMainInfo({object}: Props): ReactNode {
                             </div>
                         </Col>
                     </Row>
-                    {object.parent_id == null && <Row className="g-3 align-items-center">
-                        <Col xs={12} md={6}>
-                            <div className="d-flex align-items-center p-2 rounded hover-shadow"
-                                 style={{transition: "all 0.2s"}}>
-                                <i className="bi bi-bookmark-fill me-2 text-primary fs-4"></i>
-                                <Button onClick={() => createObjectInstance()}>Добавить экземпляр</Button>
-                            </div>
-                        </Col>
-                    </Row>}
+                    {object.parent_id == null && (
+                        <Row className='g-3 align-items-center'>
+                            <Col xs={12} md={6}>
+                                <div
+                                    className='d-flex align-items-center p-2 rounded hover-shadow'
+                                    style={{ transition: 'all 0.2s' }}
+                                >
+                                    <i className='bi bi-bookmark-fill me-2 text-primary fs-4'></i>
+                                    <Button
+                                        onClick={() => createObjectInstance()}
+                                    >
+                                        Добавить экземпляр
+                                    </Button>
+                                </div>
+                            </Col>
+                        </Row>
+                    )}
                 </Card.Body>
             </Card>
         </div>
-    );
+    )
 }
 
-export default ObjectMainInfo;
+export default ObjectMainInfo

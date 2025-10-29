@@ -1,81 +1,104 @@
-import {useNavigate, useParams} from "react-router-dom";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
-import Breadcrumb from "react-bootstrap/Breadcrumb";
-import Tabs from "react-bootstrap/Tabs";
-import Tab from "react-bootstrap/Tab";
+import Breadcrumb from 'react-bootstrap/Breadcrumb'
+import Col from 'react-bootstrap/Col'
+import Container from 'react-bootstrap/Container'
+import Row from 'react-bootstrap/Row'
+import Tab from 'react-bootstrap/Tab'
+import Tabs from 'react-bootstrap/Tabs'
 
-import type {ObjectType} from "../../../schemas/ObjectType.ts";
-import {useServicesStore} from "../../../stores/Zustand.ts";
-import {RestApiError} from "../../../http/RestApiClient.ts";
-import LoadEffect from "../../Common/LoadEffect.tsx";
-import TypeObjectsTab from "./TypeObjectsTab.tsx";
-import TypePropertiesTab from "./TypePropertiesTab.tsx";
-import TypeTreeView from "./TypeTreeView.tsx";
-import TypeMainInfo from "./TypeMainInfo.tsx";
-import {handleApiError} from "../../../utility/handle_api_error.ts";
+import { RestApiError } from '@/Http/RestApiClient.ts'
+import type { ObjectType } from '@/Schemas/ObjectType.ts'
+import { useServicesStore } from '@/Storages/Zustand.ts'
+import { handleApiError } from '@/Utility/handle_api_error.ts'
+import LoadEffect from '../../Common/LoadEffect.tsx'
+import TypeMainInfo from './TypeMainInfo.tsx'
+import TypeObjectsTab from './TypeObjectsTab.tsx'
+import TypePropertiesTab from './TypePropertiesTab.tsx'
+import TypeTreeView from './TypeTreeView.tsx'
 
 function TypePage() {
-    const {typeId} = useParams();
-    const navigate = useNavigate();
+    const { typeId } = useParams()
+    const navigate = useNavigate()
 
-    const services = useServicesStore((state) => state.services)
+    const services = useServicesStore(state => state.services)
 
     const id: number = Number(typeId)
 
-    const [objectType, setObjectType] = useState<ObjectType | null>(null);
+    const [objectType, setObjectType] = useState<ObjectType | null>(null)
 
     useEffect(() => {
         async function loadObjectType() {
-            setObjectType(null);
+            setObjectType(null)
             if (isNaN(id)) {
-                navigate("/404");
-                return;
+                navigate('/404')
+                return
             }
 
             try {
-                setObjectType(await services.objectsTypesService.getTypeById(id))
+                setObjectType(
+                    await services.objectsTypesService.getTypeById(id),
+                )
             } catch (error) {
                 handleApiError(error as RestApiError, {
                     navigate,
-                    showToast: (m) => alert(m)
-                });
+                    showToast: m => alert(m),
+                })
             }
         }
-        loadObjectType();
+        loadObjectType()
     }, [navigate, services.objectsTypesService, id, typeId])
 
     return (
-        <Container className="mt-4">
+        <Container className='mt-4'>
             <Row>
                 <Col>
-                    <Breadcrumb className="mb-3">
-                        <LoadEffect data={objectType} contentSize={{height: "20px", width: "100%"}}>
-                            <Breadcrumb.Item href="/">Главная</Breadcrumb.Item>
-                            <Breadcrumb.Item active>{objectType?.name}</Breadcrumb.Item>
+                    <Breadcrumb className='mb-3'>
+                        <LoadEffect
+                            data={objectType}
+                            contentSize={{ height: '20px', width: '100%' }}
+                        >
+                            <Breadcrumb.Item href='/'>Главная</Breadcrumb.Item>
+                            <Breadcrumb.Item active>
+                                {objectType?.name}
+                            </Breadcrumb.Item>
                         </LoadEffect>
                     </Breadcrumb>
 
-                    <LoadEffect data={objectType} contentSize={{height: "20px", width: "100%"}}>
-                        <h1 className="text-center mb-5">Тип "{objectType?.name}"</h1>
+                    <LoadEffect
+                        data={objectType}
+                        contentSize={{ height: '20px', width: '100%' }}
+                    >
+                        <h1 className='text-center mb-5'>
+                            Тип "{objectType?.name}"
+                        </h1>
 
-                        {objectType && <TypeMainInfo objectType={objectType}/>}
+                        {objectType && <TypeMainInfo objectType={objectType} />}
                     </LoadEffect>
 
-                    <Tabs defaultActiveKey="instances" id="main-tabs" className="mb-4" justify>
-                        <Tab eventKey="instances" title="Объекты">
-                            {objectType && <TypeObjectsTab objectType={objectType}/>}
+                    <Tabs
+                        defaultActiveKey='instances'
+                        id='main-tabs'
+                        className='mb-4'
+                        justify
+                    >
+                        <Tab eventKey='instances' title='Объекты'>
+                            {objectType && (
+                                <TypeObjectsTab objectType={objectType} />
+                            )}
                         </Tab>
 
-                        <Tab eventKey="properties" title="Свойства">
-                            {objectType && <TypePropertiesTab objectType={objectType}/>}
+                        <Tab eventKey='properties' title='Свойства'>
+                            {objectType && (
+                                <TypePropertiesTab objectType={objectType} />
+                            )}
                         </Tab>
 
-                        <Tab eventKey="structure" title="Структура">
-                            {objectType && <TypeTreeView objectType={objectType}/>}
+                        <Tab eventKey='structure' title='Структура'>
+                            {objectType && (
+                                <TypeTreeView objectType={objectType} />
+                            )}
                         </Tab>
                     </Tabs>
                 </Col>
@@ -84,4 +107,4 @@ function TypePage() {
     )
 }
 
-export default TypePage;
+export default TypePage

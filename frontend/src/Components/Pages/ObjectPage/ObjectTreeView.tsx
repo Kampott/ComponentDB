@@ -1,38 +1,43 @@
-import {useEffect, useState} from 'react';
-import {useNavigate} from "react-router-dom";
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import Button from "react-bootstrap/Button";
+import Button from 'react-bootstrap/Button'
 
-import {useServicesStore} from "../../../stores/Zustand.ts";
-import FileSystemTreeView, {type DataNode} from "../../Common/FileSystemTreeView.tsx";
-import type {Object, ObjectAdd} from "../../../schemas/Object.ts";
-import LoadEffect from "../../Common/LoadEffect.tsx";
-import AddObjectForm from "../../Forms/AddObjectForm.tsx";
-import {toString} from "../../../utility/to_string.ts";
-import {handleApiError} from "../../../utility/handle_api_error.ts";
-import {RestApiError} from "../../../http/RestApiClient.ts";
+import { RestApiError } from '@/Http/RestApiClient.ts'
+import type { Object, ObjectAdd } from '@/Schemas/Object.ts'
+import { useServicesStore } from '@/Storages/Zustand.ts'
+import { handleApiError } from '@/Utility/handle_api_error.ts'
+import { toString } from '@/Utility/to_string.ts'
+import FileSystemTreeView, {
+    type DataNode,
+} from '../../Common/FileSystemTreeView.tsx'
+import LoadEffect from '../../Common/LoadEffect.tsx'
+import AddObjectForm from '../../Forms/AddObjectForm.tsx'
 
 interface Props {
-    object: Object;
+    object: Object
 }
 
-function ObjectTreeView({object}: Props) {
-    const navigate = useNavigate();
+function ObjectTreeView({ object }: Props) {
+    const navigate = useNavigate()
 
-    const services = useServicesStore((state) => state.services)
+    const services = useServicesStore(state => state.services)
 
-    const [objectTree, setObjectTree] = useState<DataNode<Object>[] | null>(null);
+    const [objectTree, setObjectTree] = useState<DataNode<Object>[] | null>(
+        null,
+    )
 
     const [openIds, setOpenIds] = useState<Set<number>>(new Set())
     const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set())
 
-    const [formShow, setFormShow] = useState(false);
+    const [formShow, setFormShow] = useState(false)
 
     async function loadObjectChildren(id: number): Promise<DataNode<Object>[]> {
-        setLoadingIds((prev) => new Set(prev).add(id))
+        setLoadingIds(prev => new Set(prev).add(id))
 
         try {
-            const children: Object[] = await services.objectService.getObjectsByParentId(id)
+            const children: Object[] =
+                await services.objectService.getObjectsByParentId(id)
 
             return children.map((element: Object) => {
                 return {
@@ -44,17 +49,16 @@ function ObjectTreeView({object}: Props) {
         } catch (error) {
             handleApiError(error as RestApiError, {
                 navigate,
-                showToast: (m) => alert(m)
-            });
-            return [];
+                showToast: m => alert(m),
+            })
+            return []
         }
     }
 
     useEffect(() => {
         setObjectTree(null)
-        loadObjectChildren(object.id)
-            .then((data) => setObjectTree(data))
-    }, [object]);
+        loadObjectChildren(object.id).then(data => setObjectTree(data))
+    }, [object])
 
     async function onObjectChildrenToggle(id: number): Promise<void> {
         setOpenIds((prev: Set<number>): Set<number> => {
@@ -64,25 +68,27 @@ function ObjectTreeView({object}: Props) {
             } else {
                 next.add(id)
             }
-            return next;
+            return next
         })
     }
 
     function onObjectChildrenLoaded(id: number, children: DataNode<Object>[]) {
-        const attachChildren = (nodes: DataNode<Object>[]): DataNode<Object>[] => {
-            return nodes.map((n) => {
+        const attachChildren = (
+            nodes: DataNode<Object>[],
+        ): DataNode<Object>[] => {
+            return nodes.map(n => {
                 if (n.id === id) {
-                    return {...n, children, childrenLoaded: true}
+                    return { ...n, children, childrenLoaded: true }
                 }
                 if (n.children) {
-                    return {...n, children: attachChildren(n.children)}
+                    return { ...n, children: attachChildren(n.children) }
                 }
                 return n
             })
         }
 
-        setObjectTree((prev) => prev && attachChildren(prev));
-        setLoadingIds((prev) => {
+        setObjectTree(prev => prev && attachChildren(prev))
+        setLoadingIds(prev => {
             const next = new Set(prev)
             next.delete(id)
             return next
@@ -90,17 +96,19 @@ function ObjectTreeView({object}: Props) {
     }
 
     function onObjectChildrenClick(id: number) {
-        navigate(`/objects/${id}`);
+        navigate(`/objects/${id}`)
     }
 
     function renderItem(node: DataNode<Object>) {
         return (
             <span
                 onClick={() => onObjectChildrenClick(node.id)}
-                className="ms-2 text-primary"
-                role="button"
-                style={{cursor: 'pointer'}}
-            >{toString(node.data)}</span>
+                className='ms-2 text-primary'
+                role='button'
+                style={{ cursor: 'pointer' }}
+            >
+                {toString(node.data)}
+            </span>
         )
     }
 
@@ -119,8 +127,17 @@ function ObjectTreeView({object}: Props) {
 
     return (
         <>
-            <Button variant="primary" className="mt-4" onClick={() => setFormShow(true)}>Добавить объект</Button>
-            <LoadEffect data={objectTree} contentSize={{height: "20px", width: "100%"}}>
+            <Button
+                variant='primary'
+                className='mt-4'
+                onClick={() => setFormShow(true)}
+            >
+                Добавить объект
+            </Button>
+            <LoadEffect
+                data={objectTree}
+                contentSize={{ height: '20px', width: '100%' }}
+            >
                 <FileSystemTreeView
                     data={objectTree ? objectTree : []}
                     openIds={openIds}
@@ -132,7 +149,12 @@ function ObjectTreeView({object}: Props) {
                 />
             </LoadEffect>
 
-            {formShow && <AddObjectForm parentObject={object} submitCallback={confirmAddObject}/>}
+            {formShow && (
+                <AddObjectForm
+                    parentObject={object}
+                    submitCallback={confirmAddObject}
+                />
+            )}
         </>
     )
 }

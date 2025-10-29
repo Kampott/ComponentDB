@@ -1,11 +1,11 @@
-import { Toast, ToastContainer } from 'react-bootstrap';
-import { useToastStore } from '../../stores/Zustand.ts';
+import { useToastStore } from '@/Storages/Zustand.ts'
+import { Toast, ToastContainer } from 'react-bootstrap'
 
 function GlobalToaster() {
-    const { toasts, removeToast } = useToastStore();
+    const { toasts, removeToast } = useToastStore()
 
     return (
-        <ToastContainer position="top-end" className="p-3">
+        <ToastContainer position='top-end' className='p-3'>
             {toasts.map(({ id, header, message }) => (
                 <Toast
                     key={id}
@@ -15,13 +15,13 @@ function GlobalToaster() {
                     autohide
                 >
                     <Toast.Header>
-                        <strong className="me-auto">{header}</strong>
+                        <strong className='me-auto'>{header}</strong>
                     </Toast.Header>
                     <Toast.Body>{message}</Toast.Body>
                 </Toast>
             ))}
         </ToastContainer>
-    );
+    )
 }
 
-export default GlobalToaster;
+export default GlobalToaster
