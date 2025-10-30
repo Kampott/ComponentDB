@@ -6,7 +6,6 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.future import select
 from app.db.session import async_session
 from app.db.database import get_async_session
-from app.models.auth import User
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 

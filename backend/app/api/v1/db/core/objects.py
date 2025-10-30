@@ -7,7 +7,7 @@ from app.schemas.core import ObjectsRead, ObjectsCreate, ObjectsUpdate, Instance
 import app.crud.core.objects as db_objects
 import app.crud.core.instances as db_instances
 from app.db.database import get_async_session
-from app.crud.auth.auth import require_permissions
+from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
 
 router = APIRouter(prefix="/objects", tags=["DB: Core: Objects"])

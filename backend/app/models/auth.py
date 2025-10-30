@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 from typing import Optional, List
 from sqlalchemy import Index, ForeignKey, String, Integer, Boolean, DateTime, Text, UniqueConstraint
@@ -51,7 +51,7 @@ class Role(Base):
     permissions: Mapped[List["Permission"]] = relationship(
         secondary="role_permissions",
         back_populates="roles",
-        lazy="joined"
+        lazy="selectin"
     )
 
 
@@ -62,7 +62,6 @@ class Permission(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
-    scope: Mapped[Optional[str]] = mapped_column(String)
 
     roles: Mapped[List["Role"]] = relationship(
         secondary="role_permissions",

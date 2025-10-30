@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, response, Cookie
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import async_session
 from app.schemas.auth import UserCreate, UserOut, Token, TokenRefresh

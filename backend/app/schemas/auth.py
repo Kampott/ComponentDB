@@ -4,6 +4,9 @@ from pydantic import BaseModel, EmailStr
 import uuid
 
 
+
+## Login + Authorization
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -27,3 +30,55 @@ class Token(BaseModel):
 
 class TokenRefresh(BaseModel):
     refresh_token: str
+
+
+## Permission
+
+class PermissionCreate(BaseModel):
+    name: str
+    description: str
+
+class PermissionOut(PermissionCreate):
+    id: int
+
+class PermissionUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+
+
+## Role
+
+class RoleCreate(BaseModel):
+    name: str
+    description: str
+
+class RoleOut(RoleCreate):
+    id: int
+
+class RoleUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+
+
+##User Role
+
+class UserRoleCreate(BaseModel):
+    user_id: uuid.UUID
+    role_id: int
+
+class UserRoleOut(BaseModel):
+    user_id: uuid.UUID
+    role_id: int
+
+
+## Role Permission
+
+
+class RolePermissionCreate(BaseModel):
+    role_id: int
+    permission_id: int
+
+class RolePermissionOut(BaseModel):
+    role_id: int
+    permission_id: int
+
