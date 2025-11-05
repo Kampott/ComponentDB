@@ -11,9 +11,10 @@ from app.core.security import (
     create_access_token, create_refresh_token
 )
 
-from app.models.auth import User, RefreshToken
-from app.schemas.auth import UserCreate
+from app.models.auth import User, RefreshToken, Role, Permission, UserInstanceAccess, UserRole, RolePermission
+from app.schemas.auth import UserCreate, TokenOut
 from app.db.database import get_async_session
+from app.crud.core.instances import get_instance
 
 from fastapi import Depends, HTTPException, status
 
@@ -34,9 +35,9 @@ async def create_tokens(session: AsyncSession, user: User) -> dict:
         token_hash=token_hash,
         expires_at=refresh["expires_at"],
     )
-
-    async with session.begin():
-        session.add(db_token)
+    
+    session.add(db_token)
+    await session.flush() 
 
     return {"access_token": access_token, "refresh_token": refresh["token"]}
 
@@ -88,7 +89,7 @@ async def user_has_role(db: AsyncSession, user: User, role_name: str) -> bool:
         select(User)
         .where(User.id == user.id)
         .options(selectinload(User.roles))
-    )
+    )# Загружаем переменные из .env
     user = result.scalar_one_or_none()
     if not user:
         return False
@@ -165,6 +166,14 @@ async def user_can_write_instance(
     access = result.scalar_one_or_none()
     return access is not None
 
+async def user_is_superuser(db: AsyncSession, user: User) -> bool:
+    result = await db.execute(
+        select(UserRole)
+        .join(Role)
+        .where(UserRole.user_id == user.id, Role.name == "SUPER_USER")
+    )
+    role = result.scalar_one_or_none()
+    return role is not None
 
 def require_instance_permission(write: bool = False):
     async def dependency(
@@ -181,9 +190,7 @@ def require_instance_permission(write: bool = False):
             if write else user_can_read_instance(db, current_user, instance.root_id)
         )
 
-
-        superuser = await user_can_read_instance(db, current_user, -1)
-
+        superuser = await user_is_superuser(db, current_user)
 
         if not (allowed or superuser):
             raise HTTPException(status_code=403, detail="No access to this instance")

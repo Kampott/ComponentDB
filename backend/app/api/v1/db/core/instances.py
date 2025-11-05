@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
+from sqlalchemy import select
 
 from app.schemas.core import InstancesRead, InstancesCreate, InstancesUpdate, InstanceCreated
 import app.crud.core.instances as db
@@ -10,7 +11,7 @@ from app.crud.auth.auth import require_instance_permission, get_instance_root_id
 from app.db.database import get_async_session
 
 
-from app.models.auth import User
+from app.models.auth import User, Role, Permission, UserInstanceAccess, UserRole, RolePermission
 from app.core.security import get_current_user
 
 router = APIRouter(prefix="/instances", tags=["DB: Core: Instances"])

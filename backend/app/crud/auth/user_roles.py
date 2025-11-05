@@ -12,7 +12,7 @@ from app.core.security import (
     create_access_token, create_refresh_token
 )
 
-from app.models.auth import UserRole
+from app.models.auth import UserRole, User, Role, Permission
 from app.schemas.auth import UserRoleCreate, UserRoleOut
 
 from app.db.database import get_async_session
