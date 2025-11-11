@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status, response, Cookie
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import async_session
-from app.schemas.auth import UserCreate, UserOut, Token, TokenRefresh
+from app.schemas.auth import UserCreate, UserOut, Token, TokenRefresh, TokenOut
 from app.crud.auth.auth import create_tokens, verify_and_rotate_refresh_token
 from app.crud.auth.users import create_user, authenticate_user
 from app.db.database import get_async_session
+from fastapi.security import OAuth2PasswordRequestForm
+import uuid
 
 router = APIRouter(prefix="/auth", tags=["DB: Auth: Auth + Tokens"])
 
@@ -19,42 +21,22 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_async_ses
 
 
 @router.post("/login", response_model=Token)
-async def login(form_data: UserCreate, db: AsyncSession = Depends(get_async_session), response: Response = None):
-    user = await authenticate_user(db, form_data.email, form_data.password)
+async def login(
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_async_session)
+):
+
+    user = await authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
+        )
 
     tokens = await create_tokens(db, user)
 
-    response.set_cookie(
-        key="refresh_token",
-        value=tokens["refresh_token"],
-        httponly=True,
-        secure=True,  
-        samesite="strict", 
-        max_age=60 * 60 * 24 * 7 
-    )
 
-    return {
-        "access_token": tokens["access_token"],
-        "token_type": "bearer"
-    }
-
-
-@router.post("/refresh", response_model=Token)
-async def refresh(
-    db: AsyncSession = Depends(get_async_session),
-    response: Response = None,
-    refresh_token: str | None = Cookie(default=None)  # reading refresh token
-):
-    if not refresh_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
-
-    tokens = await verify_and_rotate_refresh_token(db, refresh_token)
-    if not tokens:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token")
-
-    # renewing refresh token
     response.set_cookie(
         key="refresh_token",
         value=tokens["refresh_token"],
@@ -64,11 +46,43 @@ async def refresh(
         max_age=60 * 60 * 24 * 7
     )
 
-    # returning new access token
+
+    return {
+        "access_token": tokens["access_token"],
+        "refresh_token": tokens["refresh_token"],
+        "token_type": "bearer"
+    }
+
+
+@router.post("/refresh", response_model=TokenOut)
+async def refresh(
+    response: Response,
+    refresh_token: str | None = Cookie(default=None),
+    db: AsyncSession = Depends(get_async_session)
+):
+    if not refresh_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
+
+    tokens = await verify_and_rotate_refresh_token(db, refresh_token)
+    if not tokens:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token")
+
+    # обновляем refresh_token в cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=tokens["refresh_token"],
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=60 * 60 * 24 * 7
+    )
+
     return {
         "access_token": tokens["access_token"],
         "token_type": "bearer"
     }
+
+
 
 
 @router.post("/logout")

@@ -1,0 +1,9 @@
+{
+  "permissions": [
+    {"name": "read_objects", "description": "Ability to read objects"},
+    {"name": "create_objects", "description": "Ability to create objects"},
+    {"name": "delete_objects", "description": "Ability to delete objects"},
+    {"name": "create_instance_from_root_object", "description": "Ability to create instance from root object"},
+    {"name": "edit_objects", "description": "Ability to edit objects"}
+  ]
+}

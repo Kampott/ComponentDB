@@ -6,14 +6,15 @@ from typing import Callable, Awaitable, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-
-from app.models.auth import User, RefreshToken
 from app.core.security import (
     get_current_user, verify_password, get_password_hash,
     create_access_token, create_refresh_token
 )
-from app.schemas.auth import UserCreate
+
+from app.models.auth import User, RefreshToken, Role, Permission, UserInstanceAccess, UserRole, RolePermission
+from app.schemas.auth import UserCreate, TokenOut
 from app.db.database import get_async_session
+from app.crud.core.instances import get_instance
 
 from fastapi import Depends, HTTPException, status
 
@@ -34,9 +35,9 @@ async def create_tokens(session: AsyncSession, user: User) -> dict:
         token_hash=token_hash,
         expires_at=refresh["expires_at"],
     )
-
-    async with session.begin():
-        session.add(db_token)
+    
+    session.add(db_token)
+    await session.flush() 
 
     return {"access_token": access_token, "refresh_token": refresh["token"]}
 
@@ -88,11 +89,11 @@ async def user_has_role(db: AsyncSession, user: User, role_name: str) -> bool:
         select(User)
         .where(User.id == user.id)
         .options(selectinload(User.roles))
-    )
+    )# Загружаем переменные из .env
     user = result.scalar_one_or_none()
     if not user:
         return False
-    return any(role.name == role_name for role in user.roles)
+    return any(role.name == role_name or role.name == "SUPER_USER" for role in user.roles)
 
 
 async def user_has_permission(db: AsyncSession, user: User, permission_name: str) -> bool:
@@ -108,7 +109,7 @@ async def user_has_permission(db: AsyncSession, user: User, permission_name: str
         return False
     for role in user.roles:
         for perm in role.permissions:
-            if perm.name == permission_name:
+            if perm.name == permission_name or perm.name == "SUPER_PERMISSION":
                 return True
     return False
 
@@ -130,7 +131,7 @@ def require_permission(permission: str):
             raise HTTPException(status_code=401, detail="User not found")
 
         user_perms = {perm.name for role in user.roles for perm in role.permissions}
-        if permission not in user_perms:
+        if permission not in user_perms and "SUPER_PERMISSION" not in user_perms:
             raise HTTPException(status_code=403, detail=f"Missing permission: {permission}")
         return user
     return dependency
@@ -165,26 +166,35 @@ async def user_can_write_instance(
     access = result.scalar_one_or_none()
     return access is not None
 
+async def user_is_superuser(db: AsyncSession, user: User) -> bool:
+    result = await db.execute(
+        select(UserRole)
+        .join(Role)
+        .where(UserRole.user_id == user.id, Role.name == "SUPER_USER")
+    )
+    role = result.scalar_one_or_none()
+    return role is not None
 
-def require_instance_permission(
-    write: bool = False,
-    instance_root_id_getter: Callable[..., Awaitable[int]] | None = None
-):
+def require_instance_permission(write: bool = False):
     async def dependency(
+        instance_id: int,
         current_user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_async_session),
-        **kwargs
+        db: AsyncSession = Depends(get_async_session)
     ):
-        if instance_root_id_getter is None:
-            raise RuntimeError("instance_root_id_getter is required")
+        instance = await get_instance(db, instance_id)
+        if not instance:
+            raise HTTPException(status_code=404, detail="Instance not found")
 
-        root_id = await instance_root_id_getter(**kwargs)
-        if write:
-            if not await user_can_write_instance(db, current_user, root_id):
-                raise HTTPException(status_code=403, detail="No write access to this instance")
-        else:
-            if not await user_can_read_instance(db, current_user, root_id):
-                raise HTTPException(status_code=403, detail="No read access to this instance")
+        allowed = await ( 
+            user_can_write_instance(db, current_user, instance.root_id)
+            if write else user_can_read_instance(db, current_user, instance.root_id)
+        )
+
+        superuser = await user_is_superuser(db, current_user)
+
+        if not (allowed or superuser):
+            raise HTTPException(status_code=403, detail="No access to this instance")
+
         return current_user
 
     return dependency

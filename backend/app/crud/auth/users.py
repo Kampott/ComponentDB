@@ -10,12 +10,12 @@ from app.core.security import (
     verify_password, get_password_hash,
     create_access_token, create_refresh_token
 )
-from app.schemas.auth import UserCreate
+from app.schemas.auth import UserCreate, UserOut
 
 
 
 async def create_user(session: AsyncSession, user_in: UserCreate) -> User:
-    user = User(email=user_in.email, password_hash=get_password_hash(user_in.password))
+    user = User(email=user_in.email, password_hash=get_password_hash(user_in.password), is_active=True)
     session.add(user)
     await session.commit()
     await session.refresh(user)
@@ -32,3 +32,8 @@ async def authenticate_user(session: AsyncSession, email: str, password: str) ->
 async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
     result = await session.execute(select(User).where(User.email == email))
     return result.scalars().first()
+
+
+async def get_user_by_email_crud(session: AsyncSession, email:str) -> UserOut | None:
+    result = await session.execute(select(User).where(User.email == email))
+    return result.scalar_one_or_none()
