@@ -4,8 +4,8 @@ import { type ReactNode } from 'react'
 import type {
     ContextMenuOptions,
     OnObjectActionFunc,
-} from '@/Storages/IContextMenuStore.ts'
-import { useContextMenuStore } from '@/Storages/Zustand.ts'
+} from '@/Storages/Interfaces/ContextMenuStore.ts'
+import { useContextMenuStore } from '@/Storages/Zustand/ContextMenuStore.ts'
 import ListGroup from 'react-bootstrap/ListGroup'
 
 export interface Props<T> {

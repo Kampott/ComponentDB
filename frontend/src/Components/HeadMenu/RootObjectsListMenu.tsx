@@ -4,7 +4,7 @@ import { type ReactNode, useEffect, useState } from 'react'
 
 import { RestApiError } from '@/Http/RestApiClient.ts'
 import type { ObjectType, ObjectTypeAdd } from '@/Schemas/ObjectType.ts'
-import { useServicesStore } from '@/Storages/Zustand.ts'
+import { useServicesStore } from '@/Storages/Zustand/ServicesStore.ts'
 import { handleApiError } from '@/Utility/handle_api_error.ts'
 import Button from 'react-bootstrap/Button'
 import { useNavigate } from 'react-router-dom'

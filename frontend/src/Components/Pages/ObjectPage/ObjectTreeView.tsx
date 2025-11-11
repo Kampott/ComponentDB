@@ -5,7 +5,7 @@ import Button from 'react-bootstrap/Button'
 
 import { RestApiError } from '@/Http/RestApiClient.ts'
 import type { Object, ObjectAdd } from '@/Schemas/Object.ts'
-import { useServicesStore } from '@/Storages/Zustand.ts'
+import { useServicesStore } from '@/Storages/Zustand/ServicesStore.ts'
 import { handleApiError } from '@/Utility/handle_api_error.ts'
 import { toString } from '@/Utility/to_string.ts'
 import FileSystemTreeView, {

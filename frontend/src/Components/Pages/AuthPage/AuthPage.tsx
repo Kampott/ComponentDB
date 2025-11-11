@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 
 import Button from 'react-bootstrap/Button'
 
+import LoginForm from '@/Components/Forms/LoginForm.tsx'
+import RegisterForm from '@/Components/Forms/RegisterForm.tsx'
 import { RestApiError } from '@/Http/RestApiClient.ts'
 import type { LoginRequest } from '@/Schemas/Auth.ts'
-import { useUserStore } from '@/Storages/Zustand.ts'
+import { useUserStore } from '@/Storages/Zustand/UserStore.ts'
 import { handleApiError } from '@/Utility/handle_api_error.ts'
-import LoginForm from '../../Forms/LoginForm.tsx'
-import RegisterForm from '../../Forms/RegisterForm.tsx'
 
 function AuthPage() {
     const navigate = useNavigate()

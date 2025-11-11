@@ -109,9 +109,11 @@ export default class AxiosClient implements RestApiClient {
     async get<ReturnData>(
         url: string,
         query?: Record<string, number | string>,
+        headers?: Record<string, string[]>,
     ): Promise<ReturnData> {
         const response = await this.axiosInstance.get<ReturnData>(url, {
             params: query,
+            headers: headers,
         })
         return response.data
     }
@@ -120,6 +122,7 @@ export default class AxiosClient implements RestApiClient {
         url: string,
         data: PostData,
         query?: Record<string, number | string>,
+        headers?: Record<string, string[]>,
     ): Promise<ReturnData> {
         console.info(
             `sending post to ${this.axiosInstance.getUri()}${url}, payload`,
@@ -129,7 +132,7 @@ export default class AxiosClient implements RestApiClient {
         const response = await this.axiosInstance.post<
             PostData,
             AxiosResponse<ReturnData>
-        >(url, data, { params: query })
+        >(url, data, { params: query, headers: headers })
         return response.data
     }
 
@@ -137,6 +140,7 @@ export default class AxiosClient implements RestApiClient {
         url: string,
         data: PatchData,
         query?: Record<string, number | string>,
+        headers?: Record<string, string[]>,
     ): Promise<ReturnData> {
         console.info(
             `sending patch to ${this.axiosInstance.getUri()}${url}, payload`,
@@ -146,7 +150,7 @@ export default class AxiosClient implements RestApiClient {
         const response = await this.axiosInstance.patch<
             PatchData,
             AxiosResponse<ReturnData>
-        >(url, data, { params: query })
+        >(url, data, { params: query, headers: headers })
         return response.data
     }
 
@@ -154,6 +158,7 @@ export default class AxiosClient implements RestApiClient {
         url: string,
         data: PutData,
         query?: Record<string, number | string>,
+        headers?: Record<string, string[]>,
     ): Promise<ReturnData> {
         console.info(
             `sending put to ${this.axiosInstance.getUri()}${url}, payload`,
@@ -163,13 +168,14 @@ export default class AxiosClient implements RestApiClient {
         const response = await this.axiosInstance.put<
             PutData,
             AxiosResponse<ReturnData>
-        >(url, data, { params: query })
+        >(url, data, { params: query, headers: headers })
         return response.data
     }
 
     async delete<ReturnData>(
         url: string,
         query?: Record<string, number | string>,
+        headers?: Record<string, string[]>,
     ): Promise<ReturnData> {
         console.info(
             `sending get to ${this.axiosInstance.getUri()}${url}, query`,
@@ -178,6 +184,7 @@ export default class AxiosClient implements RestApiClient {
 
         const response = await this.axiosInstance.delete<ReturnData>(url, {
             params: query,
+            headers: headers,
         })
         return response.data
     }

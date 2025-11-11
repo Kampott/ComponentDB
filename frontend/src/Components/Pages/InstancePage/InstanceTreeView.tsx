@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { RestApiError } from '@/Http/RestApiClient.ts'
 import type { ObjectInstance } from '@/Schemas/ObjectInstance.ts'
-import { useServicesStore } from '@/Storages/Zustand.ts'
+import { useServicesStore } from '@/Storages/Zustand/ServicesStore.ts'
 import { handleApiError } from '@/Utility/handle_api_error.ts'
 import { toString } from '@/Utility/to_string.ts'
 import FileSystemTreeView, {

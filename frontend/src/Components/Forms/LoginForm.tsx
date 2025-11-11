@@ -14,7 +14,7 @@ interface Props {
 function LoginForm({ submitCallback }: Props) {
     const formFields: FormField<LoginRequest, keyof LoginRequest>[] = [
         {
-            bindData: 'email',
+            bindData: 'username',
             label: '',
             type: 'text',
             placeholder: 'Имя пользователя',

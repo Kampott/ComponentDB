@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 
 import { Dropdown } from 'react-bootstrap'
 
-import { useContextMenuStore } from '@/Storages/Zustand.ts'
+import { useContextMenuStore } from '@/Storages/Zustand/ContextMenuStore.ts'
 
 function ContextMenu() {
     const { visible, position, elementData, contextMenuOptions, hideMenu } =

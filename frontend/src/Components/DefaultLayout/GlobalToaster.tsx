@@ -1,5 +1,6 @@
-import { useToastStore } from '@/Storages/Zustand.ts'
 import { Toast, ToastContainer } from 'react-bootstrap'
+
+import { useToastStore } from '@/Storages/Zustand/ToastsStore.ts'
 
 function GlobalToaster() {
     const { toasts, removeToast } = useToastStore()

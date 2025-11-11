@@ -10,7 +10,7 @@ import Tabs from 'react-bootstrap/Tabs'
 
 import { RestApiError } from '@/Http/RestApiClient.ts'
 import type { ObjectType } from '@/Schemas/ObjectType.ts'
-import { useServicesStore } from '@/Storages/Zustand.ts'
+import { useServicesStore } from '@/Storages/Zustand/ServicesStore.ts'
 import { handleApiError } from '@/Utility/handle_api_error.ts'
 import LoadEffect from '../../Common/LoadEffect.tsx'
 import TypeMainInfo from './TypeMainInfo.tsx'

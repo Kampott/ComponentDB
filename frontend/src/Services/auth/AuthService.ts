@@ -19,6 +19,8 @@ export default class AuthService implements IAuthService {
         return await this.client.post<LoginRequest, LoginResponse>(
             '/auth/login',
             userData,
+            {},
+            { 'Content-Type': ['application/x-www-form-urlencoded'] },
         )
     }
 
