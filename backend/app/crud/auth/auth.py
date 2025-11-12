@@ -16,6 +16,8 @@ from app.schemas.auth import UserCreate, TokenOut
 from app.db.database import get_async_session
 from app.crud.core.instances import get_instance
 
+
+
 from fastapi import Depends, HTTPException, status
 
 
@@ -114,6 +116,33 @@ async def user_has_permission(db: AsyncSession, user: User, permission_name: str
     return False
 
 
+
+async def _check_permission(current_user: User, db: AsyncSession, permission: str):
+    result = await db.execute(
+        select(User)
+        .where(User.id == current_user.id)
+        .options(selectinload(User.roles).selectinload(Role.permissions))
+    )
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    if permission not in user_perms and "SUPER_PERMISSION" not in user_perms:
+        raise HTTPException(status_code=403, detail=f"Missing permission: {permission}")
+
+    return user
+
+def require_permission(permission: str):
+    async def dependency(
+        current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_async_session)
+    ):
+        return await _check_permission(current_user, db, permission)
+    return dependency
+
+
+
 def require_permission(permission: str):
     async def dependency(
         current_user: User = Depends(get_current_user),
@@ -181,23 +210,29 @@ def require_instance_permission(write: bool = False):
         current_user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_async_session)
     ):
-        instance = await get_instance(db, instance_id)
-        if not instance:
-            raise HTTPException(status_code=404, detail="Instance not found")
-
-        allowed = await ( 
-            user_can_write_instance(db, current_user, instance.root_id)
-            if write else user_can_read_instance(db, current_user, instance.root_id)
-        )
-
-        superuser = await user_is_superuser(db, current_user)
-
-        if not (allowed or superuser):
-            raise HTTPException(status_code=403, detail="No access to this instance")
-
-        return current_user
-
+        return await _check_instance_permission(db, current_user, instance_id, write)
     return dependency
+
+async def _check_instance_permission(
+    db: AsyncSession,
+    current_user: User,
+    instance_id: int,
+    write: bool = False
+):
+    instance = await get_instance(db, instance_id)
+    if not instance:
+        raise HTTPException(status_code=404, detail="Instance not found")
+
+    allowed = await (
+        user_can_write_instance(db, current_user, instance.root_id)
+        if write else user_can_read_instance(db, current_user, instance.root_id)
+    )
+
+    superuser = await user_is_superuser(db, current_user)
+    if not (allowed or superuser):
+        raise HTTPException(status_code=403, detail="No access to this instance")
+
+    return current_user
 
 
 

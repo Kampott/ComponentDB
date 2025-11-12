@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.security import OAuth2PasswordBearer
 from app.db.session import async_session
 from app.schemas.auth import UserCreate, UserOut, Token, TokenRefresh, TokenOut
 from app.crud.auth.auth import create_tokens, verify_and_rotate_refresh_token
@@ -7,13 +8,18 @@ from app.crud.auth.users import create_user, authenticate_user
 from app.db.database import get_async_session
 from fastapi.security import OAuth2PasswordRequestForm
 import uuid
+from app.crud.auth.auth import require_permission as require_permissions
+from app.models.auth import User
 
 router = APIRouter(prefix="/auth", tags=["DB: Auth: Auth + Tokens"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 
 @router.post("/register", response_model=UserOut)
-async def register(user_in: UserCreate, db: AsyncSession = Depends(get_async_session)):
+async def register(user_in: UserCreate,
+    current_user: User = Depends(require_permissions("register_user")),
+    db: AsyncSession = Depends(get_async_session)):
     user = await create_user(db, user_in)
     if not user:
         raise HTTPException(status_code=400, detail="User could not be created")
