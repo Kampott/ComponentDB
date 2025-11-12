@@ -2,7 +2,7 @@ import { create } from 'zustand/react'
 
 import type { IUserStore } from '@/LayerKernel/Storage/Interfaces'
 import { useServicesStore } from '@/LayerKernel/Storage/Zustand/index.ts'
-import logError from '@/log_error.ts'
+import logError from '@/Utility/log_error.ts'
 import type { LoginRequest, User } from '@RestSchemas'
 
 export const useUserStore = create<IUserStore>((set, get) => ({

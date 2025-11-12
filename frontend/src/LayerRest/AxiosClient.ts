@@ -1,7 +1,7 @@
 import { type AxiosInstance, type AxiosResponse, default as axios } from 'axios'
 
 import type { LoginResponse } from '@RestSchemas'
-import logError from '../log_error.ts'
+import logError from '../Utility/log_error.ts'
 import type RestApiClient from './RestApiClient.ts'
 import { RestApiError } from './RestApiClient.ts'
 
