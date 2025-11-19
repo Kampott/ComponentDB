@@ -10,7 +10,7 @@ import FileSystemTreeView, {
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
-import type { Object, ObjectAdd } from '@RestSchemas'
+import type { Object } from '@RestSchemas'
 import { useServicesStore } from '@StorageImpl'
 import AddObjectForm from '../../Forms/AddObjectForm.tsx'
 

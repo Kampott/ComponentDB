@@ -22,3 +22,7 @@ export * from './Validator/Types.ts'
 
 export * from './Validator/DefaultValidator.ts'
 export * from './Validator/Types.ts'
+
+export * from './SchemaMeta.ts'
+
+export * from './DefaultProps.ts'

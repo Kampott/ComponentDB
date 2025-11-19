@@ -1,5 +1,5 @@
-import DefaultPopupForm from '@Components/Common/Form/DefaultPopupForm.tsx'
-import type { FormField } from '@Components/Common/Form/FormTypes.ts'
+import type { FormField } from '@/LayerKernel/Forms/FormTypes.ts'
+import DefaultPopupForm from '@Components/Common/Forms/DefaultPopupForm.tsx'
 import type { ObjectType, PropertyTypeAdd } from '@RestSchemas'
 import { PropertyTypeValidator } from '@RestSchemas'
 

@@ -1,7 +1,7 @@
+import type { FormField } from '@/LayerKernel/Forms/FormTypes.ts'
+import DefaultPopupForm from '@Components/Common/Forms/DefaultPopupForm.tsx'
 import type { ObjectType, ObjectTypeAdd } from '@RestSchemas'
 import { ObjectTypeValidator } from '@RestSchemas'
-import DefaultPopupForm from '../Common/Form/DefaultPopupForm.tsx'
-import type { FormField } from '../Common/Form/FormTypes.ts'
 
 interface Props {
     parentObjectType: ObjectType | null

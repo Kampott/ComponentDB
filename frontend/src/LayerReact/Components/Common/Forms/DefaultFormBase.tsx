@@ -2,7 +2,10 @@ import type { Dispatch, SetStateAction } from 'react'
 
 import Form from 'react-bootstrap/Form'
 
-import type { FieldType, FormField } from './FormTypes.ts'
+import type {
+    FieldType,
+    FormField,
+} from '../../../../LayerKernel/Forms/FormTypes.ts'
 
 interface Props<T> {
     data: T
