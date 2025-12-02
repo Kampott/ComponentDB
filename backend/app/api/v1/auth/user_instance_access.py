@@ -36,7 +36,7 @@ async def read_user_instance_access(
 
 
 @router.delete("/{root_id}/{user_id}", status_code=204)
-async def delete_user_instance_access(
+async def _delete_user_instance_access(
     root_id: int,
     user_id: uuid.UUID,
     session: AsyncSession = Depends(get_async_session),

@@ -37,8 +37,12 @@ async def get_current_user(db: AsyncSession = Depends(get_async_session), token:
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        user_id_str: str = payload.get("sub")
+        if user_id_str is None:
+            raise credentials_exception
+        try:
+            user_id = uuid.UUID(user_id_str)
+        except ValueError:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
@@ -46,6 +50,8 @@ async def get_current_user(db: AsyncSession = Depends(get_async_session), token:
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:
+        raise credentials_exception
+    if not user.is_active:
         raise credentials_exception
     return user
 
@@ -65,19 +71,23 @@ def get_password_hash(password: str) -> str:
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
+    if "sub" in to_encode and isinstance(to_encode["sub"], uuid.UUID):
+        to_encode["sub"] = str(to_encode["sub"])  # Ensure sub is str (hex if UUID)
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire, "sub": str(data["sub"])})
+    to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-
-def create_refresh_token(data: dict) -> str:
+def create_refresh_token(data: dict) -> dict:
     """Creating refresh token"""
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    jti = str(uuid.uuid4()) #refresh token uuid
+    jti_uuid = uuid.uuid4()
+    jti = str(jti_uuid)  # refresh token uuid as str
     to_encode = data.copy()
-    to_encode.update({"exp": expire, "scope": "refresh_token", "sub": str(data["sub"]), "jti": jti})
+    if "sub" in to_encode and isinstance(to_encode["sub"], uuid.UUID):
+        to_encode["sub"] = str(to_encode["sub"])
+    to_encode.update({"exp": expire, "scope": "refresh_token", "sub": to_encode["sub"], "jti": jti})
     token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return {"token": token, "jti": jti, "expires_at": expire}
+    return {"token": token, "jti": jti_uuid, "expires_at": expire}
 
 
 def decode_token(token: str) -> dict:

@@ -73,7 +73,7 @@ async def create_user_instance_access(
 
 
 async def delete_user_instance_access(session: AsyncSession, user_id: uuid.UUID, root_id: int) -> None:
-    result = await session.execute(select(UserInstanceAccess).where(UserInstanceAccess.user_id == user_id, UserInstanceAccess.root_id == instnace_id))
+    result = await session.execute(select(UserInstanceAccess).where(UserInstanceAccess.user_id == user_id, UserInstanceAccess.root_id == root_id))
     user_instance_access = result.scalar_one_or_none()
 
     if user_instance_access is None:
