@@ -13,7 +13,7 @@ from app.db.database import get_async_session
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
 
-from app.crud.auth.auth import require_object_permission, get_object_root_id, _check_object_permission
+from app.crud.auth.auth import require_object_permission, get_object_root_id, _check_object_permission, _check_permission
 from app.models.auth import User, Role, Permission, UserObjectAccess, UserTypeAccess, UserRole, RolePermission
 from app.core.security import get_current_user
 from app.models.core import Objects, Types
