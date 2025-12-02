@@ -14,49 +14,47 @@ from fastapi import HTTPException, Depends
 
 
 
-# Get all available instances with optional filters
 async def get_instances(
         db: AsyncSession,
         name: Optional[str] = None,
         object_id: Optional[int] = None,
-        root_id: Optional[int] = None,
+        root_id: Optional[int | list[int]] = None,
         parent_id: Optional[int] = None,
         is_active: Optional[bool] = None
 ) -> list[dict]:
-    # Основной запрос с outer join, чтобы получить все Instances, даже если нет записей в InstanceTreeMap
-    query = (
-        select(
-            Instances.id,
-            Instances.name,
-            Instances.object_id,
-            Instances.root_id,
-            Instances.parent_id,
-            Instances.is_active
-        )
+    from sqlalchemy import and_
+
+    query = select(
+        Instances.id,
+        Instances.name,
+        Instances.object_id,
+        Instances.root_id,
+        Instances.parent_id,
+        Instances.is_active
     )
 
-    # Формируем фильтры
     filters = []
     if name is not None:
         filters.append(Instances.name == name)
     if object_id is not None:
         filters.append(Instances.object_id == object_id)
     if root_id is not None:
-        filters.append(Instances.root_id == root_id)
+        if isinstance(root_id, list):
+            if not root_id:
+                return []
+            filters.append(Instances.root_id.in_(root_id))
+        else:
+            filters.append(Instances.root_id == root_id)
     if parent_id is not None:
         filters.append(Instances.parent_id == parent_id)
     if is_active is not None:
         filters.append(Instances.is_active == is_active)
 
-    # Применяем фильтры
     if filters:
         query = query.where(and_(*filters))
-        print(query)
 
-    # Выполняем запрос
     result = await db.execute(query)
     return result.mappings().all()
-
 
 # Get one type using the instances's id
 async def get_instance(db: AsyncSession, 
