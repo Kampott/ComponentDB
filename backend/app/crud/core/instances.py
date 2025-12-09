@@ -6,7 +6,6 @@ from sqlalchemy.future import select
 from sqlalchemy.sql import and_
 
 from app.crud.core.default import DefaultQueries
-from app.logger import logger
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
@@ -124,7 +123,6 @@ async def create_instance_for_sub_tree(
     object_parent_id: int,
     instance_parent_id: int, 
     instance_root_id: int) -> str | None:
-    logger.debug("Adding another layer for instances...")
     query = (
         select(Objects)
         .where(Objects.parent_id == object_parent_id)
@@ -144,8 +142,6 @@ async def create_instance_for_sub_tree(
             'is_active': True,
         })
 
-    logger.info(instances_add)
-
     query = (
         insert(Instances)
         .values(instances_add)
@@ -163,17 +159,15 @@ async def create_instance_for_sub_tree(
 
 
 async def create_instance_from_object_tree(session: AsyncSession, object_root_id: int) -> Instances | None:
-    logger.debug("Trying to find object with id %i", object_root_id)
     query = (
         select(Objects)
         .where(Objects.id == object_root_id)
     )
     root_object: Objects | None = (await session.execute(query)).scalar_one_or_none()
     if root_object is None or root_object.parent_id is not None:
-        logger.debug("Object %i does not exists or is not root object", object_root_id)
         return None
 
-    logger.debug("Trying to add root instance for object %i", object_root_id)
+
     root_instance_add = Instances(
         name=root_object.name,
         object_id=root_object.id,
@@ -186,14 +180,12 @@ async def create_instance_from_object_tree(session: AsyncSession, object_root_id
     root_instance_add.root_id = root_instance_add.id
     await session.flush()
 
-    logger.debug("Root instance %i for object %i has been added", root_instance_add.id, object_root_id)
+
     root_instance_id = root_instance_add.id
     err = await create_instance_for_sub_tree(session, object_root_id, root_instance_id, root_instance_id)
-    logger.debug("Instance has been created")
 
-    if err:
-        logger.warning(err)
-        return None
+
+
 
     await session.commit()
     return root_instance_add

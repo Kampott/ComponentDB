@@ -10,6 +10,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 import uuid
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
+from app.logging.deps import LoggerInterface, LogCallable, set_log_context
+import typing
 
 router = APIRouter(prefix="/auth", tags=["DB: Auth: Auth + Tokens"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -19,10 +21,21 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 @router.post("/register", response_model=UserOut)
 async def register(user_in: UserCreate,
     current_user: User = Depends(require_permissions("register_user")),
-    db: AsyncSession = Depends(get_async_session)):
+    db: AsyncSession = Depends(get_async_session),
+    log: LogCallable = Depends(LoggerInterface("user"))):
     user = await create_user(db, user_in)
     if not user:
         raise HTTPException(status_code=400, detail="User could not be created")
+    try:
+        await log(
+            action="create_user",
+            details={
+                "created_user_id": str(user.id),
+                "created_user_email": user.email
+            }
+        )
+    except Exception:
+        pass
     return user
 
 

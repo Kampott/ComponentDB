@@ -13,6 +13,7 @@ from app.db.base import Base
 from app.models import *
 from app.models import core
 from app.models import auth
+from app.models import log
 import os
 
 load_dotenv()

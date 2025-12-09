@@ -5,6 +5,7 @@ from typing import List, Optional
 from sqlalchemy import select, or_
 from sqlalchemy.sql import true, false
 from sqlalchemy.orm import selectinload
+import typing
 
 from app.schemas.core import TypesRead, TypesCreate, TypesUpdate
 import app.crud.core.types as db
@@ -18,8 +19,12 @@ from app.models.auth import User, Role, Permission, UserTypeAccess, UserRole, Ro
 from app.core.security import get_current_user
 from app.models.core import Types
 
+from app.logging.deps import LoggerInterface, LogCallable
+
 router = APIRouter(prefix="/types", tags=["DB: Core: Types"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
 
 @router.get("/", response_model=list[TypesRead])
 async def read_types(
@@ -27,7 +32,8 @@ async def read_types(
     name: Optional[str] = Query(None),
     parent_id: Optional[int] = Query(None),
     root_id: Optional[int] = Query(None),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    log: LogCallable = Depends(LoggerInterface("types"))
 ):
     # Fetch user permissions
     result_user = await session.execute(
@@ -70,6 +76,21 @@ async def read_types(
 
     result = await session.execute(query)
     types = result.scalars().all()
+
+    try:
+        await log(
+            "list",
+            {
+                "filters": {
+                    "name": bool(name),
+                    "root_id": root_id,
+                    "parent_id": parent_id
+                },
+                "result_count": len(types)
+            }
+        )
+    except Exception:
+        pass
     return types
 
 
