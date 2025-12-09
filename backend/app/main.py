@@ -131,17 +131,3 @@ app.include_router(users.router)
 app.include_router(user_instance_access.router)
 app.include_router(user_object_access.router)
 app.include_router(user_type_access.router)
-
-# Debug endpoint
-@app.get("/debug-logger")
-async def debug_logger():
-    queue = getattr(app.state, "log_queue", None)
-    task = getattr(app.state, "log_worker_task", None)
-    exception = task.exception() if task and task.done() else None
-    return {
-        "has_queue": queue is not None,
-        "queue_size": queue.qsize() if queue else 0,
-        "has_task": task is not None,
-        "task_running": not task.done() if task else False,
-        "task_exception": str(exception) if exception else "No exception",
-    }
