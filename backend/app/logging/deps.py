@@ -7,18 +7,6 @@ from app.models.auth import User
 LogCallable = Callable[[Optional[str], Optional[dict]], Awaitable[None]]
 
 
-
-async def set_log_context(request: Request, current_user = Depends(get_current_user)):
-    # Запускается перед endpoint, до возврата response — middleware увидит этот контекст
-    request.state.log_context = {
-        "user_id": getattr(current_user, "id", None),
-        "resource": None,
-        "action": None,
-        "details": None,
-    }
-    # dependency не должен возвращать ничего (или может вернуть current_user)
-    return
-
 def LoggerInterface(resource: Optional[str] = None) -> Callable[..., Awaitable[LogCallable]]:
     """
     Factory dependency. Use like: log: LogCallable = Depends(LoggerInterface("types"))

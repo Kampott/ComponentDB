@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 import uuid
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
-from app.logging.deps import LoggerInterface, LogCallable, set_log_context
+from app.logging.deps import LoggerInterface, LogCallable
 import typing
 
 router = APIRouter(prefix="/auth", tags=["DB: Auth: Auth + Tokens"])
