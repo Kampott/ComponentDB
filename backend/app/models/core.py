@@ -3,7 +3,7 @@ from app.db.database import Base
 from sqlalchemy import Index, text, UniqueConstraint
 from typing import Optional, List
 from sqlalchemy import ForeignKey, String, Integer, Boolean
-from app.models.auth import UserInstanceAccess
+from app.models.auth import UserInstanceAccess, UserTypeAccess, UserObjectAccess
 
 
 class Types(Base):
@@ -27,6 +27,10 @@ class Types(Base):
         remote_side=[id],
         backref=backref("root_children", passive_deletes=True),
         passive_deletes=True
+    )
+    user_access: Mapped[List["UserTypeAccess"]] = relationship(
+        "UserTypeAccess",
+        back_populates="type",
     )
 
 
@@ -58,6 +62,10 @@ class Objects(Base):
         "Instances",
         back_populates="object_",
         cascade="all, delete-orphan"
+    )
+    user_access: Mapped[List["UserObjectAccess"]] = relationship(
+        "UserObjectAccess",
+        back_populates="object",
     )
 
 
@@ -108,7 +116,7 @@ class Instances(Base):
         passive_deletes=True
     )
     object_: Mapped["Objects"] = relationship("Objects", back_populates="instances", passive_deletes=True)
-    user_access: Mapped[list["UserInstanceAccess"]] = relationship(
+    user_access: Mapped[List["UserInstanceAccess"]] = relationship(
         "UserInstanceAccess",
         back_populates="instance",
     )

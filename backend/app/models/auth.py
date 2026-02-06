@@ -36,6 +36,17 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    object_access: Mapped[List["UserObjectAccess"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    type_access: Mapped[List["UserTypeAccess"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+
 class Role(Base):
     __tablename__ = "roles"
 
@@ -128,3 +139,46 @@ class UserInstanceAccess(Base):
     instance: Mapped["Instances"] = relationship(
         back_populates="user_access"
     )
+
+
+
+# --- User Object Access ---
+class UserObjectAccess(Base):
+    __tablename__ = "user_object_access"
+    __table_args__ = (UniqueConstraint("user_id", "root_id"),)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    root_id: Mapped[int] = mapped_column(
+        ForeignKey("objects.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    can_read: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    can_write: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="object_access")
+    object: Mapped["Objects"] = relationship(
+        back_populates="user_access"
+    )
+
+# --- User Object Access ---
+class UserTypeAccess(Base):
+    __tablename__ = "user_type_access"
+    __table_args__ = (UniqueConstraint("user_id", "root_id"),)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    root_id: Mapped[int] = mapped_column(
+        ForeignKey("types.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    can_read: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    can_write: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="type_access")
+    type: Mapped["Types"] = relationship(
+        back_populates="user_access"
+    )
+

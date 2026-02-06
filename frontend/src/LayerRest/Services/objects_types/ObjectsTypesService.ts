@@ -17,8 +17,8 @@ export default class ObjectsTypesService implements IObjectsTypesService {
         return await this.client.get<ObjectType>(`/types/${id}`)
     }
 
-    public async addType(object: ObjectTypeAdd): Promise<ObjectTypeAdd> {
-        return await this.client.post<ObjectTypeAdd, ObjectTypeAdd>(
+    public async addType(object: ObjectTypeAdd): Promise<ObjectType> {
+        return await this.client.post<ObjectTypeAdd, ObjectType>(
             '/types/',
             object,
         )

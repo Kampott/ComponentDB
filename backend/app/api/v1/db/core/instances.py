@@ -2,16 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from sqlalchemy import select
+from sqlalchemy import select, or_
+from sqlalchemy.sql import true, false
+from sqlalchemy.orm import selectinload
 
 from app.schemas.core import InstancesRead, InstancesCreate, InstancesUpdate, InstanceCreated
 import app.crud.core.instances as db
 from app.crud.core.instances import get_instance
-from app.crud.auth.auth import require_instance_permission, get_instance_root_id
+from app.crud.auth.auth import require_instance_permission, get_instance_root_id, _check_instance_permission
 from app.db.database import get_async_session
 
+from app.models.core import Instances, Objects, Types
 
-from app.models.auth import User, Role, Permission, UserInstanceAccess, UserRole, RolePermission
+from app.crud.auth.auth import require_permission as require_permissions
+from app.crud.auth.auth import _check_permission, require_instance_permission
+from app.models.auth import User, Role, Permission, UserInstanceAccess, UserObjectAccess, UserTypeAccess, UserRole, RolePermission
 from app.core.security import get_current_user
 
 router = APIRouter(prefix="/instances", tags=["DB: Core: Instances"])
@@ -20,34 +25,84 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 @router.get("/", response_model=list[InstancesRead])
 async def read_instances(
-        session: AsyncSession = Depends(get_async_session),
-        name: Optional[str] = Query(None),
-        object_id: Optional[int] = Query(None),
-        root_id: Optional[int] = Query(None),
-        parent_id: Optional[int] = Query(None),
-        is_active: Optional[bool] = Query(None),
-        current_user: User = Depends(get_current_user)
+    session: AsyncSession = Depends(get_async_session),
+    name: Optional[str] = Query(None),
+    object_id: Optional[int] = Query(None),
+    root_id: Optional[int] = Query(None),
+    parent_id: Optional[int] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    current_user: User = Depends(get_current_user)
 ):
-    # Получаем все доступные root_id для текущего юзера
-    result = await session.execute(
-        select(UserInstanceAccess.root_id)
-        .where(UserInstanceAccess.user_id == current_user.id)
+
+    # Fetch user permissions
+    result_user = await session.execute(
+        select(User)
+        .where(User.id == current_user.id)
+        .options(selectinload(User.roles).selectinload(Role.permissions))
     )
-    accessible_root_ids = [row[0] for row in result.all()]
+    user = result_user.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
 
+    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    has_super_permission = "SUPER_PERMISSION" in user_perms
 
-    if root_id is not None and root_id not in accessible_root_ids:
-        raise HTTPException(status_code=403, detail="No access to this root instance")
+    if not has_super_permission:
+        # Fetch allowed root_ids for each level with can_read=True
+        result_instance = await session.execute(
+            select(UserInstanceAccess.root_id)
+            .where(
+                UserInstanceAccess.user_id == current_user.id,
+                UserInstanceAccess.can_read.is_(True)
+            )
+        )
+        allowed_instance_roots = [row[0] for row in result_instance.all()]
 
+        result_object = await session.execute(
+            select(UserObjectAccess.root_id)
+            .where(
+                UserObjectAccess.user_id == current_user.id,
+                UserObjectAccess.can_read.is_(True)
+            )
+        )
+        allowed_object_roots = [row[0] for row in result_object.all()]
 
-    instances = await db.get_instances(
-        session,
-        name=name,
-        object_id=object_id,
-        root_id=root_id or accessible_root_ids,
-        parent_id=parent_id,
-        is_active=is_active
-    )
+        result_type = await session.execute(
+            select(UserTypeAccess.root_id)
+            .where(
+                UserTypeAccess.user_id == current_user.id,
+                UserTypeAccess.can_read.is_(True)
+            )
+        )
+        allowed_type_roots = [row[0] for row in result_type.all()]
+
+    # Build the query
+    query = select(Instances)
+
+    if name:
+        query = query.where(Instances.name.ilike(f"%{name}%"))
+    if object_id:
+        query = query.where(Instances.object_id == object_id)
+    if root_id:
+        query = query.where(Instances.root_id == root_id)
+    if parent_id:
+        query = query.where(Instances.parent_id == parent_id)
+    if is_active is not None:
+        query = query.where(Instances.is_active == is_active)
+
+    if not has_super_permission:
+        query = query.join(Objects, Instances.object_id == Objects.id)
+        query = query.join(Types, Objects.type_id == Types.id)
+        query = query.where(
+            or_(
+                Instances.root_id.in_(allowed_instance_roots) if allowed_instance_roots else false(),
+                Objects.root_id.in_(allowed_object_roots) if allowed_object_roots else false(),
+                Types.root_id.in_(allowed_type_roots) if allowed_type_roots else false()
+            )
+        )
+
+    result = await session.execute(query)
+    instances = result.scalars().all()
     return instances
 
 @router.get("/{instance_id}", response_model=InstancesRead)
@@ -62,13 +117,20 @@ async def read_instance(
     return instance
 
 
-
 @router.post("/", response_model=InstanceCreated)
-async def add_instances(
-    data: InstancesCreate, 
+async def add_instance(
+    data: InstancesCreate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_instance_permission(write=True))):
+    current_user: User = Depends(get_current_user)
+):
+    if data.parent_id is None:
+        await _check_permission(current_user, session, "create_new_instance")
+    else:
+        await _check_instance_permission(session, current_user, data.parent_id, write=True)
+
     return await db.create_instance(session, data)
+
+
 
 
 @router.delete("/{instance_id}", status_code=204)

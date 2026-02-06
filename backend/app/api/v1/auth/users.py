@@ -28,11 +28,3 @@ async def read_user(
     if not usr:
         raise HTTPException(status_code=404, detail="User with such email not found")
     return usr
-
-@router.post("/", response_model=UserOut)
-async def add_user(
-    data: UserCreate,
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions("create_users"))
-):
-    return await create_user(session, data)

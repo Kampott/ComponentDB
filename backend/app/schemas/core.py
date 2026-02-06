@@ -111,8 +111,6 @@ class InstanceCreated(BaseModel):
     parent_id: int | None = None
     root_id: int
     is_active: bool
-    index_of_layer: int
-
 
 class InstancesUpdate(BaseModel):
     name: int | None = None
@@ -125,7 +123,6 @@ class InstancesRead(BaseModel):
     root_id: int
     parent_id: int | None = None
     object_id: int
-    index_of_layer: int
     is_active: bool
 
     class Config:

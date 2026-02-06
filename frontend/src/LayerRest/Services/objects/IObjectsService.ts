@@ -10,7 +10,7 @@ export default interface IObjectsService {
 
     getObjectById(id: number): Promise<Object>
 
-    addObject(object: ObjectAdd): Promise<ObjectAdd>
+    addObject(object: ObjectAdd): Promise<Object>
 
     updateObject(id: number, data: ObjectUpdate): Promise<Object>
 

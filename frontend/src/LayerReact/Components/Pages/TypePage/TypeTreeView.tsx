@@ -7,11 +7,13 @@ import FileSystemTreeView, {
     type DataNode,
 } from '@Components/Common/FileSystemTreeView.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
+import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
-import type { ObjectType, ObjectTypeAdd } from '@RestSchemas'
+import type { ObjectType, ObjectTypeAdd, ObjectTypeUpdate } from '@RestSchemas'
+import { objectTypeSchema } from '@RestSchemas'
 import { useServicesStore } from '@StorageImpl'
-import AddObjectTypeForm from '../../Forms/AddObjectTypeForm.tsx'
 
 interface Props {
     objectType: ObjectType
@@ -28,7 +30,12 @@ function TypeTreeView({ objectType }: Props) {
 
     const [openIds, setOpenIds] = useState<Set<number>>(new Set())
 
+    const [formParentObjectType, setFormParentObjectType] =
+        useState<ObjectType>(objectType)
     const [formShow, setFormShow] = useState(false)
+    const [editTargetType, setEditTargetType] = useState<ObjectType | null>(
+        null,
+    )
 
     async function loadObjectTypeChildren(
         id: number,
@@ -117,6 +124,32 @@ function TypeTreeView({ objectType }: Props) {
         await services.objectsTypesService.addType(data)
         setFormShow(false)
         setTypeTree(await loadObjectTypeChildren(objectType.id))
+        setFormParentObjectType(objectType)
+    }
+
+    function handleAddRequest(objectType: ObjectType) {
+        setFormParentObjectType(objectType)
+        setFormShow(true)
+    }
+
+    function handleChangeRequest(objectType: ObjectType) {
+        setEditTargetType(objectType)
+    }
+
+    async function handleDeleteRequest(currentObjectType: ObjectType) {
+        await services.objectsTypesService.deleteType(currentObjectType.id)
+        setTypeTree(await loadObjectTypeChildren(objectType.id))
+    }
+
+    async function confirmEditType(data: ObjectTypeUpdate | null) {
+        if (!editTargetType || !data) {
+            setEditTargetType(null)
+            return
+        }
+
+        await services.objectsTypesService.updateType(editTargetType.id, data)
+        setEditTargetType(null)
+        setTypeTree(await loadObjectTypeChildren(objectType.id))
     }
 
     return (
@@ -137,15 +170,32 @@ function TypeTreeView({ objectType }: Props) {
                     openIds={openIds}
                     onToggle={onObjectChildrenToggle}
                     renderItem={renderItem}
+                    contextMenuOptions={{
+                        Добавить: handleAddRequest,
+                        Изменить: handleChangeRequest,
+                        Удалить: handleDeleteRequest,
+                    }}
                     onRequestChildren={loadObjectTypeChildren}
                     onChildrenLoaded={onObjectChildrenLoaded}
                 />
             </LoadEffect>
 
             {formShow && (
-                <AddObjectTypeForm
-                    parentObjectType={objectType}
+                <AddEntityForm
+                    schema={objectTypeSchema}
+                    context={{ parentTypeId: formParentObjectType.id }}
+                    defaults={{ name: '' }}
+                    title='Добавление нового типа'
                     submitCallback={confirmAddType}
+                />
+            )}
+            {editTargetType && (
+                <EditEntityForm
+                    schema={objectTypeSchema}
+                    context={{ parentTypeId: editTargetType.parent_id }}
+                    source={editTargetType}
+                    title={`Изменение типа "${editTargetType.name}"`}
+                    submitCallback={confirmEditType}
                 />
             )}
         </>

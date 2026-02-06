@@ -11,7 +11,7 @@
             "@/*": ["src/*"],
             "@Components/*": ["src/LayerReact/Components/*"],
             "@Rest/*": ["src/LayerRest/*"],
-            "@RestSchemas": ["src/LayerRest/Schemas/index.ts"],
+            "@RestSchemas": ["src/LayerKernel/Schemas/index.ts"],
             "@Storage/*": ["src/LayerStorage/*"],
             "@Storage": ["src/LayerKernel/Storage/Interfaces/index.ts"],
             "@StorageImpl": ["src/LayerKernel/Storage/Zustand/index.ts"],

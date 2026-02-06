@@ -23,8 +23,8 @@ export default class PropertiesTypesService implements IPropertiesTypesService {
 
     public async addPropertyType(
         object: PropertyTypeAdd,
-    ): Promise<PropertyTypeAdd> {
-        return await this.client.post<PropertyTypeAdd, PropertyTypeAdd>(
+    ): Promise<PropertyType> {
+        return await this.client.post<PropertyTypeAdd, PropertyType>(
             '/property_types/',
             object,
         )

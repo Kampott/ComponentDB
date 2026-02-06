@@ -1,5 +1,5 @@
-import DefaultInlineForm from '@Components/Common/Form/DefaultInlineForm.tsx'
-import type { FormField } from '@Components/Common/Form/FormTypes.ts'
+import type { FormField } from '@/LayerKernel/Forms/FormTypes.ts'
+import DefaultInlineForm from '@Components/Common/Forms/DefaultInlineForm.tsx'
 import type { LoginRequest } from '@RestSchemas'
 import { LoginRequestValidator } from '@RestSchemas'
 import Card from 'react-bootstrap/Card'

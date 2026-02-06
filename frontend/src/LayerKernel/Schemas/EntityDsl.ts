@@ -1,0 +1,181 @@
+import type { ValidationResult } from './Validator/Types.ts'
+
+/**
+ * Правила формирования payload для create:
+ * - required: ключ обязан присутствовать в InferCreate<...>
+ * - optional: ключ опционален в InferCreate<...>
+ * - forbidden: ключ исключается из InferCreate<...>
+ */
+export type EntityCreatePolicy = 'required' | 'optional' | 'forbidden'
+
+/**
+ * Правила формирования payload для update:
+ * - optional: ключ может присутствовать в InferUpdate<...>
+ * - forbidden: ключ исключается из InferUpdate<...>
+ */
+export type EntityUpdatePolicy = 'optional' | 'forbidden'
+export type EntityInputType =
+    | 'text'
+    | 'number'
+    | 'boolean'
+    | 'select'
+    | 'password'
+
+export type EntityFieldOption<Value> = {
+    label: string
+    value: Value
+}
+
+/**
+ * Унифицированный контракт поля для типизации API и генерации UI
+ * Одна декларация определяет:
+ * - участие ключа в create/update DTO
+ * - отображение поля в форме (тип ввода/видимость/опции)
+ * - валидацию и значения по умолчанию
+ */
+export type EntityField<Schema, Field extends keyof Schema, Context> = {
+    label: string
+    description?: string
+    input: EntityInputType
+    create: EntityCreatePolicy
+    update: EntityUpdatePolicy
+    createVisible?: boolean
+    updateVisible?: boolean
+    validator?: (value: Schema[Field]) => ValidationResult
+    options?: (
+        context: Context,
+    ) =>
+        | EntityFieldOption<Schema[Field]>[]
+        | Promise<EntityFieldOption<Schema[Field]>[]>
+    defaultValue?: (context: Context) => Schema[Field] | Promise<Schema[Field]>
+}
+
+export type EntityFields<Schema, Context> = {
+    [Field in keyof Schema]: EntityField<Schema, Field, Context>
+}
+
+/**
+ * Корневая модель одной сущности
+ * Context - внешние runtime-данные, необходимые для вычисления
+ * дефолтов/опций (например: id родителя, параметры роутинга, id пользователя)
+ */
+export type EntitySchema<
+    Schema,
+    Context,
+    Fields extends EntityFields<Schema, Context>,
+> = {
+    entity: string
+    fields: Fields
+}
+
+export const defineEntitySchema =
+    <Schema, Context>() =>
+    <const Fields extends EntityFields<Schema, Context>>(
+        schema: EntitySchema<Schema, Context, Fields>,
+    ) =>
+        schema
+
+type ExtractEntityParts<S> =
+    S extends EntitySchema<infer Schema, infer Context, infer Fields>
+        ? { schema: Schema; context: Context; fields: Fields }
+        : never
+
+type EntityObject<S> = ExtractEntityParts<S>['schema'] extends object
+    ? ExtractEntityParts<S>['schema']
+    : never
+
+// Вспомогательные типы извлечения, используемые в обобщённом выводе ниже
+export type InferEntity<S> = ExtractEntityParts<S>['schema']
+
+export type EntityContext<S> = ExtractEntityParts<S>['context']
+
+type FieldsOf<S> = ExtractEntityParts<S>['fields']
+type FieldConfig<S, K extends keyof FieldsOf<S>> = Extract<
+    FieldsOf<S>[K],
+    { create: EntityCreatePolicy; update: EntityUpdatePolicy }
+>
+
+type KeysByCreatePolicy<S, Policy extends EntityCreatePolicy> = {
+    [Key in keyof FieldsOf<S>]: FieldConfig<S, Key> extends { create: Policy }
+        ? Key
+        : never
+}[keyof FieldsOf<S>] &
+    keyof EntityObject<S>
+
+type KeysByUpdatePolicy<S, Policy extends EntityUpdatePolicy> = {
+    [Key in keyof FieldsOf<S>]: FieldConfig<S, Key> extends { update: Policy }
+        ? Key
+        : never
+}[keyof FieldsOf<S>] &
+    keyof EntityObject<S>
+
+type Flatten<T> = { [Key in keyof T]: T[Key] }
+type RequiredCreateKeys<S> = KeysByCreatePolicy<S, 'required'>
+type OptionalCreateKeys<S> = KeysByCreatePolicy<S, 'optional'>
+type OptionalUpdateKeys<S> = KeysByUpdatePolicy<S, 'optional'>
+
+// Публичные ключи для runtime-итерации по наборам create/update полей
+export type CreateFieldKeys<S> = RequiredCreateKeys<S> | OptionalCreateKeys<S>
+
+export type UpdateFieldKeys<S> = OptionalUpdateKeys<S>
+
+export type InferCreate<S> = Flatten<
+    Pick<EntityObject<S>, RequiredCreateKeys<S>> &
+        Partial<Pick<EntityObject<S>, OptionalCreateKeys<S>>>
+>
+
+export type InferUpdate<S> = Flatten<
+    Partial<Pick<EntityObject<S>, OptionalUpdateKeys<S>>>
+>
+
+/**
+ * Runtime-хелпер для генерации формы:
+ * возвращает все ключи, разрешённые в create payload
+ * Порядок сохраняется из декларации схемы, чтобы layout формы был предсказуемым
+ */
+export function getCreateFieldKeys<
+    Schema,
+    Context,
+    Fields extends EntityFields<Schema, Context>,
+>(
+    schema: EntitySchema<Schema, Context, Fields>,
+): CreateFieldKeys<EntitySchema<Schema, Context, Fields>>[] {
+    type SchemaDefinition = EntitySchema<Schema, Context, Fields>
+
+    const fields = schema.fields
+    const result: CreateFieldKeys<SchemaDefinition>[] = []
+
+    for (const key of Object.keys(fields) as (keyof Fields)[]) {
+        if (fields[key].create !== 'forbidden') {
+            result.push(key as CreateFieldKeys<SchemaDefinition>)
+        }
+    }
+
+    return result
+}
+
+/**
+ * Runtime-хелпер для генерации update-формы:
+ * возвращает все ключи, разрешённые в update payload
+ * Порядок сохраняется из декларации схемы
+ */
+export function getUpdateFieldKeys<
+    Schema,
+    Context,
+    Fields extends EntityFields<Schema, Context>,
+>(
+    schema: EntitySchema<Schema, Context, Fields>,
+): UpdateFieldKeys<EntitySchema<Schema, Context, Fields>>[] {
+    type SchemaDefinition = EntitySchema<Schema, Context, Fields>
+
+    const fields = schema.fields
+    const result: UpdateFieldKeys<SchemaDefinition>[] = []
+
+    for (const key of Object.keys(fields) as (keyof Fields)[]) {
+        if (fields[key].update !== 'forbidden') {
+            result.push(key as UpdateFieldKeys<SchemaDefinition>)
+        }
+    }
+
+    return result
+}

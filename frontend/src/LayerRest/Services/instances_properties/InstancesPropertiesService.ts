@@ -6,9 +6,7 @@ import type {
 } from '@RestSchemas'
 import type IInstancesPropertiesService from './IInstancesPropertiesService.ts'
 
-export default class InstancesPropertiesService
-    implements IInstancesPropertiesService
-{
+export default class InstancesPropertiesService implements IInstancesPropertiesService {
     private client: RestApiClient
 
     public constructor(client: RestApiClient) {
@@ -29,8 +27,8 @@ export default class InstancesPropertiesService
 
     public async addInstanceProperty(
         object: InstancePropertyAdd,
-    ): Promise<InstancePropertyAdd> {
-        return await this.client.post<InstancePropertyAdd, InstancePropertyAdd>(
+    ): Promise<InstanceProperty> {
+        return await this.client.post<InstancePropertyAdd, InstanceProperty>(
             '/instanceproperties/',
             object,
         )

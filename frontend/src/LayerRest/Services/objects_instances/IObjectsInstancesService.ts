@@ -9,7 +9,7 @@ export default interface IObjectsInstancesService {
 
     getInstanceById(id: number): Promise<ObjectInstance>
 
-    addInstance(object: ObjectInstanceAdd): Promise<ObjectInstanceAdd>
+    addInstance(object: ObjectInstanceAdd): Promise<ObjectInstance>
 
     updateInstance(
         id: number,

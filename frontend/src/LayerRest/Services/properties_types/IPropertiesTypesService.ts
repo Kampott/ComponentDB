@@ -9,7 +9,7 @@ export default interface IPropertiesTypesService {
 
     getPropertyTypeById(id: number): Promise<PropertyType>
 
-    addPropertyType(object: PropertyTypeAdd): Promise<PropertyTypeAdd>
+    addPropertyType(object: PropertyTypeAdd): Promise<PropertyType>
 
     updatePropertyType(
         id: number,

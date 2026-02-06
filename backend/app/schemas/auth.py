@@ -87,3 +87,65 @@ class RolePermissionOut(BaseModel):
     role_id: int
     permission_id: int
 
+
+## User Instance Access
+
+class UserInstanceAccessCreate(BaseModel):
+    user_id: uuid.UUID
+    root_id: int
+    can_read: bool
+    can_write: bool
+
+class UserInstanceAccessOut(BaseModel):
+    user_id: uuid.UUID
+    root_id: int
+    can_read: bool
+    can_write: bool
+
+class UserInstanceAccessUpdate(BaseModel):
+    user_id: uuid.UUID | None = None
+    root_id: int | None = None
+    can_read: bool | None = None
+    can_write: bool | None = None
+
+
+## User Objects Access
+
+class UserObjectAccessCreate(BaseModel):
+    user_id: uuid.UUID
+    root_id: int
+    can_read: bool
+    can_write: bool
+
+class UserObjectAccessOut(BaseModel):
+    user_id: uuid.UUID
+    root_id: int
+    can_read: bool
+    can_write: bool
+
+class UserObjectAccessUpdate(BaseModel):
+    user_id: uuid.UUID | None = None
+    root_id: int | None = None
+    can_read: bool | None = None
+    can_write: bool | None = None
+
+
+## User Type Access
+
+class UserTypeAccessCreate(BaseModel):
+    user_id: uuid.UUID
+    root_id: int
+    can_read: bool
+    can_write: bool
+
+class UserTypeAccessOut(BaseModel):
+    user_id: uuid.UUID
+    root_id: int
+    can_read: bool
+    can_write: bool
+
+class UserTypeAccessUpdate(BaseModel):
+    user_id: uuid.UUID | None = None
+    root_id: int | None = None
+    can_read: bool | None = None
+    can_write: bool | None = None

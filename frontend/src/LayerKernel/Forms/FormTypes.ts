@@ -14,4 +14,5 @@ export interface FormField<T, K extends keyof T> {
     placeholder?: string
     options?: FormFieldOption<T[K]>[]
     validator?: (value: T[K]) => ValidationResult
+    parser?: (rawValue: unknown) => T[K]
 }

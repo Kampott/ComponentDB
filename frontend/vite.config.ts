@@ -14,7 +14,7 @@ export default defineConfig({
             { find: '@', replacement: path.resolve(__dirname, 'src') },
             { find: '@Components', replacement: path.resolve(__dirname, 'src/LayerReact/Components') },
             { find: '@Rest', replacement: path.resolve(__dirname, 'src/LayerRest') },
-            { find: '@RestSchemas', replacement: path.resolve(__dirname, 'src/LayerRest/Schemas/index.ts') },
+            { find: '@RestSchemas', replacement: path.resolve(__dirname, 'src/LayerKernel/Schemas/index.ts') },
             { find: '@Storage', replacement: path.resolve(__dirname, 'src/LayerKernel/Storage/Interfaces/index.ts') },
             { find: '@StorageImpl', replacement: path.resolve(__dirname, 'src/LayerKernel/Storage/Zustand/index.ts') },
         ],

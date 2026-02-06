@@ -2,21 +2,20 @@ import { useState } from 'react'
 
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
-import Modal from 'react-bootstrap/Modal'
 
+import type { FormField } from '@/LayerKernel/Forms/FormTypes.ts'
 import DefaultFormBase from './DefaultFormBase.tsx'
-import type { FormField } from './FormTypes.ts'
 
 interface Props<T> {
     defaultData: T
-    title: string
+    submitButtonText?: string
     fields: FormField<T, keyof T>[]
     onSubmit: (data: T | null) => void
 }
 
-function DefaultPopupForm<T>({
+function DefaultInlineForm<T>({
     defaultData,
-    title,
+    submitButtonText,
     fields,
     onSubmit,
 }: Props<T>) {
@@ -44,31 +43,21 @@ function DefaultPopupForm<T>({
     }
 
     return (
-        <Modal show={true}>
-            <Modal.Header closeButton>
-                <Modal.Title>{title}</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <Form>
-                    <DefaultFormBase
-                        fields={fields}
-                        data={data}
-                        setData={setData}
-                        errors={errors}
-                        setErrors={setErrors}
-                    />
-                </Form>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant='secondary' onClick={() => onSubmit(null)}>
-                    Отмена
-                </Button>
+        <Form>
+            <DefaultFormBase
+                fields={fields}
+                data={data}
+                setData={setData}
+                errors={errors}
+                setErrors={setErrors}
+            />
+            <Form.Group className='d-flex justify-content-center mt-3'>
                 <Button variant='primary' onClick={handleSubmit}>
-                    Сохранить
+                    {submitButtonText ? submitButtonText : 'Подтвердить'}
                 </Button>
-            </Modal.Footer>
-        </Modal>
+            </Form.Group>
+        </Form>
     )
 }
 
-export default DefaultPopupForm
+export default DefaultInlineForm

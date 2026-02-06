@@ -22,8 +22,8 @@ export default class ObjectsService implements IObjectsService {
         return await this.client.get<Object>(`/objects/${id}`)
     }
 
-    public async addObject(object: ObjectAdd): Promise<ObjectAdd> {
-        return await this.client.post<ObjectAdd, ObjectAdd>('/objects/', object)
+    public async addObject(object: ObjectAdd): Promise<Object> {
+        return await this.client.post<ObjectAdd, Object>('/objects/', object)
     }
 
     public async updateObject(id: number, data: ObjectUpdate): Promise<Object> {

@@ -5,7 +5,7 @@ export default interface IObjectsTypesService {
 
     getTypeById(id: number): Promise<ObjectType>
 
-    addType(object: ObjectTypeAdd): Promise<ObjectTypeAdd>
+    addType(object: ObjectTypeAdd): Promise<ObjectType>
 
     updateType(id: number, data: ObjectTypeUpdate): Promise<ObjectType>
 
