@@ -5,8 +5,8 @@ import type {
     ObjectInstance,
     ObjectUpdate,
 } from '@Schemas'
-import MockCrudService from './MockCrudService.ts'
-import MockDataStore from './MockDataStore.ts'
+import MockCrudService from '@/Mocks/Services/MockCrudService.ts'
+import MockDataStore from '@/Mocks/Services/MockDataStore.ts'
 
 export default class MockObjectsService
     extends MockCrudService<ObjectEntity, ObjectAdd, ObjectUpdate>

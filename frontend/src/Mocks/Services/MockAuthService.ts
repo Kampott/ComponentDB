@@ -6,7 +6,7 @@ import type {
     RegisterResponse,
     User,
 } from '@Schemas'
-import MockDataStore from './MockDataStore.ts'
+import MockDataStore from '@/Mocks/Services/MockDataStore.ts'
 
 export default class MockAuthService implements IAuthService {
     private readonly store: MockDataStore
