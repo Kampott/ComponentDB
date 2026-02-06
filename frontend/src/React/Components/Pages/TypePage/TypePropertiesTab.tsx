@@ -1,0 +1,193 @@
+import { type ReactNode, useEffect, useState } from 'react'
+
+import Button from 'react-bootstrap/Button'
+
+import DefaultList from '@Components/Common/DefaultList.tsx'
+import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
+import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
+import { handleApiError } from '@Rest/handle_api_error.ts'
+import { RestApiError } from '@Rest/RestApiClient.ts'
+import type {
+    ObjectType,
+    PropertyType,
+    PropertyTypeAdd,
+    PropertyTypeUpdate,
+} from '@Schemas'
+import { propertyTypeSchema } from '@Schemas'
+import { useServicesStore } from '@StorageImpl'
+
+interface Props {
+    objectType: ObjectType
+}
+
+function TypePropertiesTab({ objectType }: Props): ReactNode {
+    const services = useServicesStore(state => state.services)
+
+    const [objectProperties, setObjectProperties] = useState<
+        PropertyType[] | null
+    >(null)
+    const [instanceProperties, setInstanceProperties] = useState<
+        PropertyType[] | null
+    >(null)
+    const [formShow, setFormShow] = useState(false)
+    const [editTargetPropertyType, setEditTargetPropertyType] =
+        useState<PropertyType | null>(null)
+
+    async function loadProperties(): Promise<void> {
+        setObjectProperties(null)
+        setInstanceProperties(null)
+
+        try {
+            setObjectProperties(
+                await services.propertiesTypesService.getPropertyTypesByTypeId(
+                    objectType.id,
+                    true,
+                ),
+            )
+            setInstanceProperties(
+                await services.propertiesTypesService.getPropertyTypesByTypeId(
+                    objectType.id,
+                    false,
+                ),
+            )
+        } catch (error) {
+            handleApiError(error as RestApiError, {
+                showToast: m => alert(m),
+            })
+        }
+    }
+
+    useEffect(() => {
+        loadProperties()
+    }, [objectType])
+
+    function renderProperty(property: PropertyType): ReactNode {
+        return (
+            <>
+                {/*<div className="w-50 text-start">{property.name}</div>*/}
+                {property.name}
+            </>
+        )
+    }
+
+    async function confirmAddProperty(data: PropertyTypeAdd | null) {
+        if (!data) {
+            setFormShow(false)
+            return
+        }
+
+        try {
+            await services.propertiesTypesService.create(data)
+        } catch (error) {
+            handleApiError(error as RestApiError, {
+                setFormErrors: errors => alert(errors),
+                showToast: m => alert(m),
+            })
+        } finally {
+            setFormShow(false)
+            await loadProperties()
+        }
+    }
+
+    function handleChangeRequest(propertyType: PropertyType) {
+        setEditTargetPropertyType(propertyType)
+    }
+
+    function handleDeleteRequest(propertyType: PropertyType) {
+        console.log(propertyType)
+    }
+
+    async function confirmEditPropertyType(data: PropertyTypeUpdate | null) {
+        if (!editTargetPropertyType || !data) {
+            setEditTargetPropertyType(null)
+            return
+        }
+
+        await services.propertiesTypesService.update(
+            editTargetPropertyType.id,
+            data,
+        )
+        setEditTargetPropertyType(null)
+        await loadProperties()
+    }
+
+    return (
+        <>
+            <Button
+                variant='primary'
+                className='mt-4'
+                onClick={() => setFormShow(true)}
+            >
+                Добавить свойство
+            </Button>
+
+            <h4 className='fw-semibold fs-4 border-bottom pb-1 mb-3 pt-5'>
+                Свойства объекта
+            </h4>
+
+            <LoadEffect
+                data={objectProperties}
+                contentSize={{ height: '20px', width: '100%' }}
+            >
+                {objectProperties?.length == 0 ? (
+                    'Нет свойств'
+                ) : (
+                    <DefaultList
+                        data={objectProperties ? objectProperties : []}
+                        renderItem={renderProperty}
+                        onChangeRequest={handleChangeRequest}
+                        onDeleteRequest={handleDeleteRequest}
+                    />
+                )}
+            </LoadEffect>
+
+            <h4 className='fw-semibold fs-4 border-bottom pb-1 mb-3 pt-5'>
+                Свойства экземпляра
+            </h4>
+
+            <LoadEffect
+                data={instanceProperties}
+                contentSize={{ height: '20px', width: '100%' }}
+            >
+                {instanceProperties?.length == 0 ? (
+                    'Нет свойств'
+                ) : (
+                    <DefaultList
+                        data={instanceProperties ? instanceProperties : []}
+                        renderItem={renderProperty}
+                        onChangeRequest={handleChangeRequest}
+                        onDeleteRequest={handleDeleteRequest}
+                    />
+                )}
+            </LoadEffect>
+
+            {formShow && (
+                <AddEntityForm
+                    schema={propertyTypeSchema}
+                    context={{
+                        objectTypeId: objectType.id,
+                        defaultIsStatic: true,
+                    }}
+                    defaults={{ name: '' }}
+                    title='Добавление нового свойства'
+                    submitCallback={confirmAddProperty}
+                />
+            )}
+            {editTargetPropertyType && (
+                <EditEntityForm
+                    schema={propertyTypeSchema}
+                    context={{
+                        objectTypeId: editTargetPropertyType.type_id,
+                        defaultIsStatic: editTargetPropertyType.is_static,
+                    }}
+                    source={editTargetPropertyType}
+                    title={`Изменение свойства "${editTargetPropertyType.name}"`}
+                    submitCallback={confirmEditPropertyType}
+                />
+            )}
+        </>
+    )
+}
+
+export default TypePropertiesTab

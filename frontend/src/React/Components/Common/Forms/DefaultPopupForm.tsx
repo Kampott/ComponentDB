@@ -1,0 +1,74 @@
+import { useState } from 'react'
+
+import Button from 'react-bootstrap/Button'
+import Form from 'react-bootstrap/Form'
+import Modal from 'react-bootstrap/Modal'
+
+import type { FormField } from '@Kernel/Forms/FormTypes.ts'
+import DefaultFormBase from './DefaultFormBase.tsx'
+
+interface Props<T, Field extends keyof T = keyof T> {
+    defaultData: T
+    title: string
+    fields: FormField<T, Field>[]
+    onSubmit: (data: T | null) => void
+}
+
+function DefaultPopupForm<T>({
+    defaultData,
+    title,
+    fields,
+    onSubmit,
+}: Props<T>) {
+    const [data, setData] = useState<T>(defaultData)
+    const [errors, setErrors] = useState<
+        Partial<Record<keyof T, string | null>>
+    >({})
+
+    function handleSubmit() {
+        let hasError = false
+        const newErrors: Partial<Record<keyof T, string | null>> = {}
+
+        fields.forEach(f => {
+            if (f.validator) {
+                const err = f.validator(data[f.bindData])
+                newErrors[f.bindData] = err
+                if (err) hasError = true
+            }
+        })
+        setErrors(newErrors)
+
+        if (!hasError) {
+            onSubmit(data)
+        }
+    }
+
+    return (
+        <Modal show={true}>
+            <Modal.Header closeButton>
+                <Modal.Title>{title}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form>
+                    <DefaultFormBase
+                        fields={fields}
+                        data={data}
+                        setData={setData}
+                        errors={errors}
+                        setErrors={setErrors}
+                    />
+                </Form>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant='secondary' onClick={() => onSubmit(null)}>
+                    Отмена
+                </Button>
+                <Button variant='primary' onClick={handleSubmit}>
+                    Сохранить
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    )
+}
+
+export default DefaultPopupForm

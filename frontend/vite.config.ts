@@ -12,11 +12,13 @@ export default defineConfig({
     resolve: {
         alias: [
             { find: '@', replacement: path.resolve(__dirname, 'src') },
-            { find: '@Components', replacement: path.resolve(__dirname, 'src/LayerReact/Components') },
-            { find: '@Rest', replacement: path.resolve(__dirname, 'src/LayerRest') },
-            { find: '@RestSchemas', replacement: path.resolve(__dirname, 'src/LayerKernel/Schemas/index.ts') },
-            { find: '@Storage', replacement: path.resolve(__dirname, 'src/LayerKernel/Storage/Interfaces/index.ts') },
-            { find: '@StorageImpl', replacement: path.resolve(__dirname, 'src/LayerKernel/Storage/Zustand/index.ts') },
+            { find: '@Kernel', replacement: path.resolve(__dirname, 'src/Kernel') },
+            { find: '@React', replacement: path.resolve(__dirname, 'src/React') },
+            { find: '@Components', replacement: path.resolve(__dirname, 'src/React/Components') },
+            { find: '@Rest', replacement: path.resolve(__dirname, 'src/Rest') },
+            { find: '@Schemas', replacement: path.resolve(__dirname, 'src/Kernel/Schemas/index.ts') },
+            { find: '@Storage', replacement: path.resolve(__dirname, 'src/Interfaces/Storage/index.ts') },
+            { find: '@StorageImpl', replacement: path.resolve(__dirname, 'src/Kernel/Storage/Zustand/index.ts') },
         ],
     },
 })
