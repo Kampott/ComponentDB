@@ -1,3 +1,9 @@
+export * from './DefaultProps.ts'
+export * from './EntityDsl.ts'
+
+export * from './Validator/DefaultValidator.ts'
+export * from './Validator/Types.ts'
+
 export * from './Auth/Auth.ts'
 export * from './Auth/AuthValidator.ts'
 
@@ -16,13 +22,3 @@ export * from './Property/Property.ts'
 
 export * from './PropertyType/PropertyType.ts'
 export * from './PropertyType/PropertyTypeValidator.ts'
-
-export * from './Validator/DefaultValidator.ts'
-export * from './Validator/Types.ts'
-
-export * from './Validator/DefaultValidator.ts'
-export * from './Validator/Types.ts'
-
-export * from './SchemaMeta.ts'
-
-export * from './DefaultProps.ts'

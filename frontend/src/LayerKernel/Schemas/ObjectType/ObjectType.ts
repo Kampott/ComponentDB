@@ -1,8 +1,9 @@
 import {
-    createHasIdMeta,
-    ObjectTypeValidator,
-    type SchemaMeta,
-} from '@RestSchemas'
+    defineEntitySchema,
+    type InferCreate,
+    type InferUpdate,
+} from '../EntityDsl.ts'
+import { ObjectTypeValidator } from './ObjectTypeValidator.ts'
 
 export interface ObjectType {
     id: number
@@ -11,28 +12,53 @@ export interface ObjectType {
     root_id: number
 }
 
-export const objectTypeMeta: SchemaMeta<ObjectType> = {
-    ...createHasIdMeta<ObjectType>(),
-    name: {
-        displayName: 'Название',
-        description: 'Название типа объекта',
-        validators: [ObjectTypeValidator.name],
-        readonly: false,
-        canBeSetExplicitly: true,
-    },
-    parent_id: {
-        displayName: 'Родительский тип',
-        description: 'ID родительского типа',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: true,
-        defaultValue: (parentId: number | null) => parentId,
-    },
-    root_id: {
-        displayName: 'Корневой тип',
-        description: 'ID корневого типа',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: false,
-    },
+export interface ObjectTypeCreateContext {
+    parentTypeId: number | null
 }
+
+export const objectTypeSchema = defineEntitySchema<
+    ObjectType,
+    ObjectTypeCreateContext
+>()({
+    entity: 'ObjectType',
+    fields: {
+        id: {
+            label: 'ID',
+            description: 'Уникальный идентификатор',
+            input: 'number',
+            create: 'forbidden',
+            update: 'forbidden',
+            createVisible: false,
+            updateVisible: false,
+        },
+        name: {
+            label: 'Название',
+            description: 'Название типа объекта',
+            input: 'text',
+            create: 'required',
+            update: 'optional',
+            validator: ObjectTypeValidator.name,
+        },
+        parent_id: {
+            label: 'Родительский тип',
+            description: 'ID родительского типа',
+            input: 'number',
+            create: 'required',
+            update: 'forbidden',
+            createVisible: false,
+            defaultValue: context => context.parentTypeId,
+        },
+        root_id: {
+            label: 'Корневой тип',
+            description: 'ID корневого типа',
+            input: 'number',
+            create: 'forbidden',
+            update: 'forbidden',
+            createVisible: false,
+            updateVisible: false,
+        },
+    },
+})
+
+export type ObjectTypeAdd = InferCreate<typeof objectTypeSchema>
+export type ObjectTypeUpdate = InferUpdate<typeof objectTypeSchema>

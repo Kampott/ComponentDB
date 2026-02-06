@@ -1,8 +1,9 @@
 import {
-    createHasIdMeta,
-    ObjectInstanceValidator,
-    type SchemaMeta,
-} from '@RestSchemas'
+    defineEntitySchema,
+    type InferCreate,
+    type InferUpdate,
+} from '../EntityDsl.ts'
+import { ObjectInstanceValidator } from './ObjectInstanceValidator.ts'
 
 export interface ObjectInstance {
     id: number
@@ -13,43 +14,72 @@ export interface ObjectInstance {
     root_id: number
 }
 
-export const objectInstanceMeta: SchemaMeta<ObjectInstance> = {
-    ...createHasIdMeta<ObjectInstance>(),
-    name: {
-        displayName: 'Название',
-        description: 'Название экземпляра объекта',
-        validators: [ObjectInstanceValidator.name],
-        readonly: false,
-        canBeSetExplicitly: true,
-    },
-    object_id: {
-        displayName: 'Объект',
-        description: 'Объект экземпляра',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: true,
-        defaultValue: (objectId: number) => objectId,
-    },
-    parent_id: {
-        displayName: 'Родительский экземпляр',
-        description: 'ID родительского экземпляра',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: true,
-        defaultValue: (parentId: number | null) => parentId,
-    },
-    is_active: {
-        displayName: 'Активен',
-        description: 'Статус активности экземпляра',
-        validators: [],
-        readonly: false,
-        canBeSetExplicitly: true,
-    },
-    root_id: {
-        displayName: 'Корневой объект',
-        description: 'ID корневого объекта',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: false,
-    },
+export interface ObjectInstanceCreateContext {
+    objectId: number
+    parentId?: number | null
+    defaultIsActive?: boolean
 }
+
+export const objectInstanceSchema = defineEntitySchema<
+    ObjectInstance,
+    ObjectInstanceCreateContext
+>()({
+    entity: 'ObjectInstance',
+    fields: {
+        id: {
+            label: 'ID',
+            description: 'Уникальный идентификатор',
+            input: 'number',
+            create: 'forbidden',
+            update: 'forbidden',
+            createVisible: false,
+            updateVisible: false,
+        },
+        name: {
+            label: 'Название',
+            description: 'Название экземпляра объекта',
+            input: 'text',
+            create: 'required',
+            update: 'optional',
+            validator: ObjectInstanceValidator.name,
+        },
+        object_id: {
+            label: 'Объект',
+            description: 'Объект экземпляра',
+            input: 'number',
+            create: 'required',
+            update: 'forbidden',
+            createVisible: false,
+            defaultValue: context => context.objectId,
+        },
+        parent_id: {
+            label: 'Родительский экземпляр',
+            description: 'ID родительского экземпляра',
+            input: 'number',
+            create: 'optional',
+            update: 'optional',
+            createVisible: false,
+            defaultValue: context => context.parentId ?? null,
+        },
+        is_active: {
+            label: 'Активен',
+            description: 'Статус активности экземпляра',
+            input: 'boolean',
+            create: 'optional',
+            update: 'optional',
+            defaultValue: context => context.defaultIsActive ?? true,
+        },
+        root_id: {
+            label: 'Корневой объект',
+            description: 'ID корневого объекта',
+            input: 'number',
+            create: 'forbidden',
+            update: 'forbidden',
+            createVisible: false,
+            updateVisible: false,
+        },
+    },
+})
+
+export type ObjectInstanceAdd = InferCreate<typeof objectInstanceSchema>
+export type ObjectInstanceUpdate = InferUpdate<typeof objectInstanceSchema>

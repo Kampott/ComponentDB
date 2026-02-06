@@ -1,4 +1,9 @@
-import { createHasIdMeta, type SchemaMeta } from '@RestSchemas'
+import {
+    defineEntitySchema,
+    type InferCreate,
+    type InferUpdate,
+} from '../EntityDsl.ts'
+import { PropertyTypeValidator } from './PropertyTypeValidator.ts'
 
 export interface PropertyType {
     id: number
@@ -7,29 +12,58 @@ export interface PropertyType {
     name: string
 }
 
-export const propertyTypeMeta: SchemaMeta<PropertyType> = {
-    ...createHasIdMeta<PropertyType>(),
-    type_id: {
-        displayName: 'Тип объекта',
-        description: 'Тип, к которому относится это свойство',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: false,
-        defaultValue: (objectTypeId: number) => objectTypeId,
-    },
-    is_static: {
-        displayName: 'Статичное',
-        description:
-            'Если задано, то свойство относится к типу. Иначе - к экземпляру',
-        validators: [],
-        readonly: false,
-        canBeSetExplicitly: true,
-    },
-    name: {
-        displayName: 'Название',
-        description: 'Название типа свойства',
-        validators: [],
-        readonly: false,
-        canBeSetExplicitly: true,
-    },
+export interface PropertyTypeCreateContext {
+    objectTypeId: number
+    defaultIsStatic?: boolean
 }
+
+export const propertyTypeSchema = defineEntitySchema<
+    PropertyType,
+    PropertyTypeCreateContext
+>()({
+    entity: 'PropertyType',
+    fields: {
+        id: {
+            label: 'ID',
+            description: 'Уникальный идентификатор',
+            input: 'number',
+            create: 'forbidden',
+            update: 'forbidden',
+            createVisible: false,
+            updateVisible: false,
+        },
+        type_id: {
+            label: 'Тип объекта',
+            description: 'Тип, к которому относится это свойство',
+            input: 'number',
+            create: 'required',
+            update: 'forbidden',
+            createVisible: false,
+            defaultValue: context => context.objectTypeId,
+        },
+        is_static: {
+            label: 'Привязано к',
+            description:
+                'Если задано, то свойство относится к типу. Иначе - к экземпляру',
+            input: 'select',
+            create: 'required',
+            update: 'optional',
+            options: () => [
+                { label: 'Объекту', value: true },
+                { label: 'Экземпляру', value: false },
+            ],
+            defaultValue: context => context.defaultIsStatic ?? true,
+        },
+        name: {
+            label: 'Название',
+            description: 'Название типа свойства',
+            input: 'text',
+            create: 'required',
+            update: 'optional',
+            validator: PropertyTypeValidator.name,
+        },
+    },
+})
+
+export type PropertyTypeAdd = InferCreate<typeof propertyTypeSchema>
+export type PropertyTypeUpdate = InferUpdate<typeof propertyTypeSchema>

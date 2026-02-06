@@ -1,4 +1,8 @@
-import { createHasIdMeta, type SchemaMeta } from '@RestSchemas'
+import {
+    defineEntitySchema,
+    type InferCreate,
+    type InferUpdate,
+} from '../EntityDsl.ts'
 
 export interface Property {
     id: number
@@ -7,29 +11,53 @@ export interface Property {
     object_id: number
 }
 
-export const propertyMeta: SchemaMeta<Property> = {
-    ...createHasIdMeta<Property>(),
-    property_id: {
-        displayName: 'Свойство',
-        description: 'Выберите свойство',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: false,
-        defaultValue: (propertyTypeId: number) => propertyTypeId,
-    },
-    value: {
-        displayName: 'Значение',
-        description: 'Значение свойства',
-        validators: [],
-        readonly: false,
-        canBeSetExplicitly: true,
-    },
-    object_id: {
-        displayName: 'Объект',
-        description: 'Выберите объект',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: false,
-        defaultValue: (objectId: number) => objectId,
-    },
+export interface PropertyCreateContext {
+    propertyTypeId: number
+    objectId: number
 }
+
+export const propertySchema = defineEntitySchema<
+    Property,
+    PropertyCreateContext
+>()({
+    entity: 'Property',
+    fields: {
+        id: {
+            label: 'ID',
+            description: 'Уникальный идентификатор',
+            input: 'number',
+            create: 'forbidden',
+            update: 'forbidden',
+            createVisible: false,
+            updateVisible: false,
+        },
+        property_id: {
+            label: 'Свойство',
+            description: 'Выберите свойство',
+            input: 'number',
+            create: 'required',
+            update: 'forbidden',
+            createVisible: false,
+            defaultValue: context => context.propertyTypeId,
+        },
+        value: {
+            label: 'Значение',
+            description: 'Значение свойства',
+            input: 'text',
+            create: 'required',
+            update: 'optional',
+        },
+        object_id: {
+            label: 'Объект',
+            description: 'Выберите объект',
+            input: 'number',
+            create: 'required',
+            update: 'forbidden',
+            createVisible: false,
+            defaultValue: context => context.objectId,
+        },
+    },
+})
+
+export type PropertyAdd = InferCreate<typeof propertySchema>
+export type PropertyUpdate = InferUpdate<typeof propertySchema>

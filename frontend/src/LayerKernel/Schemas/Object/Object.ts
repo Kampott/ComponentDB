@@ -1,5 +1,10 @@
-import { createHasIdMeta, ObjectValidator, type SchemaMeta } from '@RestSchemas'
 import { useServicesStore } from '@StorageImpl'
+import {
+    defineEntitySchema,
+    type InferCreate,
+    type InferUpdate,
+} from '../EntityDsl.ts'
+import { ObjectValidator } from './ObjectValidator.ts'
 
 export interface Object {
     id: number
@@ -9,47 +14,82 @@ export interface Object {
     root_id: number
 }
 
-export const objectMeta: SchemaMeta<Object> = {
-    ...createHasIdMeta(),
-    name: {
-        displayName: 'Название',
-        description: 'Название объекта',
-        validators: [ObjectValidator.name],
-        readonly: false,
-        canBeSetExplicitly: true,
-    },
-    type_id: {
-        displayName: 'Тип объекта',
-        description: 'Тип объекта',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: true,
-        options: async (parentTypeId: number) => {
-            const types = await useServicesStore
-                .getState()
-                .services.objectsTypesService.getTypesByParentId(parentTypeId)
-            return types.map(el => ({ label: el.name, value: el.id }))
-        },
-        defaultValue: async (parentTypeId: number) => {
-            const types = await useServicesStore
-                .getState()
-                .services.objectsTypesService.getTypesByParentId(parentTypeId)
-            return types.length > 0 ? types[0].id : -1
-        },
-    },
-    parent_id: {
-        displayName: 'Родительский объект',
-        description: 'ID родительского объекта',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: true,
-        defaultValue: (parentObjectId: number | null) => parentObjectId,
-    },
-    root_id: {
-        displayName: 'Корневой объект',
-        description: 'ID корневого объекта',
-        validators: [],
-        readonly: true,
-        canBeSetExplicitly: false,
-    },
+export interface ObjectCreateContext {
+    parentTypeId: number
+    parentObjectId: number | null
 }
+
+/**
+ * PoC entity schema:
+ * one declaration drives:
+ * - static DTO types (ObjectAdd/ObjectUpdate)
+ * - runtime create form generation
+ * - field-level rules (visibility/options/defaults/validation)
+ */
+export const objectSchema = defineEntitySchema<Object, ObjectCreateContext>()({
+    entity: 'Object',
+    fields: {
+        // Server-managed technical field, never sent by client.
+        id: {
+            label: 'ID',
+            description: 'Уникальный идентификатор',
+            input: 'number',
+            create: 'forbidden',
+            update: 'forbidden',
+            createVisible: false,
+            updateVisible: false,
+        },
+        name: {
+            label: 'Название',
+            description: 'Название объекта',
+            input: 'text',
+            create: 'required',
+            update: 'optional',
+            validator: ObjectValidator.name,
+        },
+        // Select is populated dynamically using external context.
+        type_id: {
+            label: 'Тип объекта',
+            description: 'Тип объекта',
+            input: 'select',
+            create: 'required',
+            update: 'forbidden',
+            options: async context => {
+                const types = await useServicesStore
+                    .getState()
+                    .services.objectsTypesService.getTypesByParentId(
+                        context.parentTypeId,
+                    )
+
+                return types.map(type => ({
+                    label: type.name,
+                    value: type.id,
+                }))
+            },
+        },
+        parent_id: {
+            label: 'Родительский объект',
+            description: 'ID родительского объекта',
+            input: 'number',
+            create: 'required',
+            update: 'forbidden',
+            // Hidden from UI, but automatically included in create payload.
+            createVisible: false,
+            defaultValue: context => context.parentObjectId,
+        },
+        // Computed by backend, not editable by client.
+        root_id: {
+            label: 'Корневой объект',
+            description: 'ID корневого объекта',
+            input: 'number',
+            create: 'forbidden',
+            update: 'forbidden',
+            createVisible: false,
+            updateVisible: false,
+        },
+    },
+})
+
+// Auto-generated DTO types from the schema policies above.
+export type ObjectAdd = InferCreate<typeof objectSchema>
+export type ObjectUpdate = InferUpdate<typeof objectSchema>
