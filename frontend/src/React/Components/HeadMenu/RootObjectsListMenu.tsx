@@ -6,6 +6,7 @@ import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
+import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { ObjectType, ObjectTypeAdd, ObjectTypeUpdate } from '@Schemas'
@@ -29,6 +30,9 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
     )
     const [formShow, setFormShow] = useState(false)
     const [editTargetType, setEditTargetType] = useState<ObjectType | null>(
+        null,
+    )
+    const [viewTargetType, setViewTargetType] = useState<ObjectType | null>(
         null,
     )
 
@@ -71,6 +75,10 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
         setEditTargetType(objectType)
     }
 
+    function handleViewRequest(objectType: ObjectType) {
+        setViewTargetType(objectType)
+    }
+
     async function handleDeleteRequest(objectType: ObjectType) {
         await services.objectsTypesService.delete(objectType.id)
         await loadRootObjectTypes()
@@ -106,6 +114,7 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
                             data={rootObjectTypes ? rootObjectTypes : []}
                             onClick={handleObjectTypeClick}
                             renderItem={renderObjectType}
+                            onViewRequest={handleViewRequest}
                             onChangeRequest={handleChangeRequest}
                             onDeleteRequest={handleDeleteRequest}
                         />
@@ -136,6 +145,15 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
                     source={editTargetType}
                     title={`Изменение типа "${editTargetType.name}"`}
                     submitCallback={confirmEditType}
+                />
+            )}
+            {viewTargetType && (
+                <ViewEntityModal
+                    schema={objectTypeSchema}
+                    context={{ parentTypeId: viewTargetType.parent_id }}
+                    source={viewTargetType}
+                    title={`Просмотр типа "${viewTargetType.name}"`}
+                    onClose={() => setViewTargetType(null)}
                 />
             )}
         </>

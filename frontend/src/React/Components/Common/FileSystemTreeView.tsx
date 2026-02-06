@@ -35,7 +35,7 @@ function FileSystemTreeView<T>({
 }: Props<T>) {
     const { onContextMenuCall } = useContextMenuStore()
 
-    const isInteractive = Object.values(contextMenuOptions).every(Boolean)
+    const isInteractive = Object.values(contextMenuOptions).some(Boolean)
 
     function handleContextMenu(e: MouseEvent<HTMLElement>, element: T) {
         if (!isInteractive) {

@@ -32,61 +32,107 @@ export const objectSchema = defineEntitySchema<Object, ObjectCreateContext>()({
     fields: {
         // Техническое поле, управляется сервером и не отправляется клиентом
         id: {
-            label: 'ID',
-            description: 'Уникальный идентификатор',
-            input: 'number',
-            create: 'forbidden',
-            update: 'forbidden',
-            createVisible: false,
-            updateVisible: false,
+            common: {
+                label: 'ID',
+                description: 'Уникальный идентификатор',
+            },
+            create: { policy: 'forbidden', visible: false },
+            update: { policy: 'forbidden', visible: false },
+            read: { visible: false },
+            form: { input: 'number' },
         },
         name: {
-            label: 'Название',
-            description: 'Название объекта',
-            input: 'text',
-            create: 'required',
-            update: 'optional',
-            validator: ObjectValidator.name,
+            common: {
+                label: 'Название',
+                description: 'Название объекта',
+            },
+            create: { policy: 'required' },
+            update: { policy: 'optional' },
+            form: {
+                input: 'text',
+                validator: ObjectValidator.name,
+            },
         },
         // Select заполняется динамически на основе внешнего контекста
         type_id: {
-            label: 'Тип объекта',
-            description: 'Тип объекта',
-            input: 'select',
-            create: 'required',
-            update: 'forbidden',
-            options: async context => {
-                const types = await useServicesStore
-                    .getState()
-                    .services.objectsTypesService.getTypesByParentId(
-                        context.parentTypeId,
-                    )
+            common: {
+                label: 'Тип объекта',
+                description: 'Тип объекта',
+            },
+            create: { policy: 'required' },
+            update: { policy: 'forbidden' },
+            read: {
+                printValue: async (value, context) => {
+                    const types = await useServicesStore
+                        .getState()
+                        .services.objectsTypesService.getTypesByParentId(
+                            context.parentTypeId,
+                        )
+                    const selectedType = types.find(type => type.id === value)
+                    return selectedType ? selectedType.name : String(value)
+                },
+            },
+            form: {
+                input: 'select',
+                options: async context => {
+                    const types = await useServicesStore
+                        .getState()
+                        .services.objectsTypesService.getTypesByParentId(
+                            context.parentTypeId,
+                        )
 
-                return types.map(type => ({
-                    label: type.name,
-                    value: type.id,
-                }))
+                    return types.map(type => ({
+                        label: type.name,
+                        value: type.id,
+                    }))
+                },
             },
         },
         parent_id: {
-            label: 'Родительский объект',
-            description: 'ID родительского объекта',
-            input: 'number',
-            create: 'required',
-            update: 'forbidden',
+            common: {
+                label: 'Родительский объект',
+                description: 'ID родительского объекта',
+            },
+            create: {
+                policy: 'required',
+                visible: false,
+                defaultValue: context => context.parentObjectId,
+            },
+            update: { policy: 'forbidden' },
+            read: {
+                printValue: async (value): Promise<string> => {
+                    if (value === null) {
+                        return 'Корневой объект'
+                    }
+
+                    try {
+                        const objectService = useServicesStore.getState()
+                            .services as unknown as {
+                            objectService: {
+                                read: (id: number) => Promise<{ name: string }>
+                            }
+                        }
+                        const parentObject =
+                            await objectService.objectService.read(value)
+                        return parentObject.name
+                    } catch {
+                        return String(value)
+                    }
+                },
+            },
             // Скрыто в UI, но автоматически включается в create payload
-            createVisible: false,
-            defaultValue: context => context.parentObjectId,
+            form: { input: 'number' },
         },
         // Вычисляется на бэкенде и не редактируется клиентом
         root_id: {
-            label: 'Корневой объект',
-            description: 'ID корневого объекта',
-            input: 'number',
-            create: 'forbidden',
-            update: 'forbidden',
-            createVisible: false,
-            updateVisible: false,
+            common: {
+                label: 'Корневой объект',
+                description: 'ID корневого объекта',
+            },
+            create: { policy: 'forbidden', visible: false },
+            update: { policy: 'forbidden', visible: false },
+            read: { visible: false },
+            form: { input: 'number' },
         },
     },
 })

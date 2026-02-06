@@ -8,6 +8,7 @@ import ListGroup from 'react-bootstrap/ListGroup'
 export interface Props<T> {
     data: T[]
     onClick?: OnObjectActionFunc<T>
+    onViewRequest?: OnObjectActionFunc<T>
     onChangeRequest?: OnObjectActionFunc<T>
     onDeleteRequest?: OnObjectActionFunc<T>
     renderItem: (node: T) => ReactNode
@@ -16,6 +17,7 @@ export interface Props<T> {
 function DefaultList<T>({
     data,
     onClick,
+    onViewRequest,
     onChangeRequest,
     onDeleteRequest,
     renderItem,
@@ -23,10 +25,11 @@ function DefaultList<T>({
     const { onContextMenuCall } = useContextMenuStore()
 
     const contextMenuOptions: ContextMenuOptions<T> = {
+        Посмотреть: onViewRequest,
         Изменить: onChangeRequest,
         Удалить: onDeleteRequest,
     }
-    const isInteractive = Object.values(contextMenuOptions).every(Boolean)
+    const isInteractive = Object.values(contextMenuOptions).some(Boolean)
 
     function handleContextMenu(e: MouseEvent<HTMLElement>, element: T) {
         if (!isInteractive) {

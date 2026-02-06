@@ -26,28 +26,54 @@ export type EntityFieldOption<Value> = {
     value: Value
 }
 
-/**
- * Унифицированный контракт поля для типизации API и генерации UI
- * Одна декларация определяет:
- * - участие ключа в create/update DTO
- * - отображение поля в форме (тип ввода/видимость/опции)
- * - валидацию и значения по умолчанию
- */
-export type EntityField<Schema, Field extends keyof Schema, Context> = {
+export type EntityFieldCommon = {
     label: string
     description?: string
+}
+
+export type EntityFieldCreate<Schema, Field extends keyof Schema, Context> = {
+    policy: EntityCreatePolicy
+    visible?: boolean
+    defaultValue?: (context: Context) => Schema[Field] | Promise<Schema[Field]>
+}
+
+export type EntityFieldUpdate = {
+    policy: EntityUpdatePolicy
+    visible?: boolean
+}
+
+export type EntityFieldRead<Schema, Field extends keyof Schema, Context> = {
+    visible?: boolean
+    printValue?: (
+        value: Schema[Field],
+        context: Context,
+    ) => string | Promise<string>
+}
+
+export type EntityFieldForm<Schema, Field extends keyof Schema, Context> = {
     input: EntityInputType
-    create: EntityCreatePolicy
-    update: EntityUpdatePolicy
-    createVisible?: boolean
-    updateVisible?: boolean
     validator?: (value: Schema[Field]) => ValidationResult
+    parser?: (rawValue: unknown, context: Context) => Schema[Field]
     options?: (
         context: Context,
     ) =>
         | EntityFieldOption<Schema[Field]>[]
         | Promise<EntityFieldOption<Schema[Field]>[]>
-    defaultValue?: (context: Context) => Schema[Field] | Promise<Schema[Field]>
+}
+
+/**
+ * Унифицированный контракт поля для типизации API и генерации UI
+ * Одна декларация определяет:
+ * - общие метаданные
+ * - правила create/update/read
+ * - настройки формы
+ */
+export type EntityField<Schema, Field extends keyof Schema, Context> = {
+    common: EntityFieldCommon
+    create: EntityFieldCreate<Schema, Field, Context>
+    update: EntityFieldUpdate
+    read?: EntityFieldRead<Schema, Field, Context>
+    form: EntityFieldForm<Schema, Field, Context>
 }
 
 export type EntityFields<Schema, Context> = {
@@ -94,18 +120,25 @@ export type EntityResource<S> = ExtractEntityParts<S>['resource']
 type FieldsOf<S> = ExtractEntityParts<S>['fields']
 type FieldConfig<S, K extends keyof FieldsOf<S>> = Extract<
     FieldsOf<S>[K],
-    { create: EntityCreatePolicy; update: EntityUpdatePolicy }
+    {
+        create: { policy: EntityCreatePolicy }
+        update: { policy: EntityUpdatePolicy }
+    }
 >
 
 type KeysByCreatePolicy<S, Policy extends EntityCreatePolicy> = {
-    [Key in keyof FieldsOf<S>]: FieldConfig<S, Key> extends { create: Policy }
+    [Key in keyof FieldsOf<S>]: FieldConfig<S, Key> extends {
+        create: { policy: Policy }
+    }
         ? Key
         : never
 }[keyof FieldsOf<S>] &
     keyof EntityObject<S>
 
 type KeysByUpdatePolicy<S, Policy extends EntityUpdatePolicy> = {
-    [Key in keyof FieldsOf<S>]: FieldConfig<S, Key> extends { update: Policy }
+    [Key in keyof FieldsOf<S>]: FieldConfig<S, Key> extends {
+        update: { policy: Policy }
+    }
         ? Key
         : never
 }[keyof FieldsOf<S>] &
@@ -120,6 +153,7 @@ type OptionalUpdateKeys<S> = KeysByUpdatePolicy<S, 'optional'>
 export type CreateFieldKeys<S> = RequiredCreateKeys<S> | OptionalCreateKeys<S>
 
 export type UpdateFieldKeys<S> = OptionalUpdateKeys<S>
+export type ReadFieldKeys<S> = keyof EntityObject<S>
 
 export type InferCreate<S> = Flatten<
     Pick<EntityObject<S>, RequiredCreateKeys<S>> &
@@ -148,7 +182,7 @@ export function getCreateFieldKeys<
     const result: CreateFieldKeys<SchemaDefinition>[] = []
 
     for (const key of Object.keys(fields) as (keyof Fields)[]) {
-        if (fields[key].create !== 'forbidden') {
+        if (fields[key].create.policy !== 'forbidden') {
             result.push(key as CreateFieldKeys<SchemaDefinition>)
         }
     }
@@ -174,7 +208,7 @@ export function getUpdateFieldKeys<
     const result: UpdateFieldKeys<SchemaDefinition>[] = []
 
     for (const key of Object.keys(fields) as (keyof Fields)[]) {
-        if (fields[key].update !== 'forbidden') {
+        if (fields[key].update.policy !== 'forbidden') {
             result.push(key as UpdateFieldKeys<SchemaDefinition>)
         }
     }

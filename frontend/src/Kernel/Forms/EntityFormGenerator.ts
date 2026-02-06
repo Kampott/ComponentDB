@@ -7,6 +7,7 @@ import {
     type EntityInputType,
     type EntitySchema,
     type InferCreate,
+    type InferEntity,
     type InferUpdate,
     type UpdateFieldKeys,
 } from '@Schemas'
@@ -58,8 +59,8 @@ async function resolveFormFields<
               }[]
             | undefined
 
-        if (fieldMeta.options) {
-            const loadedOptions = (await fieldMeta.options(
+        if (fieldMeta.form.options) {
+            const loadedOptions = (await fieldMeta.form.options(
                 context,
             )) as unknown as {
                 label: string
@@ -72,9 +73,9 @@ async function resolveFormFields<
         }
 
         if (!Object.prototype.hasOwnProperty.call(defaultData, field)) {
-            if (fieldMeta.defaultValue) {
+            if (fieldMeta.create.defaultValue) {
                 defaultData[field as PropertyKey] =
-                    (await fieldMeta.defaultValue(context)) as unknown
+                    (await fieldMeta.create.defaultValue(context)) as unknown
             } else if (options && options.length > 0) {
                 defaultData[field as PropertyKey] = options[0].value as unknown
             }
@@ -82,8 +83,8 @@ async function resolveFormFields<
 
         const isVisible =
             mode === 'create'
-                ? fieldMeta.createVisible !== false
-                : fieldMeta.updateVisible !== false
+                ? fieldMeta.create.visible !== false
+                : fieldMeta.update.visible !== false
         if (!isVisible) {
             continue
         }
@@ -97,16 +98,22 @@ async function resolveFormFields<
                 return (selected ? selected.value : rawValue) as Model[Field]
             }
         } else {
-            parser = createPrimitiveParser<Model[Field]>(fieldMeta.input)
+            parser = fieldMeta.form.parser
+                ? (rawValue: unknown) =>
+                      fieldMeta.form.parser!(
+                          rawValue,
+                          context,
+                      ) as unknown as Model[Field]
+                : createPrimitiveParser<Model[Field]>(fieldMeta.form.input)
         }
 
         formFields.push({
             bindData: field,
-            label: fieldMeta.label,
-            type: options ? 'select' : fieldMeta.input,
-            placeholder: fieldMeta.description,
+            label: fieldMeta.common.label,
+            type: options ? 'select' : fieldMeta.form.input,
+            placeholder: fieldMeta.common.description,
             options: options,
-            validator: fieldMeta.validator as FormField<
+            validator: fieldMeta.form.validator as FormField<
                 Model,
                 Field
             >['validator'],
@@ -191,4 +198,58 @@ export async function generateUpdateFormFromSchema<
         formFields,
         defaultData: defaultData as unknown as UpdateModel,
     }
+}
+
+export type ReadViewField = {
+    key: string
+    label: string
+    value: string
+}
+
+function printPrimitiveValue(value: unknown): string {
+    if (value === null || value === undefined) {
+        return '—'
+    }
+    if (typeof value === 'boolean') {
+        return value ? 'Да' : 'Нет'
+    }
+    return String(value)
+}
+
+export async function generateReadViewFromSchema<
+    Schema extends object,
+    Context,
+    Fields extends EntityFields<Schema, Context>,
+>(
+    schema: EntitySchema<Schema, Context, Fields>,
+    context: Context,
+    source: InferEntity<EntitySchema<Schema, Context, Fields>>,
+) {
+    const sourceData = source as Record<PropertyKey, unknown>
+    const result: ReadViewField[] = []
+
+    for (const key of Object.keys(schema.fields) as (keyof Fields)[]) {
+        const fieldMeta = schema.fields[key]
+        if (fieldMeta.read?.visible === false) {
+            continue
+        }
+
+        const rawValue = sourceData[key as PropertyKey]
+        const printedValue = fieldMeta.read?.printValue
+            ? await (
+                  fieldMeta.read.printValue as (
+                      value: unknown,
+                      context: Context,
+                  ) => string | Promise<string>
+              )(rawValue, context)
+            : printPrimitiveValue(rawValue)
+
+        result.push({
+            key: String(key),
+            label: fieldMeta.common.label,
+            value: printedValue,
+        })
+    }
+
+    return result
 }

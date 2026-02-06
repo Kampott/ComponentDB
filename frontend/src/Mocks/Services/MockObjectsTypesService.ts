@@ -1,7 +1,7 @@
 import type IObjectsTypesService from '@/Interfaces/Services/IObjectsTypesService.ts'
-import type { ObjectType, ObjectTypeAdd, ObjectTypeUpdate } from '@Schemas'
 import MockCrudService from '@/Mocks/Services/MockCrudService.ts'
 import MockDataStore from '@/Mocks/Services/MockDataStore.ts'
+import type { ObjectType, ObjectTypeAdd, ObjectTypeUpdate } from '@Schemas'
 
 export default class MockObjectsTypesService
     extends MockCrudService<ObjectType, ObjectTypeAdd, ObjectTypeUpdate>

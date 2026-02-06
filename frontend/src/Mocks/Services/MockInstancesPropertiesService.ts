@@ -1,11 +1,11 @@
 import type IInstancesPropertiesService from '@/Interfaces/Services/IInstancesPropertiesService.ts'
+import MockCrudService from '@/Mocks/Services/MockCrudService.ts'
+import MockDataStore from '@/Mocks/Services/MockDataStore.ts'
 import type {
     InstanceProperty,
     InstancePropertyAdd,
     InstancePropertyUpdate,
 } from '@Schemas'
-import MockCrudService from '@/Mocks/Services/MockCrudService.ts'
-import MockDataStore from '@/Mocks/Services/MockDataStore.ts'
 
 export default class MockInstancesPropertiesService
     extends MockCrudService<

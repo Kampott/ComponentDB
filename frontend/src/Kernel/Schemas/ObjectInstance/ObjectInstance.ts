@@ -3,6 +3,7 @@ import {
     type InferCreate,
     type InferUpdate,
 } from '@Kernel/Schemas/EntityDsl.ts'
+import { useServicesStore } from '@StorageImpl'
 import { ObjectInstanceValidator } from './ObjectInstanceValidator.ts'
 
 export interface ObjectInstance {
@@ -28,56 +29,97 @@ export const objectInstanceSchema = defineEntitySchema<
     resource: 'instances',
     fields: {
         id: {
-            label: 'ID',
-            description: 'Уникальный идентификатор',
-            input: 'number',
-            create: 'forbidden',
-            update: 'forbidden',
-            createVisible: false,
-            updateVisible: false,
+            common: {
+                label: 'ID',
+                description: 'Уникальный идентификатор',
+            },
+            create: { policy: 'forbidden', visible: false },
+            update: { policy: 'forbidden', visible: false },
+            read: { visible: false },
+            form: { input: 'number' },
         },
         name: {
-            label: 'Название',
-            description: 'Название экземпляра объекта',
-            input: 'text',
-            create: 'required',
-            update: 'optional',
-            validator: ObjectInstanceValidator.name,
+            common: {
+                label: 'Название',
+                description: 'Название экземпляра объекта',
+            },
+            create: { policy: 'required' },
+            update: { policy: 'optional' },
+            form: {
+                input: 'text',
+                validator: ObjectInstanceValidator.name,
+            },
         },
         object_id: {
-            label: 'Объект',
-            description: 'Объект экземпляра',
-            input: 'number',
-            create: 'required',
-            update: 'forbidden',
-            createVisible: false,
-            defaultValue: context => context.objectId,
+            common: {
+                label: 'Объект',
+                description: 'Объект экземпляра',
+            },
+            create: {
+                policy: 'required',
+                visible: false,
+                defaultValue: context => context.objectId,
+            },
+            update: { policy: 'forbidden' },
+            form: { input: 'number' },
         },
         parent_id: {
-            label: 'Родительский экземпляр',
-            description: 'ID родительского экземпляра',
-            input: 'number',
-            create: 'optional',
-            update: 'optional',
-            createVisible: false,
-            defaultValue: context => context.parentId ?? null,
+            common: {
+                label: 'Родительский экземпляр',
+                description: 'ID родительского экземпляра',
+            },
+            create: {
+                policy: 'optional',
+                visible: false,
+                defaultValue: context => context.parentId ?? null,
+            },
+            update: { policy: 'optional' },
+            read: {
+                printValue: async (value): Promise<string> => {
+                    if (value === null) {
+                        return 'Корневой экземпляр'
+                    }
+
+                    try {
+                        const instanceService = useServicesStore.getState()
+                            .services as unknown as {
+                            objectsInstancesService: {
+                                read: (id: number) => Promise<{ name: string }>
+                            }
+                        }
+                        const parentInstance =
+                            await instanceService.objectsInstancesService.read(
+                                value,
+                            )
+                        return parentInstance.name
+                    } catch {
+                        return String(value)
+                    }
+                },
+            },
+            form: { input: 'number' },
         },
         is_active: {
-            label: 'Активен',
-            description: 'Статус активности экземпляра',
-            input: 'boolean',
-            create: 'optional',
-            update: 'optional',
-            defaultValue: context => context.defaultIsActive ?? true,
+            common: {
+                label: 'Активен',
+                description: 'Статус активности экземпляра',
+            },
+            create: {
+                policy: 'optional',
+                defaultValue: context => context.defaultIsActive ?? true,
+            },
+            update: { policy: 'optional' },
+            form: { input: 'boolean' },
         },
         root_id: {
-            label: 'Корневой объект',
-            description: 'ID корневого объекта',
-            input: 'number',
-            create: 'forbidden',
-            update: 'forbidden',
-            createVisible: false,
-            updateVisible: false,
+            common: {
+                label: 'Корневой объект',
+                description: 'ID корневого объекта',
+            },
+            create: { policy: 'forbidden', visible: false },
+            update: { policy: 'forbidden', visible: false },
+            read: { visible: false },
+            form: { input: 'number' },
         },
     },
 })

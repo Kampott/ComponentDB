@@ -6,6 +6,7 @@ import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
+import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type {
@@ -32,6 +33,8 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
     >(null)
     const [formShow, setFormShow] = useState(false)
     const [editTargetPropertyType, setEditTargetPropertyType] =
+        useState<PropertyType | null>(null)
+    const [viewTargetPropertyType, setViewTargetPropertyType] =
         useState<PropertyType | null>(null)
 
     async function loadProperties(): Promise<void> {
@@ -94,6 +97,10 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
         setEditTargetPropertyType(propertyType)
     }
 
+    function handleViewRequest(propertyType: PropertyType) {
+        setViewTargetPropertyType(propertyType)
+    }
+
     function handleDeleteRequest(propertyType: PropertyType) {
         console.log(propertyType)
     }
@@ -136,6 +143,7 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
                     <DefaultList
                         data={objectProperties ? objectProperties : []}
                         renderItem={renderProperty}
+                        onViewRequest={handleViewRequest}
                         onChangeRequest={handleChangeRequest}
                         onDeleteRequest={handleDeleteRequest}
                     />
@@ -156,6 +164,7 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
                     <DefaultList
                         data={instanceProperties ? instanceProperties : []}
                         renderItem={renderProperty}
+                        onViewRequest={handleViewRequest}
                         onChangeRequest={handleChangeRequest}
                         onDeleteRequest={handleDeleteRequest}
                     />
@@ -184,6 +193,18 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
                     source={editTargetPropertyType}
                     title={`Изменение свойства "${editTargetPropertyType.name}"`}
                     submitCallback={confirmEditPropertyType}
+                />
+            )}
+            {viewTargetPropertyType && (
+                <ViewEntityModal
+                    schema={propertyTypeSchema}
+                    context={{
+                        objectTypeId: viewTargetPropertyType.type_id,
+                        defaultIsStatic: viewTargetPropertyType.is_static,
+                    }}
+                    source={viewTargetPropertyType}
+                    title={`Просмотр свойства "${viewTargetPropertyType.name}"`}
+                    onClose={() => setViewTargetPropertyType(null)}
                 />
             )}
         </>

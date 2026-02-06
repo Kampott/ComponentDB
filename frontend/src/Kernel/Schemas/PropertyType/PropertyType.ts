@@ -25,43 +25,61 @@ export const propertyTypeSchema = defineEntitySchema<
     resource: 'property_types',
     fields: {
         id: {
-            label: 'ID',
-            description: 'Уникальный идентификатор',
-            input: 'number',
-            create: 'forbidden',
-            update: 'forbidden',
-            createVisible: false,
-            updateVisible: false,
+            common: {
+                label: 'ID',
+                description: 'Уникальный идентификатор',
+            },
+            create: { policy: 'forbidden', visible: false },
+            update: { policy: 'forbidden', visible: false },
+            read: { visible: false },
+            form: { input: 'number' },
         },
         type_id: {
-            label: 'Тип объекта',
-            description: 'Тип, к которому относится это свойство',
-            input: 'number',
-            create: 'required',
-            update: 'forbidden',
-            createVisible: false,
-            defaultValue: context => context.objectTypeId,
+            common: {
+                label: 'Тип объекта',
+                description: 'Тип, к которому относится это свойство',
+            },
+            create: {
+                policy: 'required',
+                visible: false,
+                defaultValue: context => context.objectTypeId,
+            },
+            update: { policy: 'forbidden' },
+            form: { input: 'number' },
         },
         is_static: {
-            label: 'Привязано к',
-            description:
-                'Если задано, то свойство относится к типу. Иначе - к экземпляру',
-            input: 'select',
-            create: 'required',
-            update: 'optional',
-            options: () => [
-                { label: 'Объекту', value: true },
-                { label: 'Экземпляру', value: false },
-            ],
-            defaultValue: context => context.defaultIsStatic ?? true,
+            common: {
+                label: 'Привязано к',
+                description:
+                    'Если задано, то свойство относится к типу. Иначе - к экземпляру',
+            },
+            create: {
+                policy: 'required',
+                defaultValue: context => context.defaultIsStatic ?? true,
+            },
+            update: { policy: 'optional' },
+            read: {
+                printValue: value => (value ? 'Объекту' : 'Экземпляру'),
+            },
+            form: {
+                input: 'select',
+                options: () => [
+                    { label: 'Объекту', value: true },
+                    { label: 'Экземпляру', value: false },
+                ],
+            },
         },
         name: {
-            label: 'Название',
-            description: 'Название типа свойства',
-            input: 'text',
-            create: 'required',
-            update: 'optional',
-            validator: PropertyTypeValidator.name,
+            common: {
+                label: 'Название',
+                description: 'Название типа свойства',
+            },
+            create: { policy: 'required' },
+            update: { policy: 'optional' },
+            form: {
+                input: 'text',
+                validator: PropertyTypeValidator.name,
+            },
         },
     },
 })

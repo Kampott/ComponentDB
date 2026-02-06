@@ -7,6 +7,7 @@ import FileSystemTreeView, {
 } from '@Components/Common/FileSystemTreeView.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
+import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { ObjectInstance, ObjectInstanceUpdate } from '@Schemas'
@@ -28,6 +29,8 @@ function InstanceTreeView({ instance }: Props) {
 
     const [openIds, setOpenIds] = useState<Set<number>>(new Set())
     const [editTargetInstance, setEditTargetInstance] =
+        useState<ObjectInstance | null>(null)
+    const [viewTargetInstance, setViewTargetInstance] =
         useState<ObjectInstance | null>(null)
 
     async function loadInstanceChildren(
@@ -101,6 +104,10 @@ function InstanceTreeView({ instance }: Props) {
         setEditTargetInstance(objectInstance)
     }
 
+    function handleViewRequest(objectInstance: ObjectInstance) {
+        setViewTargetInstance(objectInstance)
+    }
+
     async function handleDeleteRequest(objectInstance: ObjectInstance) {
         await services.objectsInstancesService.delete(objectInstance.id)
         setInstanceTree(await loadInstanceChildren(instance.id))
@@ -144,6 +151,7 @@ function InstanceTreeView({ instance }: Props) {
                     openIds={openIds}
                     onToggle={onInstanceChildrenToggle}
                     contextMenuOptions={{
+                        Посмотреть: handleViewRequest,
                         Изменить: handleChangeRequest,
                         Удалить: handleDeleteRequest,
                     }}
@@ -163,6 +171,19 @@ function InstanceTreeView({ instance }: Props) {
                     source={editTargetInstance}
                     title={`Изменение экземпляра "${editTargetInstance.name}"`}
                     submitCallback={confirmEditInstance}
+                />
+            )}
+            {viewTargetInstance && (
+                <ViewEntityModal
+                    schema={objectInstanceSchema}
+                    context={{
+                        objectId: viewTargetInstance.object_id,
+                        parentId: viewTargetInstance.parent_id,
+                        defaultIsActive: viewTargetInstance.is_active,
+                    }}
+                    source={viewTargetInstance}
+                    title={`Просмотр экземпляра "${viewTargetInstance.name}"`}
+                    onClose={() => setViewTargetInstance(null)}
                 />
             )}
         </>

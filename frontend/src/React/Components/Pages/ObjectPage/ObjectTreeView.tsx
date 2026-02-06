@@ -10,6 +10,7 @@ import FileSystemTreeView, {
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
+import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { Object, ObjectAdd, ObjectUpdate } from '@Schemas'
@@ -34,6 +35,9 @@ function ObjectTreeView({ object }: Props) {
     const [formParentObject, setFormParentObject] = useState<Object>(object)
     const [formShow, setFormShow] = useState(false)
     const [editTargetObject, setEditTargetObject] = useState<Object | null>(
+        null,
+    )
+    const [viewTargetObject, setViewTargetObject] = useState<Object | null>(
         null,
     )
 
@@ -133,6 +137,10 @@ function ObjectTreeView({ object }: Props) {
         setEditTargetObject(object)
     }
 
+    function handleViewRequest(currentObject: Object) {
+        setViewTargetObject(currentObject)
+    }
+
     async function handleDeleteRequest(currentObject: Object) {
         await services.objectService.delete(currentObject.id)
         setObjectTree(await loadObjectChildren(object.id))
@@ -167,6 +175,7 @@ function ObjectTreeView({ object }: Props) {
                     openIds={openIds}
                     onToggle={onObjectChildrenToggle}
                     contextMenuOptions={{
+                        Посмотреть: handleViewRequest,
                         Добавить: handleAddRequest,
                         Изменить: handleChangeRequest,
                         Удалить: handleDeleteRequest,
@@ -199,6 +208,18 @@ function ObjectTreeView({ object }: Props) {
                     source={editTargetObject}
                     title={`Изменение объекта "${editTargetObject.name}"`}
                     submitCallback={confirmEditObject}
+                />
+            )}
+            {viewTargetObject && (
+                <ViewEntityModal
+                    schema={objectSchema}
+                    context={{
+                        parentTypeId: viewTargetObject.type_id,
+                        parentObjectId: viewTargetObject.parent_id,
+                    }}
+                    source={viewTargetObject}
+                    title={`Просмотр объекта "${viewTargetObject.name}"`}
+                    onClose={() => setViewTargetObject(null)}
                 />
             )}
         </>
