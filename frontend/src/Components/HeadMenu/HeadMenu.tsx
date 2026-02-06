@@ -4,6 +4,7 @@ import Container from "react-bootstrap/Container";
 import NavDropdown from "react-bootstrap/NavDropdown"
 import RootObjectsListMenu from "./RootObjectsListMenu.tsx";
 import {useState} from "react";
+import {Link} from "react-router-dom";
 
 
 function HeadMenu() {
@@ -34,7 +35,7 @@ function HeadMenu() {
                         <Nav className="ms-auto gap-5">
                             <Nav.Link className="me">Справка</Nav.Link>
                             <NavDropdown title="Аккаунт" id="account-dropdown" align="end">
-                                <NavDropdown.Item>Профиль</NavDropdown.Item>
+                                <NavDropdown.Item as={Link} to={"/login"}>Профиль</NavDropdown.Item>
                                 <NavDropdown.Item>Выход</NavDropdown.Item>
                             </NavDropdown>
                         </Nav>

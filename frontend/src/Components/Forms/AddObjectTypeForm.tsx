@@ -1,5 +1,6 @@
 import type {ObjectType, ObjectTypeAdd} from "../../schemas/ObjectType.ts";
-import DefaultForm, {type FormField} from "../Common/DefaultForm.tsx";
+import DefaultForm from "../Common/Form/DefaultForm.tsx";
+import type {FormField} from "../Common/Form/FormTypes.ts";
 
 
 interface Props {
@@ -22,7 +23,7 @@ function AddObjectTypeForm({parentObjectType, submitCallback}: Props) {
         {
             bindData: "name",
             label: "Название типа",
-            type: "string",
+            type: "text",
             placeholder: "Введите название",
             validator: nameValidator
         }

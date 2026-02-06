@@ -12,4 +12,6 @@ export default interface IPropertiesService {
     deleteProperty(id: number): Promise<null>
 
     getPropertiesByObjectId(objectId: number): Promise<Property[]>
+
+    getPropertiesByInstanceId(instanceId: number): Promise<Property[]>
 }

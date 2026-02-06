@@ -1,6 +1,6 @@
 import {create} from "zustand/react";
 
-import type {LoginRequest, User} from "../models/auth.ts";
+import type {LoginRequest, User} from "../schemas/Auth.ts";
 import type IServicesStore from "./IServicesStore.ts";
 import logError from "../log_error.ts";
 import Services from "../services/Services.ts";
@@ -11,7 +11,7 @@ export const useServicesStore = create<IServicesStore>(() => ({
     services: new Services(),
 }));
 
-export const useUserStore = create<IUserStore>((set) => ({
+export const useUserStore = create<IUserStore>((set, get) => ({
     user: {} as User,
     isAuthenticated: false,
 
@@ -24,22 +24,22 @@ export const useUserStore = create<IUserStore>((set) => ({
     },
 
     async login(userData: LoginRequest) {
-        try {
-            const response = await useServicesStore.getState().services.authService.login(userData);
-            localStorage.setItem("token", response.access_token);
-            this.setAuth(true)
-            this.setUser(await useServicesStore.getState().services.authService.me())
-        } catch (e) {
-            logError(e)
-        }
+        const response = await useServicesStore.getState().services.authService.login(userData);
+        localStorage.setItem("token", response.access_token);
+
+        const store = get();
+        store.setAuth(true)
+        store.setUser(await useServicesStore.getState().services.authService.me())
     },
 
     async logout() {
         try {
             await useServicesStore.getState().services.authService.logout();
             localStorage.removeItem("token");
-            this.setAuth(false)
-            this.setUser({} as User)
+
+            const store = get();
+            store.setAuth(false)
+            store.setUser({} as User)
         } catch (e: unknown) {
             logError(e)
         }
@@ -49,8 +49,9 @@ export const useUserStore = create<IUserStore>((set) => ({
         try {
             const response = await useServicesStore.getState().services.authService.refresh()
             localStorage.setItem("token", response.access_token);
-            this.setAuth(true)
-            this.setUser(await useServicesStore.getState().services.authService.me())
+            const store = get();
+            store.setAuth(true);
+            store.setUser(await useServicesStore.getState().services.authService.me());
         } catch (e) {
             logError(e)
         }
@@ -63,7 +64,7 @@ export const useToastStore = create<IToastsStore>((set) => ({
 
     addToast(header: string, message: string) {
         set((state) => ({
-            toasts: [...state.toasts, { id: Date.now(), header: header, message: message }],
+            toasts: [...state.toasts, {id: Date.now(), header: header, message: message}],
         }))
     },
 

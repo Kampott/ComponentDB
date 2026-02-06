@@ -7,7 +7,7 @@ import DefaultList from "../../Common/DefaultList.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import type {Object} from "../../../schemas/Object.ts";
 import type {ObjectType} from "../../../schemas/ObjectType.ts";
-import objectToString from "../../../utility/object_to_string.ts";
+import {toString} from "../../../utility/to_string.ts";
 import {handleApiError} from "../../../utility/handle_api_error.ts";
 import {RestApiError} from "../../../http/RestApiClient.ts";
 
@@ -40,7 +40,7 @@ function TypeObjectsTab({objectType}: Props): ReactNode {
 
     function renderObject(object: Object): ReactNode {
         return (
-            <>{objectToString(object)}</>
+            <>{toString(object)}</>
         );
     }
 

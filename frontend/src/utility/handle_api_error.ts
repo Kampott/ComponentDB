@@ -15,6 +15,8 @@ export function handleApiError(err: unknown, handlers: Handlers = {}) {
         return;
     }
 
+    console.log(err.status)
+
     switch (err.status) {
         case 404:
             handlers.navigate?.("/404");
@@ -35,6 +37,11 @@ export function handleApiError(err: unknown, handlers: Handlers = {}) {
         case 500:
             handlers.showToast?.("Внутренняя ошибка сервера — попробуйте позже");
             handlers.setGlobalError?.("Ошибка сервера");
+            break;
+
+        case 401:
+            console.info("Received 401 on api error, navigating to /login");
+            handlers.navigate?.("/login")
             break;
 
         default:

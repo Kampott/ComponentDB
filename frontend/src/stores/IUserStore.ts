@@ -1,4 +1,4 @@
-import type {LoginRequest, User} from "../models/auth.ts";
+import type {LoginRequest, User} from "../schemas/Auth.ts";
 
 export default interface IUserStore {
     user: User

@@ -32,4 +32,8 @@ export default class PropertiesService implements IPropertiesService {
     public async getPropertiesByObjectId(objectId: number): Promise<Property[]> {
         return await this.client.get<Property[]>("/properties/", {object_id: objectId})
     }
+
+    public async getPropertiesByInstanceId(instanceId: number): Promise<Property[]> {
+        return await this.client.get<Property[]>("/properties/", {instance_id: instanceId})
+    }
 }

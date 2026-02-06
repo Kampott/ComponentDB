@@ -17,7 +17,7 @@ import ObjectPropertiesTab from "./ObjectPropertiesTab.tsx";
 import ObjectDocumentsTab from "./ObjectDocumentsTab.tsx";
 import LoadEffect from "../../Common/LoadEffect.tsx";
 import ObjectMainInfo from "./ObjectMainInfo.tsx";
-import objectToString from "../../../utility/object_to_string.ts";
+import {toString} from "../../../utility/to_string.ts";
 import {handleApiError} from "../../../utility/handle_api_error.ts";
 
 function ObjectPage() {
@@ -63,7 +63,7 @@ function ObjectPage() {
                         </LoadEffect>
                     </Breadcrumb>
                     <LoadEffect data={object} contentSize={{height: "20px", width: "100%"}}>
-                        <h1 className="text-center mb-5">Объект "{objectToString(object)}"</h1>
+                        <h1 className="text-center mb-5">Объект "{toString(object)}"</h1>
 
                         {object && <ObjectMainInfo object={object} />}
                     </LoadEffect>
