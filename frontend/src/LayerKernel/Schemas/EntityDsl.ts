@@ -1,17 +1,17 @@
 import type { ValidationResult } from './Validator/Types.ts'
 
 /**
- * Rules for create payload generation:
- * - required: key must be present in InferCreate<...>
- * - optional: key is optional in InferCreate<...>
- * - forbidden: key is excluded from InferCreate<...>
+ * Правила формирования payload для create:
+ * - required: ключ обязан присутствовать в InferCreate<...>
+ * - optional: ключ опционален в InferCreate<...>
+ * - forbidden: ключ исключается из InferCreate<...>
  */
 export type EntityCreatePolicy = 'required' | 'optional' | 'forbidden'
 
 /**
- * Rules for update payload generation:
- * - optional: key may be present in InferUpdate<...>
- * - forbidden: key is excluded from InferUpdate<...>
+ * Правила формирования payload для update:
+ * - optional: ключ может присутствовать в InferUpdate<...>
+ * - forbidden: ключ исключается из InferUpdate<...>
  */
 export type EntityUpdatePolicy = 'optional' | 'forbidden'
 export type EntityInputType =
@@ -27,11 +27,11 @@ export type EntityFieldOption<Value> = {
 }
 
 /**
- * Single field contract used by API typing and UI generation.
- * One declaration defines:
- * - how key participates in create/update DTOs
- * - how key is shown in form (input/visibility/options)
- * - how key is validated/defaulted
+ * Унифицированный контракт поля для типизации API и генерации UI
+ * Одна декларация определяет:
+ * - участие ключа в create/update DTO
+ * - отображение поля в форме (тип ввода/видимость/опции)
+ * - валидацию и значения по умолчанию
  */
 export type EntityField<Schema, Field extends keyof Schema, Context> = {
     label: string
@@ -55,9 +55,9 @@ export type EntityFields<Schema, Context> = {
 }
 
 /**
- * Root model for one entity.
- * Context is external runtime data required to resolve defaults/options
- * (example: parent id, route params, current user id).
+ * Корневая модель одной сущности
+ * Context - внешние runtime-данные, необходимые для вычисления
+ * дефолтов/опций (например: id родителя, параметры роутинга, id пользователя)
  */
 export type EntitySchema<
     Schema,
@@ -84,7 +84,7 @@ type EntityObject<S> = ExtractEntityParts<S>['schema'] extends object
     ? ExtractEntityParts<S>['schema']
     : never
 
-// Utility extraction helpers used by generic inference below.
+// Вспомогательные типы извлечения, используемые в обобщённом выводе ниже
 export type InferEntity<S> = ExtractEntityParts<S>['schema']
 
 export type EntityContext<S> = ExtractEntityParts<S>['context']
@@ -114,7 +114,7 @@ type RequiredCreateKeys<S> = KeysByCreatePolicy<S, 'required'>
 type OptionalCreateKeys<S> = KeysByCreatePolicy<S, 'optional'>
 type OptionalUpdateKeys<S> = KeysByUpdatePolicy<S, 'optional'>
 
-// Public keys to iterate create/update field sets at runtime.
+// Публичные ключи для runtime-итерации по наборам create/update полей
 export type CreateFieldKeys<S> = RequiredCreateKeys<S> | OptionalCreateKeys<S>
 
 export type UpdateFieldKeys<S> = OptionalUpdateKeys<S>
@@ -129,9 +129,9 @@ export type InferUpdate<S> = Flatten<
 >
 
 /**
- * Runtime helper for form generation:
- * returns all keys that are allowed in create payload.
- * Order is preserved from schema declaration to keep form layout predictable.
+ * Runtime-хелпер для генерации формы:
+ * возвращает все ключи, разрешённые в create payload
+ * Порядок сохраняется из декларации схемы, чтобы layout формы был предсказуемым
  */
 export function getCreateFieldKeys<
     Schema,
@@ -155,9 +155,9 @@ export function getCreateFieldKeys<
 }
 
 /**
- * Runtime helper for update form generation:
- * returns all keys that are allowed in update payload.
- * Order is preserved from schema declaration.
+ * Runtime-хелпер для генерации update-формы:
+ * возвращает все ключи, разрешённые в update payload
+ * Порядок сохраняется из декларации схемы
  */
 export function getUpdateFieldKeys<
     Schema,

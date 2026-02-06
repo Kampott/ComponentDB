@@ -3,12 +3,11 @@ import { useState } from 'react'
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
-import type { FormField } from '../../../../LayerKernel/Forms/FormTypes.ts'
+import type { FormField } from '@/LayerKernel/Forms/FormTypes.ts'
 import DefaultFormBase from './DefaultFormBase.tsx'
 
 interface Props<T> {
     defaultData: T
-    // title: string;
     submitButtonText?: string
     fields: FormField<T, keyof T>[]
     onSubmit: (data: T | null) => void

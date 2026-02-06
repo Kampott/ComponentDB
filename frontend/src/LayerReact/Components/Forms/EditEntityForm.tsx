@@ -27,8 +27,8 @@ interface Props<
 }
 
 /**
- * Generic "update" modal form for an arbitrary entity schema.
- * The form is generated from update policies and prefilled from `source`.
+ * Универсальная модальная "update"-форма для произвольной схемы сущности
+ * Форма генерируется из update-политик и предзаполняется данными из `source`
  */
 function EditEntityForm<
     Schema extends object,

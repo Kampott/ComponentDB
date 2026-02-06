@@ -31,8 +31,8 @@ function DefaultFormBase<T>({
         field: FormField<T, K>,
         rawValue: unknown,
     ) {
-        // parser has priority: schema-aware fields (especially select) can
-        // convert raw DOM value to exact typed value.
+        // parser имеет приоритет: поля, завязанные на схему (особенно select),
+        // могут преобразовать сырое DOM-значение в точно типизированное
         const value = field.parser
             ? field.parser(rawValue)
             : parseValue<T, K>(rawValue, field.type)
@@ -53,8 +53,8 @@ function DefaultFormBase<T>({
                 field.options &&
                 field.options.length > 0
             ) {
-                // Initialize select-backed fields with first option to avoid
-                // submitting undefined when user does not touch control.
+                // Инициализируем select-поля первым значением,
+                // чтобы не отправлять undefined, если пользователь не трогал контрол
                 handleChange(field, field.options[0].value)
             }
         }

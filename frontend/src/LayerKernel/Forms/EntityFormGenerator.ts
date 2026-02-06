@@ -12,9 +12,9 @@ import {
 } from '@RestSchemas'
 
 /**
- * Primitive fallback parser used when a field is not "select".
- * For select fields we resolve value by comparing against loaded options,
- * because browser always returns string from <select>.
+ * Базовый fallback-парсер для полей, которые не являются "select"
+ * Для select значение определяется сравнением с загруженными опциями,
+ * потому что браузер всегда возвращает строку из <select>
  */
 function createPrimitiveParser<Value>(
     input: EntityInputType,

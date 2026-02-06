@@ -1,9 +1,9 @@
-import type { HasId } from '../DefaultProps.ts'
+import type { HasId } from '@/LayerKernel/Schemas/DefaultProps.ts'
 import {
     defineEntitySchema,
     type InferCreate,
     type InferUpdate,
-} from '../EntityDsl.ts'
+} from '@/LayerKernel/Schemas/EntityDsl.ts'
 
 export interface InstanceProperty extends HasId {
     value: string

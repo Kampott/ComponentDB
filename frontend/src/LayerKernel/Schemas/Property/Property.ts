@@ -2,7 +2,7 @@ import {
     defineEntitySchema,
     type InferCreate,
     type InferUpdate,
-} from '../EntityDsl.ts'
+} from '@/LayerKernel/Schemas/EntityDsl.ts'
 
 export interface Property {
     id: number

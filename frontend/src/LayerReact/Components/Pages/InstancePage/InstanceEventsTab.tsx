@@ -3,15 +3,9 @@ import { type ReactNode } from 'react'
 import Col from 'react-bootstrap/Col'
 import Row from 'react-bootstrap/Row'
 
-// import type {ObjectInstance} from "../../../schemas/ObjectInstance.ts";
-// import {useServicesStore} from "../../../stores/Zustand.ts";
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { useNavigate } from 'react-router-dom'
-
-// interface Props {
-//     instance: ObjectInstance;
-// }
 
 interface EventDummy {
     id: number
@@ -19,10 +13,8 @@ interface EventDummy {
     date: Date
 }
 
-function InstanceEventsTab(/*{instance}: Props*/): ReactNode {
+function InstanceEventsTab(): ReactNode {
     const navigate = useNavigate()
-
-    // const services = useServicesStore((state) => state.services);
 
     const events: EventDummy[] = [
         {

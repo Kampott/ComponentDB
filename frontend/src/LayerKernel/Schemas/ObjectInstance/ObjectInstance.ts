@@ -2,7 +2,7 @@ import {
     defineEntitySchema,
     type InferCreate,
     type InferUpdate,
-} from '../EntityDsl.ts'
+} from '@/LayerKernel/Schemas/EntityDsl.ts'
 import { ObjectInstanceValidator } from './ObjectInstanceValidator.ts'
 
 export interface ObjectInstance {

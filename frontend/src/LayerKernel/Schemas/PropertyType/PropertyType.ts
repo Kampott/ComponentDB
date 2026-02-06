@@ -2,7 +2,7 @@ import {
     defineEntitySchema,
     type InferCreate,
     type InferUpdate,
-} from '../EntityDsl.ts'
+} from '@/LayerKernel/Schemas/EntityDsl.ts'
 import { PropertyTypeValidator } from './PropertyTypeValidator.ts'
 
 export interface PropertyType {

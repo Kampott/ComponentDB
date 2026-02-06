@@ -3,7 +3,7 @@ import {
     defineEntitySchema,
     type InferCreate,
     type InferUpdate,
-} from '../EntityDsl.ts'
+} from '@/LayerKernel/Schemas/EntityDsl.ts'
 import { ObjectValidator } from './ObjectValidator.ts'
 
 export interface Object {
@@ -20,16 +20,16 @@ export interface ObjectCreateContext {
 }
 
 /**
- * PoC entity schema:
- * one declaration drives:
- * - static DTO types (ObjectAdd/ObjectUpdate)
- * - runtime create form generation
- * - field-level rules (visibility/options/defaults/validation)
+ * PoC-схема сущности:
+ * одна декларация управляет:
+ * - статическими DTO-типами (ObjectAdd/ObjectUpdate)
+ * - runtime-генерацией create-формы
+ * - правилами на уровне поля (видимость/опции/дефолты/валидация)
  */
 export const objectSchema = defineEntitySchema<Object, ObjectCreateContext>()({
     entity: 'Object',
     fields: {
-        // Server-managed technical field, never sent by client.
+        // Техническое поле, управляется сервером и не отправляется клиентом
         id: {
             label: 'ID',
             description: 'Уникальный идентификатор',
@@ -47,7 +47,7 @@ export const objectSchema = defineEntitySchema<Object, ObjectCreateContext>()({
             update: 'optional',
             validator: ObjectValidator.name,
         },
-        // Select is populated dynamically using external context.
+        // Select заполняется динамически на основе внешнего контекста
         type_id: {
             label: 'Тип объекта',
             description: 'Тип объекта',
@@ -73,11 +73,11 @@ export const objectSchema = defineEntitySchema<Object, ObjectCreateContext>()({
             input: 'number',
             create: 'required',
             update: 'forbidden',
-            // Hidden from UI, but automatically included in create payload.
+            // Скрыто в UI, но автоматически включается в create payload
             createVisible: false,
             defaultValue: context => context.parentObjectId,
         },
-        // Computed by backend, not editable by client.
+        // Вычисляется на бэкенде и не редактируется клиентом
         root_id: {
             label: 'Корневой объект',
             description: 'ID корневого объекта',
@@ -90,6 +90,6 @@ export const objectSchema = defineEntitySchema<Object, ObjectCreateContext>()({
     },
 })
 
-// Auto-generated DTO types from the schema policies above.
+// DTO-типы автоматически выводятся из политик схемы выше
 export type ObjectAdd = InferCreate<typeof objectSchema>
 export type ObjectUpdate = InferUpdate<typeof objectSchema>

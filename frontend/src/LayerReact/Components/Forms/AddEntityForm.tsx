@@ -21,9 +21,9 @@ interface Props<
 }
 
 /**
- * Generic "create" modal form for an arbitrary entity schema.
- * It delegates all field construction to generateCreateFormFromSchema(...)
- * and only handles async load + rendering.
+ * Универсальная модальная "create"-форма для произвольной схемы сущности
+ * Построение полей полностью делегируется generateCreateFormFromSchema(...),
+ * компонент отвечает только за асинхронную загрузку и рендер
  */
 function AddEntityForm<
     Schema extends object,
@@ -51,7 +51,7 @@ function AddEntityForm<
 
     useEffect(() => {
         async function load() {
-            // Build typed controls and initial payload from DSL schema.
+            // Собираем типизированные контролы и стартовый payload из DSL-схемы
             const result = await generateCreateFormFromSchema(
                 schema,
                 context,
