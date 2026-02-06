@@ -8,7 +8,7 @@ import { toString } from '@/Utility/to_string.ts'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
-import type { Object, ObjectType } from '@RestSchemas'
+import type { Object, ObjectAdd, ObjectType } from '@RestSchemas'
 import { useServicesStore } from '@StorageImpl'
 import { Link } from 'react-router-dom'
 
@@ -67,11 +67,13 @@ function TypeMainInfo({ objectType }: Props): ReactNode {
     }, [services.objectsTypesService, objectType])
 
     async function addRootObject() {
-        await services.objectService.addObject({
+        const payload: ObjectAdd = {
             name: objectType.name,
             type_id: objectType.id,
             parent_id: null,
-        })
+        }
+
+        await services.objectService.addObject(payload)
 
         await loadRootObject()
     }

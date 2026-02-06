@@ -6,9 +6,11 @@ import FileSystemTreeView, {
     type DataNode,
 } from '@Components/Common/FileSystemTreeView.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
-import type { ObjectInstance } from '@RestSchemas'
+import type { ObjectInstance, ObjectInstanceUpdate } from '@RestSchemas'
+import { objectInstanceSchema } from '@RestSchemas'
 import { useServicesStore } from '@StorageImpl'
 
 interface Props {
@@ -25,6 +27,8 @@ function InstanceTreeView({ instance }: Props) {
     >(null)
 
     const [openIds, setOpenIds] = useState<Set<number>>(new Set())
+    const [editTargetInstance, setEditTargetInstance] =
+        useState<ObjectInstance | null>(null)
 
     async function loadInstanceChildren(
         id: number,
@@ -93,16 +97,27 @@ function InstanceTreeView({ instance }: Props) {
         navigate(`/instances/${id}`)
     }
 
-    function handleAddChildRequest(objectInstance: ObjectInstance) {
-        console.log(objectInstance)
-    }
-
     function handleChangeRequest(objectInstance: ObjectInstance) {
-        console.log(objectInstance)
+        setEditTargetInstance(objectInstance)
     }
 
-    function handleDeleteRequest(objectInstance: ObjectInstance) {
-        console.log(objectInstance)
+    async function handleDeleteRequest(objectInstance: ObjectInstance) {
+        await services.objectsInstancesService.deleteInstance(objectInstance.id)
+        setInstanceTree(await loadInstanceChildren(instance.id))
+    }
+
+    async function confirmEditInstance(data: ObjectInstanceUpdate | null) {
+        if (!editTargetInstance || !data) {
+            setEditTargetInstance(null)
+            return
+        }
+
+        await services.objectsInstancesService.updateInstance(
+            editTargetInstance.id,
+            data,
+        )
+        setEditTargetInstance(null)
+        setInstanceTree(await loadInstanceChildren(instance.id))
     }
 
     function renderItem(node: DataNode<ObjectInstance>) {
@@ -128,14 +143,28 @@ function InstanceTreeView({ instance }: Props) {
                     data={instanceTree ? instanceTree : []}
                     openIds={openIds}
                     onToggle={onInstanceChildrenToggle}
+                    contextMenuOptions={{
+                        Изменить: handleChangeRequest,
+                        Удалить: handleDeleteRequest,
+                    }}
                     renderItem={renderItem}
                     onRequestChildren={loadInstanceChildren}
                     onChildrenLoaded={onInstanceChildrenLoaded}
-                    onAddChildRequest={handleAddChildRequest}
-                    onChangeRequest={handleChangeRequest}
-                    onDeleteRequest={handleDeleteRequest}
                 />
             </LoadEffect>
+            {editTargetInstance && (
+                <EditEntityForm
+                    schema={objectInstanceSchema}
+                    context={{
+                        objectId: editTargetInstance.object_id,
+                        parentId: editTargetInstance.parent_id,
+                        defaultIsActive: editTargetInstance.is_active,
+                    }}
+                    source={editTargetInstance}
+                    title={`Изменение экземпляра "${editTargetInstance.name}"`}
+                    submitCallback={confirmEditInstance}
+                />
+            )}
         </>
     )
 }

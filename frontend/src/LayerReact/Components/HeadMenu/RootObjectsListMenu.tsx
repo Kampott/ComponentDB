@@ -2,15 +2,17 @@ import Offcanvas from 'react-bootstrap/Offcanvas'
 
 import { type ReactNode, useEffect, useState } from 'react'
 
+import DefaultList from '@Components/Common/DefaultList.tsx'
+import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
+import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
-import type { ObjectType, ObjectTypeAdd } from '@RestSchemas'
+import type { ObjectType, ObjectTypeAdd, ObjectTypeUpdate } from '@RestSchemas'
+import { objectTypeSchema } from '@RestSchemas'
 import { useServicesStore } from '@StorageImpl'
 import Button from 'react-bootstrap/Button'
 import { useNavigate } from 'react-router-dom'
-import DefaultList from '../Common/DefaultList.tsx'
-import LoadEffect from '../Common/LoadEffect.tsx'
-import AddObjectTypeForm from '../Forms/AddObjectTypeForm.tsx'
 
 interface Props {
     showObjectsMenu: boolean
@@ -26,6 +28,9 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
         null,
     )
     const [formShow, setFormShow] = useState(false)
+    const [editTargetType, setEditTargetType] = useState<ObjectType | null>(
+        null,
+    )
 
     function handleObjectTypeClick(objectType: ObjectType) {
         navigate(`/types/${objectType.id}`)
@@ -65,11 +70,23 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
     }
 
     function handleChangeRequest(objectType: ObjectType) {
-        console.log(objectType)
+        setEditTargetType(objectType)
     }
 
-    function handleDeleteRequest(objectType: ObjectType) {
-        console.log(objectType)
+    async function handleDeleteRequest(objectType: ObjectType) {
+        await services.objectsTypesService.deleteType(objectType.id)
+        await loadRootObjectTypes()
+    }
+
+    async function confirmEditType(data: ObjectTypeUpdate | null) {
+        if (!editTargetType || !data) {
+            setEditTargetType(null)
+            return
+        }
+
+        await services.objectsTypesService.updateType(editTargetType.id, data)
+        setEditTargetType(null)
+        await loadRootObjectTypes()
     }
 
     return (
@@ -106,9 +123,21 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
             </Offcanvas>
 
             {formShow && (
-                <AddObjectTypeForm
-                    parentObjectType={null}
+                <AddEntityForm
+                    schema={objectTypeSchema}
+                    context={{ parentTypeId: null }}
+                    defaults={{ name: '' }}
+                    title='Добавление нового типа'
                     submitCallback={confirmAddType}
+                />
+            )}
+            {editTargetType && (
+                <EditEntityForm
+                    schema={objectTypeSchema}
+                    context={{ parentTypeId: editTargetType.parent_id }}
+                    source={editTargetType}
+                    title={`Изменение типа "${editTargetType.name}"`}
+                    submitCallback={confirmEditType}
                 />
             )}
         </>

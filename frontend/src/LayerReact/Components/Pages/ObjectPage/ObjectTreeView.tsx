@@ -8,11 +8,13 @@ import FileSystemTreeView, {
     type DataNode,
 } from '@Components/Common/FileSystemTreeView.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
+import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
-import type { Object } from '@RestSchemas'
+import type { Object, ObjectAdd, ObjectUpdate } from '@RestSchemas'
+import { objectSchema } from '@RestSchemas'
 import { useServicesStore } from '@StorageImpl'
-import AddObjectForm from '../../Forms/AddObjectForm.tsx'
 
 interface Props {
     object: Object
@@ -29,7 +31,11 @@ function ObjectTreeView({ object }: Props) {
 
     const [openIds, setOpenIds] = useState<Set<number>>(new Set())
 
+    const [formParentObject, setFormParentObject] = useState<Object>(object)
     const [formShow, setFormShow] = useState(false)
+    const [editTargetObject, setEditTargetObject] = useState<Object | null>(
+        null,
+    )
 
     async function loadObjectChildren(id: number): Promise<DataNode<Object>[]> {
         try {
@@ -115,6 +121,32 @@ function ObjectTreeView({ object }: Props) {
         await services.objectService.addObject(data)
         setFormShow(false)
         setObjectTree(await loadObjectChildren(object.id))
+        setFormParentObject(object)
+    }
+
+    function handleAddRequest(object: Object) {
+        setFormParentObject(object)
+        setFormShow(true)
+    }
+
+    function handleChangeRequest(object: Object) {
+        setEditTargetObject(object)
+    }
+
+    async function handleDeleteRequest(currentObject: Object) {
+        await services.objectService.deleteObject(currentObject.id)
+        setObjectTree(await loadObjectChildren(object.id))
+    }
+
+    async function confirmEditObject(data: ObjectUpdate | null) {
+        if (!editTargetObject || !data) {
+            setEditTargetObject(null)
+            return
+        }
+
+        await services.objectService.updateObject(editTargetObject.id, data)
+        setEditTargetObject(null)
+        setObjectTree(await loadObjectChildren(object.id))
     }
 
     return (
@@ -134,6 +166,11 @@ function ObjectTreeView({ object }: Props) {
                     data={objectTree ? objectTree : []}
                     openIds={openIds}
                     onToggle={onObjectChildrenToggle}
+                    contextMenuOptions={{
+                        Добавить: handleAddRequest,
+                        Изменить: handleChangeRequest,
+                        Удалить: handleDeleteRequest,
+                    }}
                     renderItem={renderItem}
                     onRequestChildren={loadObjectChildren}
                     onChildrenLoaded={onObjectChildrenLoaded}
@@ -141,9 +178,27 @@ function ObjectTreeView({ object }: Props) {
             </LoadEffect>
 
             {formShow && (
-                <AddObjectForm
-                    parentObject={object}
+                <AddEntityForm
+                    schema={objectSchema}
+                    context={{
+                        parentTypeId: formParentObject.type_id,
+                        parentObjectId: formParentObject.id,
+                    }}
+                    defaults={{ name: '' }}
+                    title='Добавление нового объекта'
                     submitCallback={confirmAddObject}
+                />
+            )}
+            {editTargetObject && (
+                <EditEntityForm
+                    schema={objectSchema}
+                    context={{
+                        parentTypeId: editTargetObject.type_id,
+                        parentObjectId: editTargetObject.parent_id,
+                    }}
+                    source={editTargetObject}
+                    title={`Изменение объекта "${editTargetObject.name}"`}
+                    submitCallback={confirmEditObject}
                 />
             )}
         </>

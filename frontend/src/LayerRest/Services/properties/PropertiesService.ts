@@ -17,8 +17,8 @@ export default class PropertiesService implements IPropertiesService {
         return await this.client.get<Property>(`/properties/${id}`)
     }
 
-    public async addProperty(object: PropertyAdd): Promise<PropertyAdd> {
-        return await this.client.post<PropertyAdd, PropertyAdd>(
+    public async addProperty(object: PropertyAdd): Promise<Property> {
+        return await this.client.post<PropertyAdd, Property>(
             '/properties/',
             object,
         )

@@ -9,9 +9,7 @@ export default interface IInstancesPropertiesService {
 
     getInstancePropertyById(id: number): Promise<InstanceProperty>
 
-    addInstanceProperty(
-        object: InstancePropertyAdd,
-    ): Promise<InstancePropertyAdd>
+    addInstanceProperty(object: InstancePropertyAdd): Promise<InstanceProperty>
 
     updateInstanceProperty(
         id: number,

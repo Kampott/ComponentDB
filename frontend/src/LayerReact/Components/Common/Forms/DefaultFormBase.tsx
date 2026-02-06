@@ -1,11 +1,8 @@
-import type { Dispatch, SetStateAction } from 'react'
+import { type Dispatch, type SetStateAction, useEffect } from 'react'
 
 import Form from 'react-bootstrap/Form'
 
-import type {
-    FieldType,
-    FormField,
-} from '../../../../LayerKernel/Forms/FormTypes.ts'
+import type { FieldType, FormField } from '@/LayerKernel/Forms/FormTypes.ts'
 
 interface Props<T> {
     data: T
@@ -32,9 +29,13 @@ function DefaultFormBase<T>({
 
     function handleChange<K extends keyof T>(
         field: FormField<T, K>,
-        rawValue: any,
+        rawValue: unknown,
     ) {
-        const value = parseValue<T, K>(rawValue, field.type)
+        // parser has priority: schema-aware fields (especially select) can
+        // convert raw DOM value to exact typed value.
+        const value = field.parser
+            ? field.parser(rawValue)
+            : parseValue<T, K>(rawValue, field.type)
         updateField(field.bindData, value)
 
         if (field.validator) {
@@ -45,14 +46,31 @@ function DefaultFormBase<T>({
         }
     }
 
+    useEffect(() => {
+        for (const field of fields) {
+            if (
+                field.type == 'select' &&
+                field.options &&
+                field.options.length > 0
+            ) {
+                // Initialize select-backed fields with first option to avoid
+                // submitting undefined when user does not touch control.
+                handleChange(field, field.options[0].value)
+            }
+        }
+    }, [])
+
     function parseValue<T, K extends keyof T>(
-        value: any,
+        value: unknown,
         type: FieldType,
     ): T[K] {
         switch (type) {
             case 'number':
                 return Number(value) as T[K]
             case 'boolean':
+                if (typeof value === 'string') {
+                    return (value === 'true') as T[K]
+                }
                 return Boolean(value) as T[K]
             default:
                 return value as T[K]
@@ -61,54 +79,64 @@ function DefaultFormBase<T>({
 
     return (
         <>
-            {fields.map((field: FormField<T, keyof T>) => (
-                <Form.Group key={String(field.bindData)} className='mb-3'>
-                    <Form.Label>{field.label}</Form.Label>
-
-                    {field.type === 'select' && field.options ? (
-                        <Form.Select
-                            value={getField(field.bindData) as any}
-                            onChange={e => handleChange(field, e.target.value)}
-                            isInvalid={!!errors[field.bindData]}
-                        >
-                            {field.options.map(opt => (
-                                <option
-                                    key={String(opt.value)}
-                                    value={String(opt.value)}
-                                >
-                                    {opt.label}
-                                </option>
-                            ))}
-                        </Form.Select>
-                    ) : field.type === 'boolean' ? (
-                        <Form.Check
-                            type='checkbox'
-                            checked={
-                                getField(field.bindData) as unknown as boolean
-                            }
-                            onChange={e =>
-                                handleChange(field, e.target.checked)
-                            }
-                            isInvalid={!!errors[field.bindData]}
-                        />
-                    ) : (
-                        <>
-                            <Form.Control
-                                type={field.type}
-                                placeholder={field.placeholder}
-                                value={getField(field.bindData) as any}
+            {fields.map((field: FormField<T, keyof T>) => {
+                return (
+                    <Form.Group key={String(field.bindData)} className='mb-3'>
+                        <Form.Label>{field.label}</Form.Label>
+                        {field.type === 'select' && field.options ? (
+                            <Form.Select
                                 onChange={e =>
                                     handleChange(field, e.target.value)
                                 }
                                 isInvalid={!!errors[field.bindData]}
+                            >
+                                {field.options.map(opt => (
+                                    <option
+                                        key={String(opt.value)}
+                                        value={String(opt.value)}
+                                    >
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </Form.Select>
+                        ) : field.type === 'boolean' ? (
+                            <Form.Check
+                                type='checkbox'
+                                checked={
+                                    getField(
+                                        field.bindData,
+                                    ) as unknown as boolean
+                                }
+                                onChange={e =>
+                                    handleChange(field, e.target.checked)
+                                }
+                                isInvalid={!!errors[field.bindData]}
                             />
-                            <Form.Control.Feedback type='invalid'>
-                                {errors[field.bindData]}
-                            </Form.Control.Feedback>
-                        </>
-                    )}
-                </Form.Group>
-            ))}
+                        ) : (
+                            <>
+                                <Form.Control
+                                    type={field.type}
+                                    placeholder={field.placeholder}
+                                    value={
+                                        getField(field.bindData) as
+                                            | string
+                                            | number
+                                            | string[]
+                                            | undefined
+                                    }
+                                    onChange={e =>
+                                        handleChange(field, e.target.value)
+                                    }
+                                    isInvalid={!!errors[field.bindData]}
+                                />
+                                <Form.Control.Feedback type='invalid'>
+                                    {errors[field.bindData]}
+                                </Form.Control.Feedback>
+                            </>
+                        )}
+                    </Form.Group>
+                )
+            })}
         </>
     )
 }

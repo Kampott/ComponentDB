@@ -6,7 +6,7 @@ import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
-import type { Object, Property, PropertyType } from '@RestSchemas'
+import type { Object, Property, PropertyAdd, PropertyType } from '@RestSchemas'
 import { useServicesStore } from '@StorageImpl'
 
 interface ObjectProperty {
@@ -37,11 +37,12 @@ function ObjectPropertiesTab({ object }: Props): ReactNode {
         )
 
         if (updatedProp.value) {
-            await services.propertiesService.addProperty({
+            const payload: PropertyAdd = {
                 property_id: updatedProp.type.id,
                 object_id: object.id,
                 value: updatedProp.value,
-            })
+            }
+            await services.propertiesService.addProperty(payload)
         } else {
             console.log('Something went wrong after value update')
         }

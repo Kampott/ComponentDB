@@ -1,6 +1,6 @@
 import React, { type MouseEvent } from 'react'
 
-import type { ContextMenuOptions, OnObjectActionFunc } from '@Storage'
+import type { ContextMenuOptions } from '@Storage'
 import { useContextMenuStore } from '@StorageImpl'
 import ListGroup from 'react-bootstrap/ListGroup'
 
@@ -21,9 +21,7 @@ export interface Props<T> {
     onRequestChildren?: (id: number) => Promise<DataNode<T>[]>
     onChildrenLoaded?: (id: number, children: DataNode<T>[]) => void
 
-    onAddChildRequest?: OnObjectActionFunc<T>
-    onChangeRequest?: OnObjectActionFunc<T>
-    onDeleteRequest?: OnObjectActionFunc<T>
+    contextMenuOptions: ContextMenuOptions<T>
 }
 
 function FileSystemTreeView<T>({
@@ -33,17 +31,10 @@ function FileSystemTreeView<T>({
     renderItem,
     onRequestChildren,
     onChildrenLoaded,
-    onAddChildRequest,
-    onChangeRequest,
-    onDeleteRequest,
+    contextMenuOptions,
 }: Props<T>) {
     const { onContextMenuCall } = useContextMenuStore()
 
-    const contextMenuOptions: ContextMenuOptions<T> = {
-        Добавить: onAddChildRequest,
-        Изменить: onChangeRequest,
-        Удалить: onDeleteRequest,
-    }
     const isInteractive = Object.values(contextMenuOptions).every(Boolean)
 
     function handleContextMenu(e: MouseEvent<HTMLElement>, element: T) {

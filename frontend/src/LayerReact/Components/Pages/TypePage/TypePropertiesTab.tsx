@@ -4,11 +4,18 @@ import Button from 'react-bootstrap/Button'
 
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
+import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
-import type { ObjectType, PropertyType, PropertyTypeAdd } from '@RestSchemas'
+import type {
+    ObjectType,
+    PropertyType,
+    PropertyTypeAdd,
+    PropertyTypeUpdate,
+} from '@RestSchemas'
+import { propertyTypeSchema } from '@RestSchemas'
 import { useServicesStore } from '@StorageImpl'
-import AddTypePropertyForm from '../../Forms/AddTypePropertyForm.tsx'
 
 interface Props {
     objectType: ObjectType
@@ -24,6 +31,8 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
         PropertyType[] | null
     >(null)
     const [formShow, setFormShow] = useState(false)
+    const [editTargetPropertyType, setEditTargetPropertyType] =
+        useState<PropertyType | null>(null)
 
     async function loadProperties(): Promise<void> {
         setObjectProperties(null)
@@ -82,11 +91,25 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
     }
 
     function handleChangeRequest(propertyType: PropertyType) {
-        console.log(propertyType)
+        setEditTargetPropertyType(propertyType)
     }
 
     function handleDeleteRequest(propertyType: PropertyType) {
         console.log(propertyType)
+    }
+
+    async function confirmEditPropertyType(data: PropertyTypeUpdate | null) {
+        if (!editTargetPropertyType || !data) {
+            setEditTargetPropertyType(null)
+            return
+        }
+
+        await services.propertiesTypesService.updatePropertyType(
+            editTargetPropertyType.id,
+            data,
+        )
+        setEditTargetPropertyType(null)
+        await loadProperties()
     }
 
     return (
@@ -140,9 +163,27 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
             </LoadEffect>
 
             {formShow && (
-                <AddTypePropertyForm
-                    objectType={objectType}
+                <AddEntityForm
+                    schema={propertyTypeSchema}
+                    context={{
+                        objectTypeId: objectType.id,
+                        defaultIsStatic: true,
+                    }}
+                    defaults={{ name: '' }}
+                    title='Добавление нового свойства'
                     submitCallback={confirmAddProperty}
+                />
+            )}
+            {editTargetPropertyType && (
+                <EditEntityForm
+                    schema={propertyTypeSchema}
+                    context={{
+                        objectTypeId: editTargetPropertyType.type_id,
+                        defaultIsStatic: editTargetPropertyType.is_static,
+                    }}
+                    source={editTargetPropertyType}
+                    title={`Изменение свойства "${editTargetPropertyType.name}"`}
+                    submitCallback={confirmEditPropertyType}
                 />
             )}
         </>

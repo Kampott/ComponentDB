@@ -5,7 +5,7 @@ export default interface IPropertiesService {
 
     getPropertyById(id: number): Promise<Property>
 
-    addProperty(object: PropertyAdd): Promise<PropertyAdd>
+    addProperty(object: PropertyAdd): Promise<Property>
 
     updateProperty(id: number, data: PropertyUpdate): Promise<Property>
 
