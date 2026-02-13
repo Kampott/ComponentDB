@@ -18,6 +18,8 @@ from app.models.auth import User, Role, Permission, UserObjectAccess, UserTypeAc
 from app.core.security import get_current_user
 from app.models.core import Objects, Types
 
+from app.logging.deps import LoggerInterface, LogCallable 
+
 router = APIRouter(prefix="/objects", tags=["DB: Core: Objects"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -29,7 +31,8 @@ async def read_objects(
     type_id: Optional[int] = Query(None),
     parent_id: Optional[int] = Query(None),
     root_id: Optional[int] = Query(None),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    log: LogCallable = Depends(LoggerInterface("objects")) 
 ):
     # Fetch user permissions
     result_user = await session.execute(
@@ -87,17 +90,25 @@ async def read_objects(
 
     result = await session.execute(query)
     objects = result.scalars().all()
+    
+    try:
+        await log(action="read_objects") 
+    except Exception:
+        pass
+    
     return objects
 
 @router.get("/{object_id}", response_model=ObjectsRead)
 async def read_object(
     object_id: int,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_object_permission(write=False))
+    current_user: User = Depends(require_object_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("objects"))
 ):
     obj = await db_objects.get_object(session, object_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Object not found")
+    await log(action="read_object", details={"object_id": object_id})
     return obj
 
 
@@ -105,35 +116,55 @@ async def read_object(
 async def add_object(
     data: ObjectsCreate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    log: LogCallable = Depends(LoggerInterface("objects")) 
 ):
     if data.parent_id is None:
         await _check_permission(current_user, session, "create_new_object")
     else:
         await _check_object_permission(session, current_user, data.parent_id, write=True)
 
-    return await db_objects.create_object(session, data)
-
+    new_object = await db_objects.create_object(session, data)
+    
+    await log(
+        action="add_object",
+        details={
+            "object_id": new_object.id,
+            "type_id": data.type_id,
+            "parent_id": data.parent_id
+        }
+    )
+    return new_object
 
 @router.delete("/{object_id}", status_code=204)
 async def delete_objects(
     object_id: int,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_object_permission(write=True))
+    current_user: User = Depends(require_object_permission(write=True)),
+    log: LogCallable = Depends(LoggerInterface("objects")) 
 ):
     await db_objects.delete_object(session, object_id)
+    await log(action="delete_object", details={"object_id": object_id}) 
 
 
 @router.post("/{object_id}/instance")
 async def create_instance_from_root_object(
     object_id: int,     
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_object_permission(write=True))
+    current_user: User = Depends(require_object_permission(write=True)),
+    log: LogCallable = Depends(LoggerInterface("objects")) 
 ) -> InstancesRead: 
     root_instance: InstancesRead | None = await db_instances.create_instance_from_object_tree(session, 
     object_id)
     if root_instance is None:
         raise HTTPException(status_code=422, detail="Something went wrong")
+    await log(
+        action="create_instance",
+        details={
+            "object_id": object_id,
+            "instance_id": root_instance.id
+        }
+    )
     return root_instance
 
 
@@ -142,7 +173,8 @@ async def update_object(
     object_id: int,
     data: ObjectsUpdate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_object_permission(write=True))
+    current_user: User = Depends(require_object_permission(write=True)),
+    log: LogCallable = Depends(LoggerInterface("objects"))
 ) -> ObjectsRead | None:
     updated_object: ObjectsRead | None = await db_objects.update_object(session, object_id, data)
     if not updated_object:
@@ -150,4 +182,11 @@ async def update_object(
             status_code=404,
             detail="Объект не найден"
         )
+    await log( 
+        action="update_object",
+        details={
+            "object_id": object_id,
+            "updated_fields": data.model_dump(exclude_unset=True)
+        }
+    )
     return updated_object

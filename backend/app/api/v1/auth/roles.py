@@ -2,57 +2,81 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie,
 from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.session import async_session
 from app.schemas.auth import RoleCreate, RoleOut, RoleUpdate
 from app.crud.auth.roles import create_role, get_roles, get_role, delete_role, update_role
 from app.db.database import get_async_session
-
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
+from app.logging.deps import LoggerInterface, LogCallable
 
 router = APIRouter(prefix="/roles", tags=["DB: Auth: Roles"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-
-@router.post("/rolecreate/", response_model = RoleOut)
-async def role_create(role_in: RoleCreate, current_user: User = Depends(require_permissions("create_role")), db: AsyncSession = Depends(get_async_session)):
+@router.post("/rolecreate/", response_model=RoleOut)
+async def role_create(
+    role_in: RoleCreate,
+    current_user: User = Depends(require_permissions("create_role")),
+    db: AsyncSession = Depends(get_async_session),
+    log: LogCallable = Depends(LoggerInterface("roles"))
+):
     role = await create_role(db, role_in)
     if not role:
-        raise HTTPException(status_code = 400, detail="Role could not be created")
+        raise HTTPException(status_code=400, detail="Role could not be created")
+    
+    await log(action="create_role", details={"role_id": role.id, "name": role.name})
     return role
 
 @router.get("/", response_model=list[RoleOut])
 async def read_roles(
-        session: AsyncSession = Depends(get_async_session),
-        name: Optional[str] = None,
-        description: Optional[str] = Query(None),
-        current_user: User = Depends(require_permissions("read_role"))
+    session: AsyncSession = Depends(get_async_session),
+    name: Optional[str] = None,
+    description: Optional[str] = Query(None),
+    current_user: User = Depends(require_permissions("read_role")),
+    log: LogCallable = Depends(LoggerInterface("roles"))
 ):
-    return await get_roles(session, name, description)
+    roles = await get_roles(session, name, description)
+    try:
+        await log(action="read_roles")
+    except Exception:
+        pass
+    return roles
 
-@router.get("/{role_id}/", response_model = RoleOut)
-async def read_role(
+@router.get("/{role_id}/", response_model=RoleOut)
+async def read_role_endpoint(
     role_id: int,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions("read_role"))
+    current_user: User = Depends(require_permissions("read_role")),
+    log: LogCallable = Depends(LoggerInterface("roles"))
 ):
     role = await get_role(session, role_id)
+    await log(action="read_role", details={"role_id": role_id})
+    return role
 
 @router.delete("/{role_id}/", status_code=204)
-async def delete_role(
+async def delete_role_endpoint(
     role_id: int,
     current_user: User = Depends(require_permissions("delete_role")),
-    session: AsyncSession = Depends(get_async_session)):
+    session: AsyncSession = Depends(get_async_session),
+    log: LogCallable = Depends(LoggerInterface("roles"))
+):
     await delete_role(session, role_id)
+    await log(action="delete_role", details={"role_id": role_id})
 
 @router.patch("/{role_id}")
-async def update_role(
+async def update_role_endpoint(
     role_id: int,
     data: RoleUpdate,
     current_user: User = Depends(require_permissions("edit_role")),
-    session: AsyncSession = Depends(get_async_session)
+    session: AsyncSession = Depends(get_async_session),
+    log: LogCallable = Depends(LoggerInterface("roles"))
 ) -> RoleOut | None:
     updated_role: RoleOut | None = await update_role(session, role_id, data)
     if not updated_role:
-        raise HTTPException(status_code = 404, detail="Role not found")
+        raise HTTPException(status_code=404, detail="Role not found")
+    
+    details = {"role_id": role_id}
+    if data.name is not None:
+        details["name"] = data.name
+    
+    await log(action="update_role", details=details)
     return updated_role

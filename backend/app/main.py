@@ -13,7 +13,7 @@ from app.api.v1.auth import auth, permissions, roles, role_permissions, user_rol
 # рабочий логер (функция/корутина)
 from app.logging.logger import worker as log_worker_func
 # ассинхронная фабрика сессий (sessionmaker)
-from app.db.database import async_session, engine
+from app.db.database import async_session, async_log_session, engine
 
 # middleware для сбора логов: должен быть функция (request, call_next)
 from app.logging.middleware import logging_middleware
@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
         # Launch worker task
         app.state.log_worker_task = asyncio.create_task(
-            log_worker_func(app.state.log_queue, async_session, app.state.log_stop_event)
+            log_worker_func(app.state.log_queue,  async_log_session, app.state.log_stop_event)
         )
         # Add done callback to log if task fails
         def worker_done(fut):

@@ -8,23 +8,32 @@ from app.db.database import get_async_session
 from app.schemas.auth import UserOut, UserCreate
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
-
+from app.logging.deps import LoggerInterface, LogCallable
 
 router = APIRouter(prefix="/user", tags=["DB: User Data Manipulation"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 @router.get("/me")
-async def read_users_me(current_user: User = Depends(get_current_user)):
+async def read_users_me(
+    current_user: User = Depends(get_current_user),
+    log: LogCallable = Depends(LoggerInterface("users"))
+):
+    try:
+        await log(action="read_user_me")
+    except Exception:
+        pass
     return {"id": current_user.id, "email": current_user.email}
-
 
 @router.get("/user/{user_email}", response_model=UserOut)
 async def read_user(
     email: str,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions("read_users"))
+    current_user: User = Depends(require_permissions("read_users")),
+    log: LogCallable = Depends(LoggerInterface("users"))
 ):
     usr = await get_user_by_email_crud(session, email)
     if not usr:
         raise HTTPException(status_code=404, detail="User with such email not found")
+    
+    await log(action="read_user", details={"queried_email": email})
     return usr

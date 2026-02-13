@@ -4,9 +4,9 @@ from typing import Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, DateTime, JSON, Text, Float
 from sqlalchemy.dialects.postgresql import UUID
-from app.db.database import Base
+from app.db.database import LogBase
 
-class APILog(Base):
+class APILog(LogBase):
     __tablename__ = "api_logs"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

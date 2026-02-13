@@ -7,6 +7,8 @@ from app.schemas.core import InstancePropertiesRead, InstancePropertiesCreate, I
 import app.crud.core.instance_properties as db
 from app.db.database import get_async_session
 
+from app.logging.deps import LoggerInterface, LogCallable
+
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
 
@@ -19,39 +21,83 @@ async def read_instance_properties(session: AsyncSession = Depends(get_async_ses
                                     current_user: User = Depends(require_permissions("read_instance_properties")),
                                    instance_id: Optional[int] = None,
                                    value: Optional[str] = None,
-                                   property_type_id: Optional[int] = None):
-    return await db.get_instanceproperties(session, instance_id, value, property_type_id)
+                                   property_type_id: Optional[int] = None,
+                                log: LogCallable = Depends(LoggerInterface("instance_properties"))):
+    result = await db.get_instanceproperties(session, instance_id, value, property_type_id)
+    try:
+        await log(
+            action="read_instance_properties",
+            details={
+                "value": value
+            }
+        )
+    except Exception:
+        pass
+    return result
 
 
 @router.get("/{instance_property_id}", response_model=InstancePropertiesRead)
 async def read_instance_properties(instance_property_id: int,
         current_user: User = Depends(require_permissions("read_instance_properties")),
-        session: AsyncSession = Depends(get_async_session)):
+        session: AsyncSession = Depends(get_async_session),
+        log: LogCallable = Depends(LoggerInterface("instance_properties"))):
     obj = await db.get_instanceproperty(session, instance_property_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Instance property not found")
+    try:
+        await log(
+            action="read_instance_properties",
+            details={
+            }
+        )
+    except Exception:
+        pass   
     return obj
 
 
 @router.post("/", response_model=InstancePropertiesRead)
 async def add_instanceproperty(data: InstancePropertiesCreate,
         current_user: User = Depends(require_permissions("create_instance_properties")),
-        session: AsyncSession = Depends(get_async_session)):
-    return await db.create_instanceproperty(session, data)
+        session: AsyncSession = Depends(get_async_session),
+        log: LogCallable = Depends(LoggerInterface("instance_properties"))):
+        result = await db.create_instanceproperty(session, data)
+        try:
+            await log(
+            action="read_instance_properties",
+            details={
+                "value": data.value,
+                "instance_id": data.instance_id,
+                "property_type_id": data.property_type_id
+            }
+            )
+        except Exception:
+            pass 
+        return result
 
 
 @router.delete("/{instance_property_id}", status_code=204)
 async def delete_instance_property(instance_property_id: int,
         current_user: User = Depends(require_permissions("delete_instance_properties")),
-        session: AsyncSession = Depends(get_async_session)):
+        session: AsyncSession = Depends(get_async_session),
+        log: LogCallable = Depends(LoggerInterface("instance_properties"))):
     await db.delete_instanceproperty(session, instance_property_id)
+    try:
+        await log(
+            action="read_instance_properties",
+            details={
+                "instance_property_id": instance_property_id
+            }
+        )
+    except Exception:
+        pass 
 
 
 @router.patch("/{instance_property_id}")
 async def update_property_type(instance_property_id: int,
                     data: InstancePropertiesUpdate,
                     current_user: User = Depends(require_permissions("update_instance_properties")),
-                    session: AsyncSession = Depends(get_async_session)) -> InstancePropertiesRead:
+                    session: AsyncSession = Depends(get_async_session),
+        log: LogCallable = Depends(LoggerInterface("instance_properties"))) -> InstancePropertiesRead:
     updated_instance_property: InstancePropertiesRead | None = await db.update_instance_property(
         session, instance_property_id, data
     )
@@ -60,4 +106,15 @@ async def update_property_type(instance_property_id: int,
             status_code=404,
             detail="Значение свойства экземпляра не найдено"
         )
+    try:
+        await log(
+            action="read_instance_properties",
+            details={
+                "value": data.value,
+                "instance_id": data.instance_id,
+                "property_type_id": data.property_type_id
+            }
+        )
+    except Exception:
+        pass 
     return updated_instance_property
