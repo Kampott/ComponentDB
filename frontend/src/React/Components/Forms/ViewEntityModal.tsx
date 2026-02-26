@@ -1,6 +1,11 @@
-import Button from 'react-bootstrap/Button'
-import Modal from 'react-bootstrap/Modal'
-
+import { Button } from '@/components/ui/button'
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import ViewEntityInfo from '@Components/Forms/ViewEntityInfo.tsx'
 import type { EntityFields, EntitySchema, InferEntity } from '@Schemas'
 
@@ -22,23 +27,23 @@ function ViewEntityModal<
     Fields extends EntityFields<Schema, Context>,
 >({ schema, context, source, title, onClose }: Props<Schema, Context, Fields>) {
     return (
-        <Modal show={true} onHide={onClose}>
-            <Modal.Header closeButton>
-                <Modal.Title>{title}</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
+        <Dialog open={true} onOpenChange={open => !open && onClose()}>
+            <DialogContent className='sm:max-w-[560px]'>
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                </DialogHeader>
                 <ViewEntityInfo
                     schema={schema}
                     context={context}
                     source={source}
                 />
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant='secondary' onClick={onClose}>
-                    Закрыть
-                </Button>
-            </Modal.Footer>
-        </Modal>
+                <DialogFooter>
+                    <Button variant='outline' onClick={onClose}>
+                        Закрыть
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     )
 }
 

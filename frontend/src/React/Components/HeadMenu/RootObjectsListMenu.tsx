@@ -1,7 +1,12 @@
-import Offcanvas from 'react-bootstrap/Offcanvas'
-
 import { type ReactNode, useEffect, useState } from 'react'
 
+import { Button } from '@/components/ui/button'
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet'
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
@@ -12,12 +17,11 @@ import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { ObjectType, ObjectTypeAdd, ObjectTypeUpdate } from '@Schemas'
 import { objectTypeSchema } from '@Schemas'
 import { useServicesStore } from '@StorageImpl'
-import Button from 'react-bootstrap/Button'
 import { useNavigate } from 'react-router-dom'
 
 interface Props {
     showObjectsMenu: boolean
-    handleClose: CallableFunction
+    handleClose: () => void
 }
 
 function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
@@ -97,37 +101,40 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
 
     return (
         <>
-            <Offcanvas
-                show={showObjectsMenu}
-                onHide={handleClose}
-                placement='start'
+            <Sheet
+                open={showObjectsMenu}
+                onOpenChange={open => {
+                    if (!open) {
+                        handleClose()
+                    }
+                }}
             >
-                <Offcanvas.Header closeButton>
-                    <Offcanvas.Title>Список типов</Offcanvas.Title>
-                </Offcanvas.Header>
-                <Offcanvas.Body>
-                    <LoadEffect
-                        data={rootObjectTypes}
-                        contentSize={{ height: '20px', width: '100%' }}
-                    >
-                        <DefaultList
-                            data={rootObjectTypes ? rootObjectTypes : []}
-                            onClick={handleObjectTypeClick}
-                            renderItem={renderObjectType}
-                            onViewRequest={handleViewRequest}
-                            onChangeRequest={handleChangeRequest}
-                            onDeleteRequest={handleDeleteRequest}
-                        />
-                    </LoadEffect>
-                    <Button
-                        variant='primary'
-                        className='mt-4'
-                        onClick={() => setFormShow(true)}
-                    >
-                        Добавить тип
-                    </Button>
-                </Offcanvas.Body>
-            </Offcanvas>
+                <SheetContent side='left' className='w-full sm:max-w-md'>
+                    <SheetHeader>
+                        <SheetTitle>Список типов</SheetTitle>
+                    </SheetHeader>
+
+                    <div className='mt-4 space-y-4'>
+                        <LoadEffect
+                            data={rootObjectTypes}
+                            contentSize={{ height: '20px', width: '100%' }}
+                        >
+                            <DefaultList
+                                data={rootObjectTypes ? rootObjectTypes : []}
+                                onClick={handleObjectTypeClick}
+                                renderItem={renderObjectType}
+                                onViewRequest={handleViewRequest}
+                                onChangeRequest={handleChangeRequest}
+                                onDeleteRequest={handleDeleteRequest}
+                            />
+                        </LoadEffect>
+
+                        <Button onClick={() => setFormShow(true)}>
+                            Добавить тип
+                        </Button>
+                    </div>
+                </SheetContent>
+            </Sheet>
 
             {formShow && (
                 <AddEntityForm

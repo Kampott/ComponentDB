@@ -1,8 +1,7 @@
 import { type ReactElement, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Button from 'react-bootstrap/Button'
-
+import { Button } from '@/components/ui/button'
 import LoginForm from '@Components/Forms/LoginForm.tsx'
 import RegisterForm from '@Components/Forms/RegisterForm.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
@@ -36,21 +35,31 @@ function AuthPage() {
     let content: ReactElement
     if (isRegister) {
         content = (
-            <>
+            <div className='space-y-4'>
                 <RegisterForm />
-                <Button onClick={() => setIsRegister(false)}>
-                    Есть аккаунт?
-                </Button>
-            </>
+                <div className='flex justify-center'>
+                    <Button
+                        variant='outline'
+                        onClick={() => setIsRegister(false)}
+                    >
+                        Есть аккаунт?
+                    </Button>
+                </div>
+            </div>
         )
     } else {
         content = (
-            <>
-                <LoginForm submitCallback={confirmLogin} />;
-                <Button onClick={() => setIsRegister(true)}>
-                    Зарегистрироваться
-                </Button>
-            </>
+            <div className='space-y-4'>
+                <LoginForm submitCallback={confirmLogin} />
+                <div className='fixed bottom-4 left-1/2 -translate-x-1/2'>
+                    <Button
+                        variant='outline'
+                        onClick={() => setIsRegister(true)}
+                    >
+                        Зарегистрироваться
+                    </Button>
+                </div>
+            </div>
         )
     }
 

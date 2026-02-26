@@ -1,4 +1,3 @@
-import 'bootstrap/dist/css/bootstrap.min.css'
 import 'normalize.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

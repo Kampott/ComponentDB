@@ -3,5 +3,19 @@
     "references": [
         { "path": "./tsconfig.app.json" },
         { "path": "./tsconfig.node.json" }
-    ]
+    ],
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"],
+            "@Kernel/*": ["src/Kernel/*"],
+            "@React/*": ["src/React/*"],
+            "@Components/*": ["src/React/Components/*"],
+            "@Rest/*": ["src/Rest/*"],
+            "@Schemas": ["src/Kernel/Schemas/index.ts"],
+            "@Storage/*": ["src/Interfaces/Storage/*"],
+            "@Storage": ["src/Interfaces/Storage/index.ts"],
+            "@StorageImpl": ["src/Kernel/Storage/Zustand/index.ts"]
+        }
+    }
 }

@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import Breadcrumb from 'react-bootstrap/Breadcrumb'
-import Col from 'react-bootstrap/Col'
-import Container from 'react-bootstrap/Container'
-import Row from 'react-bootstrap/Row'
-import Tab from 'react-bootstrap/Tab'
-import Tabs from 'react-bootstrap/Tabs'
-
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
@@ -49,59 +51,59 @@ function TypePage() {
     }, [navigate, services.objectsTypesService, id, typeId])
 
     return (
-        <Container className='mt-4'>
-            <Row>
-                <Col>
-                    <Breadcrumb className='mb-3'>
+        <div className='mx-auto mt-4 w-full max-w-6xl px-4'>
+            <div className='mb-3'>
+                <Breadcrumb>
+                    <BreadcrumbList>
                         <LoadEffect
                             data={objectType}
                             contentSize={{ height: '20px', width: '100%' }}
                         >
-                            <Breadcrumb.Item href='/'>Главная</Breadcrumb.Item>
-                            <Breadcrumb.Item active>
-                                {objectType?.name}
-                            </Breadcrumb.Item>
+                            <BreadcrumbItem>
+                                <BreadcrumbLink to='/'>Главная</BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <BreadcrumbPage>
+                                    {objectType?.name}
+                                </BreadcrumbPage>
+                            </BreadcrumbItem>
                         </LoadEffect>
-                    </Breadcrumb>
+                    </BreadcrumbList>
+                </Breadcrumb>
+            </div>
 
-                    <LoadEffect
-                        data={objectType}
-                        contentSize={{ height: '20px', width: '100%' }}
-                    >
-                        <h1 className='text-center mb-5'>
-                            Тип "{objectType?.name}"
-                        </h1>
+            <LoadEffect
+                data={objectType}
+                contentSize={{ height: '20px', width: '100%' }}
+            >
+                <h1 className='mb-6 text-center text-3xl font-semibold'>
+                    Тип "{objectType?.name}"
+                </h1>
 
-                        {objectType && <TypeMainInfo objectType={objectType} />}
-                    </LoadEffect>
+                {objectType && <TypeMainInfo objectType={objectType} />}
+            </LoadEffect>
 
-                    <Tabs
-                        defaultActiveKey='instances'
-                        id='main-tabs'
-                        className='mb-4'
-                        justify
-                    >
-                        <Tab eventKey='instances' title='Объекты'>
-                            {objectType && (
-                                <TypeObjectsTab objectType={objectType} />
-                            )}
-                        </Tab>
+            <Tabs defaultValue='instances' className='mb-4'>
+                <TabsList className='grid h-auto w-full grid-cols-3'>
+                    <TabsTrigger value='instances'>Объекты</TabsTrigger>
+                    <TabsTrigger value='properties'>Свойства</TabsTrigger>
+                    <TabsTrigger value='structure'>Структура</TabsTrigger>
+                </TabsList>
 
-                        <Tab eventKey='properties' title='Свойства'>
-                            {objectType && (
-                                <TypePropertiesTab objectType={objectType} />
-                            )}
-                        </Tab>
-
-                        <Tab eventKey='structure' title='Структура'>
-                            {objectType && (
-                                <TypeTreeView objectType={objectType} />
-                            )}
-                        </Tab>
-                    </Tabs>
-                </Col>
-            </Row>
-        </Container>
+                <TabsContent value='instances'>
+                    {objectType && <TypeObjectsTab objectType={objectType} />}
+                </TabsContent>
+                <TabsContent value='properties'>
+                    {objectType && (
+                        <TypePropertiesTab objectType={objectType} />
+                    )}
+                </TabsContent>
+                <TabsContent value='structure'>
+                    {objectType && <TypeTreeView objectType={objectType} />}
+                </TabsContent>
+            </Tabs>
+        </div>
     )
 }
 

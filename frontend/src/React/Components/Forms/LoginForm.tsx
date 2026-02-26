@@ -1,11 +1,8 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import DefaultInlineForm from '@Components/Common/Forms/DefaultInlineForm.tsx'
 import type { FormField } from '@Kernel/Forms/FormTypes.ts'
 import type { LoginRequest } from '@Schemas'
 import { LoginRequestValidator } from '@Schemas'
-import Card from 'react-bootstrap/Card'
-import Col from 'react-bootstrap/Col'
-import Container from 'react-bootstrap/Container'
-import Row from 'react-bootstrap/Row'
 
 interface Props {
     submitCallback: (data: LoginRequest | null) => void
@@ -32,29 +29,23 @@ function LoginForm({ submitCallback }: Props) {
     const defaultData = {} as LoginRequest
 
     return (
-        <Container
-            fluid
-            className='d-flex align-items-center justify-content-center'
-            style={{ minHeight: '100vh' }}
-        >
-            <Row className='w-100 justify-content-center'>
-                <Col xs={12} sm={8} md={6} lg={4}>
-                    <Card className='shadow-sm p-4'>
-                        <Card.Body className='d-flex flex-column align-items-center'>
-                            <h4 className='mb-4 fw-normal text-center'>
-                                Вход в систему
-                            </h4>
-                            <DefaultInlineForm
-                                defaultData={defaultData}
-                                submitButtonText='Войти'
-                                fields={formFields}
-                                onSubmit={submitCallback}
-                            />
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-        </Container>
+        <div className='flex min-h-screen items-center justify-center px-4'>
+            <Card className='w-full max-w-md'>
+                <CardHeader>
+                    <CardTitle className='text-center text-xl font-medium'>
+                        Вход в систему
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <DefaultInlineForm
+                        defaultData={defaultData}
+                        submitButtonText='Войти'
+                        fields={formFields}
+                        onSubmit={submitCallback}
+                    />
+                </CardContent>
+            </Card>
+        </div>
     )
 }
 

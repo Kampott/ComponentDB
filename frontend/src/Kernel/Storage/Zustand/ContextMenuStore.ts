@@ -15,7 +15,6 @@ export const useContextMenuStore = create<IContextMenuStore>(set => ({
         elementData: T,
         contextMenuOptions: ContextMenuOptions<T>,
     ) => {
-        console.info('onContextMenuCall called')
         e.preventDefault()
         set({
             visible: true,

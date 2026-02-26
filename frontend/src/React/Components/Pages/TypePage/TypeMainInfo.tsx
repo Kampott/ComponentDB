@@ -1,9 +1,8 @@
+import { Bookmark, Boxes } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 
-import Card from 'react-bootstrap/Card'
-import Col from 'react-bootstrap/Col'
-import Row from 'react-bootstrap/Row'
-
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { toString } from '@/Utility/to_string.ts'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
@@ -62,7 +61,7 @@ function TypeMainInfo({ objectType }: Props): ReactNode {
             loadRootObject()
         }
         loadRootType()
-    }, [services.objectsTypesService, objectType])
+    }, [loadRootObject, services.objectsTypesService, objectType])
 
     async function addRootObject() {
         const payload: ObjectAdd = {
@@ -78,78 +77,65 @@ function TypeMainInfo({ objectType }: Props): ReactNode {
 
     return (
         <div className='mb-4'>
-            <Card className='shadow-sm border-0'>
-                <Card.Body>
-                    <Row className='g-3 align-items-center'>
-                        <Col xs={12} md={6}>
-                            <div
-                                className='d-flex align-items-center p-2 rounded hover-shadow'
-                                style={{ transition: 'all 0.2s' }}
-                            >
-                                <i className='bi bi-bookmark-fill me-2 text-primary fs-4'></i>
-                                <div>
-                                    <div className='text-muted small'>
-                                        Корневой тип
-                                    </div>
-                                    <LoadEffect
-                                        data={rootType}
-                                        contentSize={{
-                                            width: '30%',
-                                            height: '15px',
-                                        }}
-                                    >
-                                        <Link
-                                            to={`/types/${rootType?.id}`}
-                                            className='fw-bold text-decoration-none'
-                                        >
-                                            {rootType?.name}
-                                        </Link>
-                                    </LoadEffect>
+            <Card className='border'>
+                <CardContent className='space-y-3'>
+                    <div className='grid gap-3 md:grid-cols-2'>
+                        <div className='flex items-center gap-3 rounded-lg border p-3'>
+                            <Bookmark className='text-primary size-5' />
+                            <div>
+                                <div className='text-muted-foreground text-sm'>
+                                    Корневой тип
                                 </div>
+                                <LoadEffect
+                                    data={rootType}
+                                    contentSize={{
+                                        width: '120px',
+                                        height: '16px',
+                                    }}
+                                >
+                                    <Link
+                                        to={`/types/${rootType?.id}`}
+                                        className='font-semibold hover:underline'
+                                    >
+                                        {rootType?.name}
+                                    </Link>
+                                </LoadEffect>
                             </div>
-                        </Col>
+                        </div>
 
                         {objectType.parent_id == null && (
-                            <Col xs={12} md={6}>
-                                <div
-                                    className='d-flex align-items-center justify-content-between p-2 rounded hover-shadow'
-                                    style={{ transition: 'all 0.2s' }}
-                                >
-                                    <div className='d-flex align-items-center'>
-                                        <i className='bi bi-box-seam me-2 text-success fs-4'></i>
-                                        <div>
-                                            <div className='text-muted small'>
-                                                Корневой объект
-                                            </div>
-                                            {rootObject ? (
-                                                <Link
-                                                    to={`/objects/${rootObject.id}`}
-                                                    className='fw-bold text-decoration-none'
-                                                >
-                                                    {toString(rootObject)}
-                                                </Link>
-                                            ) : (
-                                                <>
-                                                    <span className='text-danger fw-bold'>
-                                                        Не создан
-                                                        <button
-                                                            onClick={() =>
-                                                                addRootObject()
-                                                            }
-                                                            className='btn btn-sm btn-outline-primary'
-                                                        >
-                                                            Добавить
-                                                        </button>
-                                                    </span>
-                                                </>
-                                            )}
-                                        </div>
+                            <div className='flex items-center gap-3 rounded-lg border p-3'>
+                                <Boxes className='text-primary size-5' />
+                                <div>
+                                    <div className='text-muted-foreground text-sm'>
+                                        Корневой объект
                                     </div>
+                                    {rootObject ? (
+                                        <Link
+                                            to={`/objects/${rootObject.id}`}
+                                            className='font-semibold hover:underline'
+                                        >
+                                            {toString(rootObject)}
+                                        </Link>
+                                    ) : (
+                                        <div className='flex items-center gap-2'>
+                                            <span className='text-destructive font-semibold'>
+                                                Не создан
+                                            </span>
+                                            <Button
+                                                onClick={() => addRootObject()}
+                                                size='sm'
+                                                variant='outline'
+                                            >
+                                                Добавить
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
-                            </Col>
+                            </div>
                         )}
-                    </Row>
-                </Card.Body>
+                    </div>
+                </CardContent>
             </Card>
         </div>
     )

@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import Breadcrumb from 'react-bootstrap/Breadcrumb'
-import Col from 'react-bootstrap/Col'
-import Container from 'react-bootstrap/Container'
-import Row from 'react-bootstrap/Row'
-import Tab from 'react-bootstrap/Tab'
-import Tabs from 'react-bootstrap/Tabs'
-
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toString } from '@/Utility/to_string.ts'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
@@ -53,61 +55,59 @@ function InstancePage() {
     }, [services.objectsInstancesService, id, navigate, instanceId])
 
     return (
-        <Container className='mt-4'>
-            <Row>
-                <Col>
-                    <Breadcrumb className='mb-3'>
+        <div className='mx-auto mt-4 w-full max-w-6xl px-4'>
+            <div className='mb-3'>
+                <Breadcrumb>
+                    <BreadcrumbList>
                         <LoadEffect
                             data={instance}
                             contentSize={{ height: '20px', width: '100%' }}
                         >
-                            <Breadcrumb.Item href='/'>Главная</Breadcrumb.Item>
-                            <Breadcrumb.Item active>
-                                {instance?.id}
-                            </Breadcrumb.Item>
+                            <BreadcrumbItem>
+                                <BreadcrumbLink to='/'>Главная</BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <BreadcrumbPage>{instance?.id}</BreadcrumbPage>
+                            </BreadcrumbItem>
                         </LoadEffect>
-                    </Breadcrumb>
-                    <LoadEffect
-                        data={instance}
-                        contentSize={{ height: '20px', width: '100%' }}
-                    >
-                        <h1 className='text-center mb-5'>
-                            Экземпляр "{toString(instance)}"
-                        </h1>
+                    </BreadcrumbList>
+                </Breadcrumb>
+            </div>
 
-                        {instance && <InstanceMainInfo instance={instance} />}
-                    </LoadEffect>
-                    <Tabs
-                        defaultActiveKey='instances'
-                        id='main-tabs'
-                        className='mb-4'
-                        justify
-                    >
-                        <Tab eventKey='instances' title='События'>
-                            {instance && <InstanceEventsTab />}
-                        </Tab>
+            <LoadEffect
+                data={instance}
+                contentSize={{ height: '20px', width: '100%' }}
+            >
+                <h1 className='mb-6 text-center text-3xl font-semibold'>
+                    Экземпляр "{toString(instance)}"
+                </h1>
 
-                        <Tab eventKey='properties' title='Свойства'>
-                            {instance && (
-                                <InstancePropertiesTab instance={instance} />
-                            )}
-                        </Tab>
+                {instance && <InstanceMainInfo instance={instance} />}
+            </LoadEffect>
 
-                        <Tab eventKey='documents' title='Документы'>
-                            {instance && (
-                                <InstanceDocumentsTab instance={instance} />
-                            )}
-                        </Tab>
+            <Tabs defaultValue='instances' className='mb-4'>
+                <TabsList className='grid h-auto w-full grid-cols-4'>
+                    <TabsTrigger value='instances'>События</TabsTrigger>
+                    <TabsTrigger value='properties'>Свойства</TabsTrigger>
+                    <TabsTrigger value='documents'>Документы</TabsTrigger>
+                    <TabsTrigger value='structure'>Структура</TabsTrigger>
+                </TabsList>
 
-                        <Tab eventKey='structure' title='Структура'>
-                            {instance && (
-                                <InstanceTreeView instance={instance} />
-                            )}
-                        </Tab>
-                    </Tabs>
-                </Col>
-            </Row>
-        </Container>
+                <TabsContent value='instances'>
+                    {instance && <InstanceEventsTab />}
+                </TabsContent>
+                <TabsContent value='properties'>
+                    {instance && <InstancePropertiesTab instance={instance} />}
+                </TabsContent>
+                <TabsContent value='documents'>
+                    {instance && <InstanceDocumentsTab instance={instance} />}
+                </TabsContent>
+                <TabsContent value='structure'>
+                    {instance && <InstanceTreeView instance={instance} />}
+                </TabsContent>
+            </Tabs>
+        </div>
     )
 }
 

@@ -1,9 +1,7 @@
+import { Bookmark, Boxes } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 
-import Card from 'react-bootstrap/Card'
-import Col from 'react-bootstrap/Col'
-import Row from 'react-bootstrap/Row'
-
+import { Card, CardContent } from '@/components/ui/card'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
@@ -78,105 +76,83 @@ function InstanceMainInfo({ instance }: Props): ReactNode {
         loadParentInstance()
         loadRootInstance()
         loadObject()
-    }, [
-        services.objectService,
-        services.objectsTypesService,
-        services.objectsInstancesService,
-        instance,
-    ])
+    }, [services.objectService, services.objectsInstancesService, instance])
 
     return (
         <div className='mb-4'>
-            <Card className='shadow-sm border-0'>
-                <Card.Body>
-                    <Row className='g-3 align-items-center'>
-                        <Col xs={12} md={6}>
-                            <div
-                                className='d-flex align-items-center p-2 rounded hover-shadow'
-                                style={{ transition: 'all 0.2s' }}
-                            >
-                                <i className='bi bi-bookmark-fill me-2 text-primary fs-4'></i>
-                                <div>
-                                    <div className='text-muted small'>
-                                        Родитель
-                                    </div>
-                                    <LoadEffect
-                                        data={parentInstance}
-                                        contentSize={{
-                                            width: '30%',
-                                            height: '15px',
-                                        }}
+            <Card className='border'>
+                <CardContent className='space-y-3'>
+                    <div className='grid gap-3 md:grid-cols-2'>
+                        <div className='flex items-center gap-3 rounded-lg border p-3'>
+                            <Bookmark className='text-primary size-5' />
+                            <div>
+                                <div className='text-muted-foreground text-sm'>
+                                    Родитель
+                                </div>
+                                <LoadEffect
+                                    data={parentInstance}
+                                    contentSize={{
+                                        width: '120px',
+                                        height: '16px',
+                                    }}
+                                >
+                                    <Link
+                                        to={`/instances/${parentInstance?.id}`}
+                                        className='font-semibold hover:underline'
                                     >
-                                        <Link
-                                            to={`/objects/${parentInstance?.id}`}
-                                            className='fw-bold text-decoration-none'
-                                        >
-                                            {parentInstance?.name}
-                                        </Link>
-                                    </LoadEffect>
-                                </div>
+                                        {parentInstance?.name}
+                                    </Link>
+                                </LoadEffect>
                             </div>
-                        </Col>
+                        </div>
 
-                        <Col xs={12} md={6}>
-                            <div
-                                className='d-flex align-items-center p-2 rounded hover-shadow'
-                                style={{ transition: 'all 0.2s' }}
-                            >
-                                <i className='bi bi-bookmark-fill me-2 text-primary fs-4'></i>
-                                <div>
-                                    <div className='text-muted small'>
-                                        Корневой экземпляр
-                                    </div>
-                                    <LoadEffect
-                                        data={rootInstance}
-                                        contentSize={{
-                                            width: '30%',
-                                            height: '15px',
-                                        }}
+                        <div className='flex items-center gap-3 rounded-lg border p-3'>
+                            <Bookmark className='text-primary size-5' />
+                            <div>
+                                <div className='text-muted-foreground text-sm'>
+                                    Корневой экземпляр
+                                </div>
+                                <LoadEffect
+                                    data={rootInstance}
+                                    contentSize={{
+                                        width: '120px',
+                                        height: '16px',
+                                    }}
+                                >
+                                    <Link
+                                        to={`/instances/${rootInstance?.id}`}
+                                        className='font-semibold hover:underline'
                                     >
-                                        <Link
-                                            to={`/objects/${rootInstance?.id}`}
-                                            className='fw-bold text-decoration-none'
-                                        >
-                                            {rootInstance?.name}
-                                        </Link>
-                                    </LoadEffect>
-                                </div>
+                                        {rootInstance?.name}
+                                    </Link>
+                                </LoadEffect>
                             </div>
-                        </Col>
+                        </div>
 
-                        <Col xs={12} md={6}>
-                            <div
-                                className='d-flex align-items-center justify-content-between p-2 rounded hover-shadow'
-                                style={{ transition: 'all 0.2s' }}
-                            >
-                                <div className='d-flex align-items-center'>
-                                    <i className='bi bi-box-seam me-2 text-success fs-4'></i>
-                                    <div>
-                                        <div className='text-muted small'>
-                                            Объект
-                                        </div>
-                                        <LoadEffect
-                                            data={obj}
-                                            contentSize={{
-                                                width: '30%',
-                                                height: '15px',
-                                            }}
-                                        >
-                                            <Link
-                                                to={`/types/${obj?.id}`}
-                                                className='fw-bold text-decoration-none'
-                                            >
-                                                {obj?.name}
-                                            </Link>
-                                        </LoadEffect>
-                                    </div>
+                        <div className='flex items-center gap-3 rounded-lg border p-3'>
+                            <Boxes className='text-primary size-5' />
+                            <div>
+                                <div className='text-muted-foreground text-sm'>
+                                    Объект
                                 </div>
+                                <LoadEffect
+                                    data={obj}
+                                    contentSize={{
+                                        width: '120px',
+                                        height: '16px',
+                                    }}
+                                >
+                                    <Link
+                                        to={`/objects/${obj?.id}`}
+                                        className='font-semibold hover:underline'
+                                    >
+                                        {obj?.name}
+                                    </Link>
+                                </LoadEffect>
                             </div>
-                        </Col>
-                    </Row>
-                </Card.Body>
+                        </div>
+                    </div>
+                </CardContent>
             </Card>
         </div>
     )

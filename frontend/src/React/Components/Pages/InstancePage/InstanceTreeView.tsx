@@ -131,7 +131,7 @@ function InstanceTreeView({ instance }: Props) {
         return (
             <span
                 onClick={() => onInstanceChildrenClick(node.id)}
-                className='ms-2 text-primary'
+                className='ml-2 text-primary'
                 role='button'
                 style={{ cursor: 'pointer' }}
             >
@@ -150,11 +150,9 @@ function InstanceTreeView({ instance }: Props) {
                     data={instanceTree ? instanceTree : []}
                     openIds={openIds}
                     onToggle={onInstanceChildrenToggle}
-                    contextMenuOptions={{
-                        Посмотреть: handleViewRequest,
-                        Изменить: handleChangeRequest,
-                        Удалить: handleDeleteRequest,
-                    }}
+                    onViewRequest={handleViewRequest}
+                    onChangeRequest={handleChangeRequest}
+                    onDeleteRequest={handleDeleteRequest}
                     renderItem={renderItem}
                     onRequestChildren={loadInstanceChildren}
                     onChildrenLoaded={onInstanceChildrenLoaded}

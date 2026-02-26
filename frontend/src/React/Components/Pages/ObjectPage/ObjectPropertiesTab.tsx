@@ -1,7 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react'
 
-import Form from 'react-bootstrap/Form'
-
+import { Input } from '@/components/ui/input'
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
@@ -16,6 +15,52 @@ interface ObjectProperty {
 
 interface Props {
     object: Object
+}
+
+function EditableObjectPropertyRow({
+    property,
+    onUpdate,
+}: {
+    property: ObjectProperty
+    onUpdate: (property: ObjectProperty) => void
+}) {
+    const [isEditing, setIsEditing] = useState(false)
+    const [editValue, setEditValue] = useState(property.value || '')
+
+    const handleDoubleClick = () => {
+        setEditValue(property.value || '')
+        setIsEditing(true)
+    }
+
+    const commit = () => {
+        setIsEditing(false)
+        onUpdate({ ...property, value: editValue })
+    }
+
+    return (
+        <div className='grid w-full grid-cols-2 gap-3'>
+            <div className='text-sm'>{property.type.name}</div>
+            <div className='text-sm' onDoubleClick={handleDoubleClick}>
+                {isEditing ? (
+                    <Input
+                        type='text'
+                        value={editValue}
+                        autoFocus
+                        onChange={e => setEditValue(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                commit()
+                            }
+                        }}
+                        onBlur={commit}
+                        placeholder='Введите значение'
+                    />
+                ) : (
+                    property.value || 'Свойство не задано'
+                )}
+            </div>
+        </div>
+    )
 }
 
 function ObjectPropertiesTab({ object }: Props): ReactNode {
@@ -86,48 +131,14 @@ function ObjectPropertiesTab({ object }: Props): ReactNode {
         }
 
         loadProperties()
-    }, [object])
+    }, [object, services.propertiesService, services.propertiesTypesService])
 
-    function RenderObjectProperty(property: ObjectProperty): ReactNode {
-        const [isEditing, setIsEditing] = useState(false)
-        const [editValue, setEditValue] = useState(property.value || '')
-
-        const handleDoubleClick = () => {
-            setEditValue(property.value || '')
-            setIsEditing(true)
-        }
-
-        const handleKeyDown = (key: string) => {
-            if (key === 'Enter') {
-                setIsEditing(false)
-                property.value = editValue
-                updateProperty(property)
-            }
-        }
-
+    function renderObjectProperty(property: ObjectProperty): ReactNode {
         return (
-            <>
-                <div className='w-50 text-start'>{property.type.name}</div>
-                <div
-                    className='w-50 text-start'
-                    onDoubleClick={handleDoubleClick}
-                >
-                    {isEditing ? (
-                        <Form.Control
-                            type='text'
-                            value={editValue}
-                            autoFocus
-                            size='sm' // компактнее
-                            onChange={e => setEditValue(e.target.value)}
-                            onKeyDown={e => handleKeyDown(e.key)}
-                            onBlur={() => setIsEditing(false)}
-                            placeholder='Введите значение'
-                        />
-                    ) : (
-                        property.value || 'Свойство не задано'
-                    )}
-                </div>
-            </>
+            <EditableObjectPropertyRow
+                property={property}
+                onUpdate={updateProperty}
+            />
         )
     }
 
@@ -139,7 +150,7 @@ function ObjectPropertiesTab({ object }: Props): ReactNode {
             >
                 <DefaultList
                     data={objectProperties ? objectProperties : []}
-                    renderItem={RenderObjectProperty}
+                    renderItem={renderObjectProperty}
                 />
             </LoadEffect>
         </>
