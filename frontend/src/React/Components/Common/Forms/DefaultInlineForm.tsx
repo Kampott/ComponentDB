@@ -1,8 +1,6 @@
 import { useState } from 'react'
 
-import Button from 'react-bootstrap/Button'
-import Form from 'react-bootstrap/Form'
-
+import { Button } from '@/components/ui/button'
 import type { FormField } from '@Kernel/Forms/FormTypes.ts'
 import DefaultFormBase from './DefaultFormBase.tsx'
 
@@ -43,7 +41,7 @@ function DefaultInlineForm<T>({
     }
 
     return (
-        <Form>
+        <div className='space-y-3'>
             <DefaultFormBase
                 fields={fields}
                 data={data}
@@ -51,12 +49,12 @@ function DefaultInlineForm<T>({
                 errors={errors}
                 setErrors={setErrors}
             />
-            <Form.Group className='d-flex justify-content-center mt-3'>
-                <Button variant='primary' onClick={handleSubmit}>
+            <div className='mt-3 flex justify-center'>
+                <Button onClick={handleSubmit}>
                     {submitButtonText ? submitButtonText : 'Подтвердить'}
                 </Button>
-            </Form.Group>
-        </Form>
+            </div>
+        </div>
     )
 }
 

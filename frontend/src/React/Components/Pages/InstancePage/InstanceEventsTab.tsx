@@ -1,8 +1,5 @@
 import { type ReactNode } from 'react'
 
-import Col from 'react-bootstrap/Col'
-import Row from 'react-bootstrap/Row'
-
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { useNavigate } from 'react-router-dom'
@@ -31,11 +28,11 @@ function InstanceEventsTab(): ReactNode {
 
     function renderEvent(event: EventDummy): ReactNode {
         return (
-            <Row className='w-100'>
-                <Col>{event.id}</Col>
-                <Col>{event.type}</Col>
-                <Col>{event.date.toLocaleDateString()}</Col>
-            </Row>
+            <div className='grid w-full grid-cols-3 gap-2 text-sm'>
+                <span>{event.id}</span>
+                <span>{event.type}</span>
+                <span>{event.date.toLocaleDateString()}</span>
+            </div>
         )
     }
 

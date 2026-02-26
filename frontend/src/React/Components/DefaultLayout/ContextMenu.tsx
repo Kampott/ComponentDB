@@ -1,63 +1,61 @@
-import { useEffect, useRef } from 'react'
-
-import { Dropdown } from 'react-bootstrap'
-
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useContextMenuStore } from '@StorageImpl'
 
 function ContextMenu() {
     const { visible, position, elementData, contextMenuOptions, hideMenu } =
         useContextMenuStore()
-
-    const menuRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (
-                menuRef.current &&
-                !menuRef.current.contains(e.target as Node)
-            ) {
-                hideMenu()
-            }
-        }
-
-        document.addEventListener('mousedown', handleClickOutside)
-        return () =>
-            document.removeEventListener('mousedown', handleClickOutside)
-    }, [hideMenu])
-
-    console.log('hii')
-
-    function handleOptionClick(option: string) {
-        const action = contextMenuOptions![option]
-        if (action) {
-            action(elementData)
-        }
-        hideMenu()
-    }
+    const availableOptions = Object.entries(contextMenuOptions ?? {}).filter(
+        ([, action]) => action != null,
+    )
 
     return (
-        <Dropdown.Menu
-            show={visible}
-            ref={menuRef}
-            style={{
-                position: 'absolute',
-                left: position.x,
-                top: position.y,
-                zIndex: 9999,
+        <DropdownMenu
+            open={visible}
+            onOpenChange={open => {
+                if (!open) {
+                    hideMenu()
+                }
             }}
         >
-            {contextMenuOptions &&
-                Object.keys(contextMenuOptions).map((option, idx) => (
-                    <Dropdown.Item
-                        key={idx}
-                        onClick={() => handleOptionClick(option)}
+            <DropdownMenuTrigger asChild>
+                <button
+                    aria-hidden
+                    tabIndex={-1}
+                    className='pointer-events-none fixed h-px w-px opacity-0'
+                    style={{
+                        left: position.x,
+                        top: position.y,
+                    }}
+                />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='start' className='w-44'>
+                {availableOptions.map(([option, action]) => (
+                    <DropdownMenuItem
+                        key={option}
+                        onClick={() => {
+                            if (action) {
+                                ;(action as (entity: unknown) => void)(
+                                    elementData,
+                                )
+                            }
+                            hideMenu()
+                        }}
                     >
                         {option}
-                    </Dropdown.Item>
+                    </DropdownMenuItem>
                 ))}
-            <Dropdown.Divider />
-            <Dropdown.Item onClick={() => hideMenu()}>Закрыть</Dropdown.Item>
-        </Dropdown.Menu>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => hideMenu()}>
+                    Закрыть
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     )
 }
 

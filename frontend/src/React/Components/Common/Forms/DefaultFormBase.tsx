@@ -1,7 +1,15 @@
 import { type Dispatch, type SetStateAction, useEffect } from 'react'
 
-import Form from 'react-bootstrap/Form'
-
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
 import type { FieldType, FormField } from '@Kernel/Forms/FormTypes.ts'
 
 interface Props<T> {
@@ -81,60 +89,76 @@ function DefaultFormBase<T>({
         <>
             {fields.map((field: FormField<T, keyof T>) => {
                 return (
-                    <Form.Group key={String(field.bindData)} className='mb-3'>
-                        <Form.Label>{field.label}</Form.Label>
+                    <div key={String(field.bindData)} className='mb-3'>
+                        <Label className='mb-2'>{field.label}</Label>
                         {field.type === 'select' && field.options ? (
-                            <Form.Select
+                            <Select
+                                value={String(getField(field.bindData) ?? '')}
+                                onValueChange={value =>
+                                    handleChange(field, value)
+                                }
+                            >
+                                <SelectTrigger
+                                    aria-invalid={!!errors[field.bindData]}
+                                >
+                                    <SelectValue
+                                        placeholder={
+                                            field.placeholder ??
+                                            'Выберите значение'
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {field.options.map(opt => (
+                                        <SelectItem
+                                            key={String(opt.value)}
+                                            value={String(opt.value)}
+                                        >
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        ) : field.type === 'boolean' ? (
+                            <div className='flex items-center gap-2 pt-1'>
+                                <Checkbox
+                                    checked={
+                                        getField(
+                                            field.bindData,
+                                        ) as unknown as boolean
+                                    }
+                                    onCheckedChange={checked =>
+                                        handleChange(field, checked === true)
+                                    }
+                                    aria-invalid={!!errors[field.bindData]}
+                                />
+                                <Label>
+                                    {field.placeholder ?? field.label}
+                                </Label>
+                            </div>
+                        ) : (
+                            <Input
+                                type={field.type}
+                                placeholder={field.placeholder}
+                                value={
+                                    getField(field.bindData) as
+                                        | string
+                                        | number
+                                        | string[]
+                                        | undefined
+                                }
                                 onChange={e =>
                                     handleChange(field, e.target.value)
                                 }
-                                isInvalid={!!errors[field.bindData]}
-                            >
-                                {field.options.map(opt => (
-                                    <option
-                                        key={String(opt.value)}
-                                        value={String(opt.value)}
-                                    >
-                                        {opt.label}
-                                    </option>
-                                ))}
-                            </Form.Select>
-                        ) : field.type === 'boolean' ? (
-                            <Form.Check
-                                type='checkbox'
-                                checked={
-                                    getField(
-                                        field.bindData,
-                                    ) as unknown as boolean
-                                }
-                                onChange={e =>
-                                    handleChange(field, e.target.checked)
-                                }
-                                isInvalid={!!errors[field.bindData]}
+                                aria-invalid={!!errors[field.bindData]}
                             />
-                        ) : (
-                            <>
-                                <Form.Control
-                                    type={field.type}
-                                    placeholder={field.placeholder}
-                                    value={
-                                        getField(field.bindData) as
-                                            | string
-                                            | number
-                                            | string[]
-                                            | undefined
-                                    }
-                                    onChange={e =>
-                                        handleChange(field, e.target.value)
-                                    }
-                                    isInvalid={!!errors[field.bindData]}
-                                />
-                                <Form.Control.Feedback type='invalid'>
-                                    {errors[field.bindData]}
-                                </Form.Control.Feedback>
-                            </>
                         )}
-                    </Form.Group>
+                        {errors[field.bindData] ? (
+                            <p className='text-destructive mt-1 text-sm'>
+                                {errors[field.bindData]}
+                            </p>
+                        ) : null}
+                    </div>
                 )
             })}
         </>

@@ -1,7 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react'
 
-import Form from 'react-bootstrap/Form'
-
+import { Input } from '@/components/ui/input'
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { handleApiError } from '@Rest/handle_api_error.ts'
@@ -21,6 +20,52 @@ interface InstanceProperty {
 
 interface Props {
     instance: ObjectInstance
+}
+
+function EditableInstancePropertyRow({
+    property,
+    onUpdate,
+}: {
+    property: InstanceProperty
+    onUpdate: (property: InstanceProperty) => void
+}) {
+    const [isEditing, setIsEditing] = useState(false)
+    const [editValue, setEditValue] = useState(property.value || '')
+
+    const handleDoubleClick = () => {
+        setEditValue(property.value || '')
+        setIsEditing(true)
+    }
+
+    const commit = () => {
+        setIsEditing(false)
+        onUpdate({ ...property, value: editValue })
+    }
+
+    return (
+        <div className='grid w-full grid-cols-2 gap-3'>
+            <div className='text-sm'>{property.type.name}</div>
+            <div className='text-sm' onDoubleClick={handleDoubleClick}>
+                {isEditing ? (
+                    <Input
+                        type='text'
+                        value={editValue}
+                        autoFocus
+                        onChange={e => setEditValue(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                commit()
+                            }
+                        }}
+                        onBlur={commit}
+                        placeholder='Введите значение'
+                    />
+                ) : (
+                    property.value || 'Свойство не задано'
+                )}
+            </div>
+        </div>
+    )
 }
 
 function InstancePropertiesTab({ instance }: Props): ReactNode {
@@ -101,46 +146,12 @@ function InstancePropertiesTab({ instance }: Props): ReactNode {
         services.propertiesTypesService,
     ])
 
-    function RenderInstanceProperty(property: InstanceProperty): ReactNode {
-        const [isEditing, setIsEditing] = useState(false)
-        const [editValue, setEditValue] = useState(property.value || '')
-
-        const handleDoubleClick = () => {
-            setEditValue(property.value || '')
-            setIsEditing(true)
-        }
-
-        const handleKeyDown = (key: string) => {
-            if (key === 'Enter') {
-                setIsEditing(false)
-                property.value = editValue
-                updateProperty(property)
-            }
-        }
-
+    function renderInstanceProperty(property: InstanceProperty): ReactNode {
         return (
-            <>
-                <div className='w-50 text-start'>{property.type.name}</div>
-                <div
-                    className='w-50 text-start'
-                    onDoubleClick={handleDoubleClick}
-                >
-                    {isEditing ? (
-                        <Form.Control
-                            type='text'
-                            value={editValue}
-                            autoFocus
-                            size='sm' // компактнее
-                            onChange={e => setEditValue(e.target.value)}
-                            onKeyDown={e => handleKeyDown(e.key)}
-                            onBlur={() => setIsEditing(false)}
-                            placeholder='Введите значение'
-                        />
-                    ) : (
-                        property.value || 'Свойство не задано'
-                    )}
-                </div>
-            </>
+            <EditableInstancePropertyRow
+                property={property}
+                onUpdate={updateProperty}
+            />
         )
     }
 
@@ -152,7 +163,7 @@ function InstancePropertiesTab({ instance }: Props): ReactNode {
             >
                 <DefaultList
                     data={instanceProperties ? instanceProperties : []}
-                    renderItem={RenderInstanceProperty}
+                    renderItem={renderInstanceProperty}
                 />
             </LoadEffect>
         </>

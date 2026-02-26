@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import Form from 'react-bootstrap/Form'
-
+import { Label } from '@/components/ui/label'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import {
     generateReadViewFromSchema,
@@ -44,14 +43,18 @@ function ViewEntityInfo<
             data={readFields}
             contentSize={{ width: '100%', height: '1rem' }}
         >
-            <Form>
+            <div className='space-y-3'>
                 {(readFields ?? []).map(field => (
-                    <Form.Group key={field.key} className='mb-3'>
-                        <Form.Label>{field.label}</Form.Label>
-                        <Form.Control plaintext readOnly value={field.value} />
-                    </Form.Group>
+                    <div key={field.key} className='space-y-1'>
+                        <Label className='text-muted-foreground text-xs'>
+                            {field.label}
+                        </Label>
+                        <div className='bg-muted/30 rounded-md border px-3 py-2 text-sm'>
+                            {field.value}
+                        </div>
+                    </div>
                 ))}
-            </Form>
+            </div>
         </LoadEffect>
     )
 }

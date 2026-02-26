@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Button from 'react-bootstrap/Button'
-
+import { Button } from '@/components/ui/button'
 import { toString } from '@/Utility/to_string.ts'
 import FileSystemTreeView, {
     type DataNode,
@@ -105,7 +104,7 @@ function ObjectTreeView({ object }: Props) {
         return (
             <span
                 onClick={() => onObjectChildrenClick(node.id)}
-                className='ms-2 text-primary'
+                className='ml-2 text-primary'
                 role='button'
                 style={{ cursor: 'pointer' }}
             >
@@ -159,11 +158,7 @@ function ObjectTreeView({ object }: Props) {
 
     return (
         <>
-            <Button
-                variant='primary'
-                className='mt-4'
-                onClick={() => setFormShow(true)}
-            >
+            <Button className='mt-4' onClick={() => setFormShow(true)}>
                 Добавить объект
             </Button>
             <LoadEffect
@@ -174,12 +169,10 @@ function ObjectTreeView({ object }: Props) {
                     data={objectTree ? objectTree : []}
                     openIds={openIds}
                     onToggle={onObjectChildrenToggle}
-                    contextMenuOptions={{
-                        Посмотреть: handleViewRequest,
-                        Добавить: handleAddRequest,
-                        Изменить: handleChangeRequest,
-                        Удалить: handleDeleteRequest,
-                    }}
+                    onViewRequest={handleViewRequest}
+                    onAddRequest={handleAddRequest}
+                    onChangeRequest={handleChangeRequest}
+                    onDeleteRequest={handleDeleteRequest}
                     renderItem={renderItem}
                     onRequestChildren={loadObjectChildren}
                     onChildrenLoaded={onObjectChildrenLoaded}

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import Placeholder from 'react-bootstrap/Placeholder'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type ContentSize = {
     width: string
@@ -17,16 +17,13 @@ function LoadEffect<T>({ data, children, contentSize }: Props<T>) {
     return (
         <>
             {data == null ? (
-                <Placeholder as='div' animation='glow'>
-                    <Placeholder
-                        xs={12}
-                        style={{
-                            height: contentSize.height,
-                            width: contentSize.width,
-                            borderRadius: '4px',
-                        }}
-                    />
-                </Placeholder>
+                <Skeleton
+                    style={{
+                        height: contentSize.height,
+                        width: contentSize.width,
+                        borderRadius: '4px',
+                    }}
+                />
             ) : (
                 children
             )}

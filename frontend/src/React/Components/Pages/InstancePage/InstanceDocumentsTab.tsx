@@ -1,8 +1,6 @@
 import { type ReactNode } from 'react'
 
-import Button from 'react-bootstrap/Button'
-import Image from 'react-bootstrap/Image'
-
+import { Button } from '@/components/ui/button'
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import type { ObjectInstance } from '@Schemas'
@@ -20,45 +18,35 @@ function InstanceDocumentsTab({ instance }: Props): ReactNode {
 
     function renderDocument(doc: string): ReactNode {
         return (
-            <>
+            <div className='flex w-full items-center justify-between gap-2'>
                 <Button
                     variant='link'
-                    className='p-0'
-                    onClick={() => console.log(`Скачать ${doc}`)}
+                    className='h-auto p-0 text-left'
+                    onClick={() => console.log(`Открыть ${doc}`)}
                     aria-label={`Перейти к ${doc}`}
                 >
                     {doc}
                 </Button>
-                <Button
-                    variant='link'
-                    className='p-0'
+                <button
+                    type='button'
+                    className='text-muted-foreground hover:text-foreground transition-colors'
                     onClick={() => console.log(`Скачать ${doc}`)}
                     aria-label={`Скачать ${doc}`}
                 >
-                    <Image
+                    <img
                         src='/download_icon.svg'
                         alt='Скачать'
-                        width={24}
-                        height={24}
-                        style={{ cursor: 'pointer' }}
-                        className='opacity-75'
-                        onMouseEnter={e =>
-                            (e.currentTarget.style.opacity = '1')
-                        }
-                        onMouseLeave={e =>
-                            (e.currentTarget.style.opacity = '0.75')
-                        }
+                        width={20}
+                        height={20}
                     />
-                </Button>
-            </>
+                </button>
+            </div>
         )
     }
 
     return (
         <>
-            <Button variant='primary' className='mt-4'>
-                Добавить документ
-            </Button>
+            <Button className='mt-4'>Добавить документ</Button>
             <LoadEffect
                 data={documents}
                 contentSize={{ height: '20px', width: '100%' }}

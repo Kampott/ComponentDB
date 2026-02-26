@@ -1,7 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react'
 
-import Button from 'react-bootstrap/Button'
-
+import { Button } from '@/components/ui/button'
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
@@ -66,12 +65,7 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
     }, [objectType])
 
     function renderProperty(property: PropertyType): ReactNode {
-        return (
-            <>
-                {/*<div className="w-50 text-start">{property.name}</div>*/}
-                {property.name}
-            </>
-        )
+        return <>{property.name}</>
     }
 
     async function confirmAddProperty(data: PropertyTypeAdd | null) {
@@ -121,15 +115,11 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
 
     return (
         <>
-            <Button
-                variant='primary'
-                className='mt-4'
-                onClick={() => setFormShow(true)}
-            >
+            <Button className='mt-4' onClick={() => setFormShow(true)}>
                 Добавить свойство
             </Button>
 
-            <h4 className='fw-semibold fs-4 border-bottom pb-1 mb-3 pt-5'>
+            <h4 className='mt-6 mb-3 border-b pb-1 text-xl font-semibold'>
                 Свойства объекта
             </h4>
 
@@ -138,7 +128,7 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
                 contentSize={{ height: '20px', width: '100%' }}
             >
                 {objectProperties?.length == 0 ? (
-                    'Нет свойств'
+                    <span className='text-muted-foreground'>Нет свойств</span>
                 ) : (
                     <DefaultList
                         data={objectProperties ? objectProperties : []}
@@ -150,7 +140,7 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
                 )}
             </LoadEffect>
 
-            <h4 className='fw-semibold fs-4 border-bottom pb-1 mb-3 pt-5'>
+            <h4 className='mt-6 mb-3 border-b pb-1 text-xl font-semibold'>
                 Свойства экземпляра
             </h4>
 
@@ -159,7 +149,7 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
                 contentSize={{ height: '20px', width: '100%' }}
             >
                 {instanceProperties?.length == 0 ? (
-                    'Нет свойств'
+                    <span className='text-muted-foreground'>Нет свойств</span>
                 ) : (
                     <DefaultList
                         data={instanceProperties ? instanceProperties : []}

@@ -8,6 +8,8 @@ import NoPage from '@Components/Pages/NoPage/NoPage.tsx'
 import ObjectPage from '@Components/Pages/ObjectPage/ObjectPage.tsx'
 import TypePage from '@Components/Pages/TypePage/TypePage.tsx'
 
+import './index.css'
+
 function App() {
     return (
         <BrowserRouter>

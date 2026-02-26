@@ -1,9 +1,13 @@
 import { useState } from 'react'
 
-import Button from 'react-bootstrap/Button'
-import Form from 'react-bootstrap/Form'
-import Modal from 'react-bootstrap/Modal'
-
+import { Button } from '@/components/ui/button'
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import type { FormField } from '@Kernel/Forms/FormTypes.ts'
 import DefaultFormBase from './DefaultFormBase.tsx'
 
@@ -44,30 +48,28 @@ function DefaultPopupForm<T>({
     }
 
     return (
-        <Modal show={true}>
-            <Modal.Header closeButton>
-                <Modal.Title>{title}</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <Form>
+        <Dialog open={true} onOpenChange={open => !open && onSubmit(null)}>
+            <DialogContent className='sm:max-w-[560px]'>
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                </DialogHeader>
+                <div>
                     <DefaultFormBase
-                        fields={fields}
+                        fields={fields as FormField<T, keyof T>[]}
                         data={data}
                         setData={setData}
                         errors={errors}
                         setErrors={setErrors}
                     />
-                </Form>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant='secondary' onClick={() => onSubmit(null)}>
-                    Отмена
-                </Button>
-                <Button variant='primary' onClick={handleSubmit}>
-                    Сохранить
-                </Button>
-            </Modal.Footer>
-        </Modal>
+                </div>
+                <DialogFooter>
+                    <Button variant='outline' onClick={() => onSubmit(null)}>
+                        Отмена
+                    </Button>
+                    <Button onClick={handleSubmit}>Сохранить</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     )
 }
 
