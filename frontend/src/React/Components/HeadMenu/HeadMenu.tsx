@@ -2,7 +2,7 @@ import { Menu } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@Components/ui/button'
 import {
     Menubar,
     MenubarContent,
@@ -10,13 +10,13 @@ import {
     MenubarMenu,
     MenubarSeparator,
     MenubarTrigger,
-} from '@/components/ui/menubar'
+} from '@Components/ui/menubar'
 import {
     Sheet,
     SheetContent,
     SheetHeader,
     SheetTitle,
-} from '@/components/ui/sheet'
+} from '@Components/ui/sheet'
 import RootObjectsListMenu from './RootObjectsListMenu.tsx'
 
 function HeadMenu() {
@@ -58,7 +58,11 @@ function HeadMenu() {
                                     <MenubarItem disabled>
                                         Документы
                                     </MenubarItem>
-                                    <MenubarItem disabled>События</MenubarItem>
+                                    <MenubarItem
+                                        onSelect={() => navigate('/events')}
+                                    >
+                                        События
+                                    </MenubarItem>
                                 </MenubarContent>
                             </MenubarMenu>
                         </Menubar>
@@ -130,7 +134,10 @@ function HeadMenu() {
                         <Button
                             variant='ghost'
                             className='w-full justify-start'
-                            disabled
+                            onClick={() => {
+                                setShowMobileMenu(false)
+                                navigate('/events')
+                            }}
                         >
                             События
                         </Button>

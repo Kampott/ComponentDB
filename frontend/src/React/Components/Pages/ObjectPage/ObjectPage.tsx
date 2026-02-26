@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { toString } from '@/Utility/to_string.ts'
+import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -8,10 +10,8 @@ import {
     BreadcrumbList,
     BreadcrumbPage,
     BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { toString } from '@/Utility/to_string.ts'
-import LoadEffect from '@Components/Common/LoadEffect.tsx'
+} from '@Components/ui/breadcrumb'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@Components/ui/tabs'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { Object } from '@Schemas'

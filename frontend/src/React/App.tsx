@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import DefaultLayout from '@Components/DefaultLayout/DefaultLayout.tsx'
 import AuthPage from '@Components/Pages/AuthPage/AuthPage.tsx'
+import EventsPage from '@Components/Pages/EventsPage/EventsPage.tsx'
 import HomePage from '@Components/Pages/HomePage/HomePage.tsx'
 import InstancePage from '@Components/Pages/InstancePage/InstancePage.tsx'
 import NoPage from '@Components/Pages/NoPage/NoPage.tsx'
@@ -22,6 +23,7 @@ function App() {
                         path='instances/:instanceId'
                         element={<InstancePage />}
                     />
+                    <Route path='events' element={<EventsPage />} />
                     <Route path='login' element={<AuthPage />} />
                 </Route>
                 <Route path='/404' element={<NoPage />} />

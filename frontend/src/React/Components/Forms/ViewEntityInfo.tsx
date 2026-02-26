@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { Label } from '@/components/ui/label'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import { Label } from '@Components/ui/label'
 import {
     generateReadViewFromSchema,
     type ReadViewField,
