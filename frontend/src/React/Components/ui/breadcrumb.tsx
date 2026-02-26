@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react'
 import * as React from 'react'
 import { Link } from 'react-router-dom'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils.ts'
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<'nav'>) {
     return (

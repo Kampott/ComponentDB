@@ -1,6 +1,12 @@
 import type { ValidationResult } from '@Schemas'
 
-export type FieldType = 'text' | 'number' | 'boolean' | 'select' | 'password'
+export type FieldType =
+    | 'text'
+    | 'number'
+    | 'boolean'
+    | 'select'
+    | 'datetime'
+    | 'password'
 
 export interface FormFieldOption<T> {
     label: string

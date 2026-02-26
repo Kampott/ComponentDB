@@ -3,6 +3,7 @@ import {
     type InferCreate,
     type InferUpdate,
 } from '@Kernel/Schemas/EntityDsl.ts'
+import { useServicesStore } from '@StorageImpl'
 
 // Схема события
 export interface Event {
@@ -43,7 +44,31 @@ export const eventSchema = defineEntitySchema<Event, EventCreateContext>()({
                 defaultValue: context => context.defaultTypeId ?? 1,
             },
             update: { policy: 'optional' },
-            form: { input: 'number' },
+            read: {
+                printValue: async value => {
+                    try {
+                        const eventType = await useServicesStore
+                            .getState()
+                            .services.eventsTypesService.read(value)
+                        return eventType.name
+                    } catch {
+                        return String(value)
+                    }
+                },
+            },
+            form: {
+                input: 'select',
+                options: async () => {
+                    const types = await useServicesStore
+                        .getState()
+                        .services.eventsTypesService.list()
+
+                    return types.map(type => ({
+                        label: type.name,
+                        value: type.id,
+                    }))
+                },
+            },
         },
         time: {
             common: {
@@ -56,19 +81,20 @@ export const eventSchema = defineEntitySchema<Event, EventCreateContext>()({
             },
             update: { policy: 'optional' },
             read: {
-                printValue: value => value.toLocaleString(),
+                printValue: value => value.toLocaleString('ru-RU'),
             },
-            form: {
-                input: 'text',
-                parser: rawValue => new Date(String(rawValue)),
-            },
+            form: { input: 'datetime' },
         },
         info: {
             common: {
                 label: 'Описание',
                 description: 'Дополнительная информация о событии',
             },
-            create: { policy: 'required' },
+            create: {
+                policy: 'optional',
+                visible: false,
+                defaultValue: () => '',
+            },
             update: { policy: 'optional' },
             form: { input: 'text' },
         },
@@ -79,10 +105,21 @@ export const eventSchema = defineEntitySchema<Event, EventCreateContext>()({
             },
             create: {
                 policy: 'required',
-                visible: false,
                 defaultValue: context => context.instanceId,
             },
             update: { policy: 'forbidden' },
+            read: {
+                printValue: async value => {
+                    try {
+                        const instance = await useServicesStore
+                            .getState()
+                            .services.objectsInstancesService.read(value)
+                        return `${instance.name} (#${value})`
+                    } catch {
+                        return String(value)
+                    }
+                },
+            },
             form: { input: 'number' },
         },
     },

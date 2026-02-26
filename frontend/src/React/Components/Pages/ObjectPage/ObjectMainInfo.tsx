@@ -1,9 +1,9 @@
 import { Bookmark, Boxes } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import { Button } from '@Components/ui/button'
+import { Card, CardContent } from '@Components/ui/card'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { Object, ObjectInstance, ObjectType } from '@Schemas'

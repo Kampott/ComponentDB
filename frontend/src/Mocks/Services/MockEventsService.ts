@@ -19,7 +19,7 @@ export default class MockEventsService
             id: this.store.nextId('events'),
             type_id: data.type_id,
             time: data.time,
-            info: data.info,
+            info: data.info ?? '',
             instance_id: data.instance_id,
         })
     }

@@ -1,12 +1,12 @@
-import { Button } from '@/components/ui/button'
+import ViewEntityInfo from '@Components/Forms/ViewEntityInfo.tsx'
+import { Button } from '@Components/ui/button'
 import {
     Dialog,
     DialogContent,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog'
-import ViewEntityInfo from '@Components/Forms/ViewEntityInfo.tsx'
+} from '@Components/ui/dialog'
 import type { EntityFields, EntitySchema, InferEntity } from '@Schemas'
 
 interface Props<

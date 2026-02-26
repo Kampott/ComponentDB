@@ -1,13 +1,13 @@
 import { useState } from 'react'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@Components/ui/button'
 import {
     Dialog,
     DialogContent,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog'
+} from '@Components/ui/dialog'
 import type { FormField } from '@Kernel/Forms/FormTypes.ts'
 import DefaultFormBase from './DefaultFormBase.tsx'
 

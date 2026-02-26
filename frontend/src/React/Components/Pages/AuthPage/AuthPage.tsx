@@ -1,9 +1,9 @@
 import { type ReactElement, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Button } from '@/components/ui/button'
 import LoginForm from '@Components/Forms/LoginForm.tsx'
 import RegisterForm from '@Components/Forms/RegisterForm.tsx'
+import { Button } from '@Components/ui/button'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { LoginRequest } from '@Schemas'

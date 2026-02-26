@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@Components/ui/skeleton'
 
 type ContentSize = {
     width: string

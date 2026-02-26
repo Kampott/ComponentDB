@@ -19,6 +19,7 @@ export type EntityInputType =
     | 'number'
     | 'boolean'
     | 'select'
+    | 'datetime'
     | 'password'
 
 export type EntityFieldOption<Value> = {

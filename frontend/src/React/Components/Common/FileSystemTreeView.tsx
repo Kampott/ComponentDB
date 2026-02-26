@@ -1,12 +1,12 @@
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { MouseEvent, ReactNode } from 'react'
 
+import { cn } from '@/lib/utils'
 import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
-} from '@/components/ui/collapsible'
-import { cn } from '@/lib/utils'
+} from '@Components/ui/collapsible'
 import type { ContextMenuOptions, OnObjectActionFunc } from '@Storage'
 import { useContextMenuStore } from '@StorageImpl'
 import {
