@@ -20,7 +20,7 @@ export interface ObjectCreateContext {
 }
 
 /**
- * PoC-схема сущности:
+ * Схема сущности:
  * одна декларация управляет:
  * - статическими DTO-типами (ObjectAdd/ObjectUpdate)
  * - runtime-генерацией create-формы

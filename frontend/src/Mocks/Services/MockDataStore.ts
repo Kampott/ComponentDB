@@ -1,15 +1,21 @@
 import type {
+    Event,
+    EventType,
     InstanceProperty,
     Object as ObjectEntity,
     ObjectInstance,
     ObjectType,
     Property,
     PropertyType,
+    ReplacementEvent,
     User,
 } from '@Schemas'
 
 type CounterKey =
     | 'users'
+    | 'eventTypes'
+    | 'events'
+    | 'replacementEvents'
     | 'objectTypes'
     | 'objects'
     | 'objectInstances'
@@ -19,6 +25,9 @@ type CounterKey =
 
 export default class MockDataStore {
     public readonly users: User[]
+    public readonly eventTypes: EventType[]
+    public readonly events: Event[]
+    public readonly replacementEvents: ReplacementEvent[]
     public readonly objectTypes: ObjectType[]
     public readonly objects: ObjectEntity[]
     public readonly objectInstances: ObjectInstance[]
@@ -30,6 +39,10 @@ export default class MockDataStore {
 
     public constructor() {
         this.users = [{ id: 1, email: 'demo@local', level: 10 }]
+
+        this.eventTypes = [{ id: 1, name: 'Замена' }]
+        this.events = []
+        this.replacementEvents = []
 
         this.objectTypes = [
             { id: 1, name: 'Root Type', parent_id: null, root_id: 1 },
@@ -50,6 +63,9 @@ export default class MockDataStore {
 
         this.counters = {
             users: this.users.length,
+            eventTypes: this.eventTypes.length,
+            events: this.events.length,
+            replacementEvents: this.replacementEvents.length,
             objectTypes: this.objectTypes.length,
             objects: this.objects.length,
             objectInstances: this.objectInstances.length,
