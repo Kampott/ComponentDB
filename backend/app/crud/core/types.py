@@ -15,7 +15,7 @@ from fastapi import HTTPException
 async def get_types(db: AsyncSession,
                     name: Optional[str] = None,
                     parent_id: Optional[int] = None,
-                    root_id: Optional[int] = None,
+                    root_id: Optional[int] = None
                     ) -> List[Types]:
     query = select(Types)
 
