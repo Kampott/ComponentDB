@@ -19,6 +19,8 @@ from app.crud.auth.auth import _check_permission, require_instance_permission
 from app.models.auth import User, Role, Permission, UserInstanceAccess, UserObjectAccess, UserTypeAccess, UserRole, RolePermission
 from app.core.security import get_current_user
 
+from app.logging.deps import LoggerInterface, LogCallable
+
 router = APIRouter(prefix="/instances", tags=["DB: Core: Instances"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -31,7 +33,8 @@ async def read_instances(
     root_id: Optional[int] = Query(None),
     parent_id: Optional[int] = Query(None),
     is_active: Optional[bool] = Query(None),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    log: LogCallable = Depends(LoggerInterface("instances"))
 ):
 
     # Fetch user permissions
@@ -103,17 +106,26 @@ async def read_instances(
 
     result = await session.execute(query)
     instances = result.scalars().all()
+    
+    try:
+        await log(action="read_instances")
+    except Exception:
+        pass
+    
     return instances
 
 @router.get("/{instance_id}", response_model=InstancesRead)
 async def read_instance(
     instance_id: int,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_instance_permission(write=False))
+    current_user: User = Depends(require_instance_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("instances")) 
 ):
     instance = await db.get_instance(session, instance_id)
     if not instance:
         raise HTTPException(status_code=404, detail="Instance not found")
+    
+    await log(action="read_instance", details={"instance_id": instance_id})
     return instance
 
 
@@ -121,14 +133,25 @@ async def read_instance(
 async def add_instance(
     data: InstancesCreate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    log: LogCallable = Depends(LoggerInterface("instances")) 
 ):
     if data.parent_id is None:
         await _check_permission(current_user, session, "create_new_instance")
     else:
         await _check_instance_permission(session, current_user, data.parent_id, write=True)
 
-    return await db.create_instance(session, data)
+    new_instance = await db.create_instance(session, data)
+    
+    await log(
+        action="add_instance",
+        details={
+            "instance_id": new_instance.id,
+            "object_id": data.object_id,
+            "parent_id": data.parent_id
+        }
+    )
+    return new_instance
 
 
 
@@ -137,8 +160,11 @@ async def add_instance(
 async def delete_instances(
     instance_id: int, 
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_instance_permission(write=True))):
+    current_user: User = Depends(require_instance_permission(write=True)),
+    log: LogCallable = Depends(LoggerInterface("instances")) 
+):
     await db.delete_instance(session, instance_id)
+    await log(action="delete_instance", details={"instance_id": instance_id})
 
 
 @router.patch("/{instance_id}", response_model=InstancesRead)
@@ -146,7 +172,8 @@ async def update_instance(
     instance_id: int,
     data: InstancesUpdate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_instance_permission(write=True))
+    current_user: User = Depends(require_instance_permission(write=True)),
+    log: LogCallable = Depends(LoggerInterface("instances")) 
 ):
     updated_instance: InstancesRead | None = await db.update_instance(session, instance_id, data)
     if not updated_instance:
@@ -154,5 +181,12 @@ async def update_instance(
             status_code=404,
             detail="Экземпляр не найден"
         )
+    details = {"instance_id": instance_id}
+    if data.name is not None:
+        details["name"] = data.name
+    if data.is_active is not None:
+        details["is_active"] = data.is_active
+    
+    await log(action="update_instance", details=details)
     return updated_instance
 

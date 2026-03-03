@@ -5,6 +5,7 @@ from typing import List, Optional
 from sqlalchemy import select, or_
 from sqlalchemy.sql import true, false
 from sqlalchemy.orm import selectinload
+import typing
 
 from app.schemas.core import TypesRead, TypesCreate, TypesUpdate
 import app.crud.core.types as db
@@ -18,8 +19,12 @@ from app.models.auth import User, Role, Permission, UserTypeAccess, UserRole, Ro
 from app.core.security import get_current_user
 from app.models.core import Types
 
+from app.logging.deps import LoggerInterface, LogCallable
+
 router = APIRouter(prefix="/types", tags=["DB: Core: Types"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
 
 @router.get("/", response_model=list[TypesRead])
 async def read_types(
@@ -27,7 +32,8 @@ async def read_types(
     name: Optional[str] = Query(None),
     parent_id: Optional[int] = Query(None),
     root_id: Optional[int] = Query(None),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    log: LogCallable = Depends(LoggerInterface("types"))
 ):
     # Fetch user permissions
     result_user = await session.execute(
@@ -70,6 +76,13 @@ async def read_types(
 
     result = await session.execute(query)
     types = result.scalars().all()
+
+    try:
+        await log(
+            action="read_types"
+        )
+    except Exception:
+        pass
     return types
 
 
@@ -77,11 +90,16 @@ async def read_types(
 async def read_type(
     type_id: int,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_type_permission(write=False))
+    current_user: User = Depends(require_type_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("types"))
 ):
     type_obj = await db.get_type(session, type_id)
     if not type_obj:
         raise HTTPException(status_code=404, detail="Type not found")
+
+    await log(action="read_type", details={
+        "type_id": type_id
+    })
     return type_obj
 
 
@@ -89,23 +107,41 @@ async def read_type(
 async def add_type(
     data: TypesCreate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    log: LogCallable = Depends(LoggerInterface("types"))
 ):
     if data.parent_id is None:
         await _check_permission(current_user, session, "create_new_type")
     else:
         await _check_type_permission(session, current_user, data.parent_id, write=True)
 
-    return await db.create_type(session, data)
+    new_type = await db.create_type(session, data)
+    
+    await log(
+        action="add_type",
+        details={
+            "id": new_type.id,
+            "name": data.name,
+            "parent_id": data.parent_id
+        }
+    )
+    return new_type
 
 
 @router.delete("/{type_id}", status_code=204)
 async def delete_types(
     type_id: int,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_type_permission(write=True))
+    current_user: User = Depends(require_type_permission(write=True)),
+    log: LogCallable = Depends(LoggerInterface("types"))
 ):
     await db.delete_type(session, type_id)
+    await log(
+        action="delete_types",
+        details={
+            "type_id": type_id
+        }
+    ) 
 
 
 @router.patch("/{type_id}")
@@ -113,7 +149,8 @@ async def update_type(
     type_id: int,
     data: TypesUpdate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_type_permission(write=True))
+    current_user: User = Depends(require_type_permission(write=True)),
+    log: LogCallable = Depends(LoggerInterface("types"))
 ) -> TypesRead:
     updated_type: TypesRead | None = await db.update_type(session, type_id, data)
     if not updated_type:
@@ -121,4 +158,13 @@ async def update_type(
             status_code=404,
             detail="Тип не найден"
         )
+    await log(
+        action="update",
+        details=
+        {
+            "type_id": type_id,
+            "name": name,
+            "parent_id": data.parent_id
+        }
+    )
     return updated_type
