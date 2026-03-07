@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.test import router as test_router
 from app.api.v1.db.core import objects, types, property_types, properties, instances, instanceproperties, data_manip
 from app.api.v1.auth import auth, permissions, roles, role_permissions, user_roles, users, user_instance_access, user_object_access, user_type_access
+from app.api.v1.events import event_types, event_types_types, events, replacements
 
 # рабочий логер (функция/корутина)
 from app.logging.logger import worker as log_worker_func
@@ -131,3 +132,9 @@ app.include_router(users.router)
 app.include_router(user_instance_access.router)
 app.include_router(user_object_access.router)
 app.include_router(user_type_access.router)
+
+# events routers
+app.include_router(event_types.router)
+app.include_router(event_types_types.router)
+app.include_router(events.router)
+app.include_router(replacements.router)

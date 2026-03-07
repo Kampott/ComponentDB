@@ -43,6 +43,20 @@
     {"name": "edit_user_object_access", "description": "Ability to edit user object access"},
     {"name": "create_new_instance", "description": "Ability to create new instance"},
     {"name": "create_new_object", "description": "Ability to create new object"},
-    {"name": "create_new_type", "description": "Ability to create new type"}
+    {"name": "create_new_type", "description": "Ability to create new type"},
+    {"name": "read_event_types", "description": "Ability to read event types"},
+    {"name": "create_event_types", "description": "Ability to create event types"},
+    {"name": "delete_event_types", "description": "Ability to delete event types"},
+    {"name": "edit_event_types", "description": "Ability to edit event types"},
+    {"name": "read_event_types_types", "description": "Ability to read event type-type relationships"},
+    {"name": "create_event_types_types", "description": "Ability to create event type-type relationships"},
+    {"name": "delete_event_types_types", "description": "Ability to delete event type-type relationships"},
+    {"name": "read_events", "description": "Ability to read events"},
+    {"name": "create_events", "description": "Ability to create events"},
+    {"name": "delete_events", "description": "Ability to delete events"},
+    {"name": "edit_events", "description": "Ability to edit events"},
+    {"name": "read_replacements", "description": "Ability to read replacements"},
+    {"name": "create_replacements", "description": "Ability to create replacements and undo them"},
+    {"name": "delete_replacements", "description": "Ability to delete replacements"}
   ]
 }

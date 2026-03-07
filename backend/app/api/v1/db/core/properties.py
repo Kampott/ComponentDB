@@ -34,7 +34,7 @@ async def read_properties(session: AsyncSession = Depends(get_async_session),
 
 
 @router.get("/{property_id}", response_model=PropertiesRead)
-async def read_type(property_id: int,
+async def read_property(property_id: int,
                          current_user: User = Depends(require_permissions("read_properties")),
                          session: AsyncSession = Depends(get_async_session),
     log: LogCallable = Depends(LoggerInterface("properties"))):

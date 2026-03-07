@@ -4,7 +4,8 @@ from sqlalchemy import Index, text, UniqueConstraint
 from typing import Optional, List
 from sqlalchemy import ForeignKey, String, Integer, Boolean
 from app.models.auth import UserInstanceAccess, UserTypeAccess, UserObjectAccess
-
+from app.models.events import Events, EventTypesTypes, Replacements
+from datetime import datetime, timezone
 
 class Types(Base):
     __tablename__ = "types"
@@ -32,7 +33,9 @@ class Types(Base):
         "UserTypeAccess",
         back_populates="type",
     )
-
+    event_types: Mapped[List["EventTypesTypes"]] = relationship(
+        back_populates="type"
+    )
 
 class Objects(Base):
     __tablename__ = "objects"
@@ -101,6 +104,7 @@ class Instances(Base):
     root_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), nullable=True)
     object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
     is_active: Mapped[bool] = mapped_column(nullable=False)
+    
     parent: Mapped[Optional["Instances"]] = relationship(
         "Instances",
         foreign_keys=[parent_id],
@@ -119,6 +123,17 @@ class Instances(Base):
     user_access: Mapped[List["UserInstanceAccess"]] = relationship(
         "UserInstanceAccess",
         back_populates="instance",
+    )
+    related_events: Mapped[List["Events"]] = relationship(
+        back_populates="instance",
+    )
+    replaced_by: Mapped[List["Replacements"]] = relationship(
+        foreign_keys="[Replacements.replaced_id]",
+        back_populates="replaced"
+    )
+    did_replace: Mapped[List["Replacements"]] = relationship(
+        foreign_keys="[Replacements.replacement_id]",
+        back_populates="replacement"
     )
 
     __table_args__ = (
