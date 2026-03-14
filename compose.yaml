@@ -1,3 +1,6 @@
+x-python-user: &python_user
+  user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+
 services:
   db:
     image: postgres:15
@@ -55,19 +58,110 @@ services:
         condition: service_healthy
 
   backend:
-    build: ./backend
+    <<: *python_user
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     restart: always
     depends_on:
-      db:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     tty: true
     ports:
       - "${BACKEND_PORT}:8000"
     env_file:
       - ./backend/.env
+      - ./postgres/python_core/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      LOG_DATABASE_URL: postgresql+asyncpg://${LOG_POSTGRES_USER}:${LOG_POSTGRES_PASSWORD}@log_db:5432/${LOG_POSTGRES_DB}
     # command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - ./backend:/app  # Optional if you want live-reload in dev
+      - ./backend:/app/backend
+      - ./postgres:/app/postgres
+
+  db-init:
+    <<: *python_user
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      log_db:
+        condition: service_healthy
+    env_file:
+      - ./postgres/python_core/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      LOG_DATABASE_URL: postgresql+asyncpg://${LOG_POSTGRES_USER}:${LOG_POSTGRES_PASSWORD}@log_db:5432/${LOG_POSTGRES_DB}
+    command:
+      - sh
+      - -c
+      - |
+        alembic -c /app/postgres/python_core/alembic.ini upgrade head
+        alembic -c /app/postgres/python_core/alembic_logs.ini upgrade head
+        python -m scripts.init_db
+    volumes:
+      - ./backend:/app/backend
+      - ./postgres:/app/postgres
+
+  db-revision:
+    <<: *python_user
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    profiles: ["manual"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      log_db:
+        condition: service_healthy
+    env_file:
+      - ./postgres/python_core/.env
+    environment:
+      REVISION_MESSAGE: manual_revision
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      LOG_DATABASE_URL: postgresql+asyncpg://${LOG_POSTGRES_USER}:${LOG_POSTGRES_PASSWORD}@log_db:5432/${LOG_POSTGRES_DB}
+    command:
+      - sh
+      - -c
+      - |
+        test -n "$$REVISION_MESSAGE"
+        alembic -c /app/postgres/python_core/alembic.ini revision --autogenerate -m "$$REVISION_MESSAGE"
+    volumes:
+      - ./backend:/app/backend
+      - ./postgres:/app/postgres
+
+  db-revision-logs:
+    <<: *python_user
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    profiles: ["manual"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      log_db:
+        condition: service_healthy
+    env_file:
+      - ./postgres/python_core/.env
+    environment:
+      REVISION_MESSAGE: manual_log_revision
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      LOG_DATABASE_URL: postgresql+asyncpg://${LOG_POSTGRES_USER}:${LOG_POSTGRES_PASSWORD}@log_db:5432/${LOG_POSTGRES_DB}
+    command:
+      - sh
+      - -c
+      - |
+        test -n "$$REVISION_MESSAGE"
+        alembic -c /app/postgres/python_core/alembic_logs.ini revision --autogenerate -m "$$REVISION_MESSAGE"
+    volumes:
+      - ./backend:/app/backend
+      - ./postgres:/app/postgres
 
   frontend:
     build: ./frontend

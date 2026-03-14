@@ -11,7 +11,7 @@ from app.schemas.events import *
 from typing import List, Optional
 from fastapi import HTTPException
 
-from app.models.core import Instances
+from app.models.core import Instances, Objects
 
 
 async def get_events(

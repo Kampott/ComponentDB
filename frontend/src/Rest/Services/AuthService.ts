@@ -43,6 +43,6 @@ export default class AuthService implements IAuthService {
     }
 
     async me(): Promise<User> {
-        return await this.client.get<User>('/auth/me')
+        return await this.client.get<User>('/user/me')
     }
 }
