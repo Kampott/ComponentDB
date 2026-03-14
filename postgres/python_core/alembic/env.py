@@ -2,20 +2,15 @@ import asyncio
 from logging.config import fileConfig
 
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
-from sqlalchemy.future import select
-from passlib.hash import bcrypt
-import uuid
+from sqlalchemy.ext.asyncio import AsyncConnection
 from sqlalchemy import pool
 from alembic import context
-from dotenv import load_dotenv
-from app.db.base import Base
-from app.models import core
-from app.models import auth
-from app.models import events
-import os
 
-load_dotenv()
+from base import Base
+from models import auth, core, events
+from settings import get_required_env, load_core_env
+
+load_core_env()
 
 # Alembic Config
 config = context.config
@@ -23,10 +18,23 @@ fileConfig(config.config_file_name)
 target_metadata = Base.metadata
 
 # Loading environmental variables
-ASYNC_DATABASE_URL = os.getenv("DATABASE_URL")
+ASYNC_DATABASE_URL = get_required_env("DATABASE_URL")
 SYNC_DATABASE_URL = ASYNC_DATABASE_URL.replace("asyncpg", "psycopg2")
-SUPERUSER_EMAIL = os.getenv("SUPERUSER_EMAIL", "root@example.com")
-SUPERUSER_PASSWORD = os.getenv("SUPERUSER_PASSWORD", "changeme")
+SUPERUSER_EMAIL = get_required_env("SUPERUSER_EMAIL")
+SUPERUSER_PASSWORD = get_required_env("SUPERUSER_PASSWORD")
+
+
+def process_revision_directives(migration_context, revision, directives):
+    if not getattr(config.cmd_opts, "autogenerate", False):
+        return
+
+    if not directives:
+        return
+
+    script = directives[0]
+    if script.upgrade_ops.is_empty():
+        directives[:] = []
+        print("Изменений в основной схеме нет. Ревизия не создана.")
 
 
 def run_migrations_offline():
@@ -36,6 +44,7 @@ def run_migrations_offline():
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        process_revision_directives=process_revision_directives,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -49,7 +58,11 @@ async def run_migrations_online():
         await connection.run_sync(do_run_migrations)
 
 def do_run_migrations(connection: AsyncConnection):
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        process_revision_directives=process_revision_directives,
+    )
     with context.begin_transaction():
         context.run_migrations()
 

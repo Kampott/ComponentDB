@@ -1,7 +1,3 @@
-from sqlalchemy.orm import DeclarativeBase
+from base import Base, LogBase
 
-class Base(DeclarativeBase):
-    pass
-
-class LogBase(DeclarativeBase):
-    pass
+__all__ = ["Base", "LogBase"]
