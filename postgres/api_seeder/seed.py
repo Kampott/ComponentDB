@@ -556,8 +556,7 @@ class Seeder:
                         "/replacements/",
                         ReplacementsCreate(
                             event_id=event_id,
-                            replaced_id=current.id,
-                            replacement_id=replacement_instance.id,
+                            new_instance_id=replacement_instance.id,
                         ).model_dump(),
                     )
                     self.stats.replacements += 1
@@ -595,21 +594,22 @@ class Seeder:
         event_index: int,
         instance_ordinal: int,
     ) -> int:
+        timestamp = (
+            datetime.now(UTC)
+            - timedelta(days=(sequence_index % 23), hours=event_index, minutes=instance_ordinal)
+        )
         response = await self.client.post(
             "/events/",
             EventsCreate(
                 event_type_id=self.event_type_ids[spec.key],
                 instance_id=instance.id,
+                timestamp=timestamp,
                 info={
                     "seed_prefix": self.config.prefix,
                     "event_key": spec.key,
                     "sequence": sequence_index,
                     "event_index": event_index,
                     "tree_instance_ordinal": instance_ordinal,
-                    "timestamp_hint": (
-                        datetime.now(UTC)
-                        - timedelta(days=(sequence_index % 23), hours=event_index, minutes=instance_ordinal)
-                    ).isoformat(),
                 },
             ).model_dump(),
         )

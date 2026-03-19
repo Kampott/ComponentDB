@@ -126,7 +126,37 @@ async def update_event(db: AsyncSession, event_id: int, data: EventsUpdate) -> O
         )
         if not instance_exists.scalar_one_or_none():
             raise HTTPException(status_code=404, detail="Instance not found")
-    
+
+    next_instance_id = update_data.get("instance_id", event.instance_id)
+    next_event_type_id = update_data.get("event_type_id", event.event_type_id)
+
+    if "instance_id" in update_data or "event_type_id" in update_data:
+        instance_result = await db.execute(
+            select(Instances).where(Instances.id == next_instance_id)
+        )
+        instance = instance_result.scalar_one_or_none()
+        if not instance:
+            raise HTTPException(status_code=404, detail="Instance not found")
+
+        object_result = await db.execute(
+            select(Objects).where(Objects.id == instance.object_id)
+        )
+        obj = object_result.scalar_one_or_none()
+
+        event_type_link = await db.execute(
+            select(EventTypesTypes).where(
+                and_(
+                    EventTypesTypes.event_type_id == next_event_type_id,
+                    EventTypesTypes.type_id == obj.type_id
+                )
+            )
+        )
+        if not event_type_link.scalar_one_or_none():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Event type {next_event_type_id} is not valid for instances of type {obj.type_id}"
+            )
+
     for key, value in update_data.items():
         setattr(event, key, value)
     

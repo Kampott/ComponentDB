@@ -17,9 +17,9 @@ export default class MockEventsService
     public async create(data: EventAdd): Promise<Event> {
         return this.pushEntity({
             id: this.store.nextId('events'),
-            type_id: data.type_id,
-            time: data.time,
-            info: data.info ?? '',
+            event_type_id: data.event_type_id,
+            timestamp: data.timestamp,
+            info: data.info ?? {},
             instance_id: data.instance_id,
         })
     }

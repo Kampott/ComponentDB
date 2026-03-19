@@ -6,5 +6,7 @@ export default interface IObjectsTypesService extends ICrudService<
     ObjectTypeAdd,
     ObjectTypeUpdate
 > {
+    getAllTypes(): Promise<ObjectType[]>
+    getRootTypes(): Promise<ObjectType[]>
     getTypesByParentId(parentId: number): Promise<ObjectType[]>
 }

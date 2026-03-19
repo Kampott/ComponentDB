@@ -130,13 +130,9 @@ class Instances(Base):
     related_events: Mapped[List["Events"]] = relationship(
         back_populates="instance",
     )
-    replaced_by: Mapped[List["Replacements"]] = relationship(
-        foreign_keys="[Replacements.replaced_id]",
-        back_populates="replaced",
-    )
-    did_replace: Mapped[List["Replacements"]] = relationship(
-        foreign_keys="[Replacements.replacement_id]",
-        back_populates="replacement",
+    replacement_links: Mapped[List["Replacements"]] = relationship(
+        foreign_keys="[Replacements.new_instance_id]",
+        back_populates="new_instance",
     )
 
     __table_args__ = (

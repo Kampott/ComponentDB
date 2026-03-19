@@ -7,6 +7,7 @@ export type FieldType =
     | 'select'
     | 'datetime'
     | 'password'
+    | 'kv-object'
 
 export interface FormFieldOption<T> {
     label: string

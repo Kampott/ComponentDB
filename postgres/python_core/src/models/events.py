@@ -62,15 +62,13 @@ class EventTypesTypes(Base):
 
 class Replacements(Base):
     __tablename__ = "replacements"
-    __table_args__ = (UniqueConstraint("replaced_id"),)
+    __table_args__ = (UniqueConstraint("event_id"),)
 
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"), primary_key=True)
-    replaced_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), primary_key=True)
-    replacement_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), primary_key=True)
+    new_instance_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), primary_key=True)
 
     event: Mapped["Events"] = relationship(back_populates="replacement_info")
-    replaced: Mapped["Instances"] = relationship(foreign_keys=[replaced_id], back_populates="replaced_by")
-    replacement: Mapped["Instances"] = relationship(
-        foreign_keys=[replacement_id],
-        back_populates="did_replace",
+    new_instance: Mapped["Instances"] = relationship(
+        foreign_keys=[new_instance_id],
+        back_populates="replacement_links",
     )

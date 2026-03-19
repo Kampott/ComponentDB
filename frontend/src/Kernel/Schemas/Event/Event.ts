@@ -1,3 +1,6 @@
+import { createElement } from 'react'
+
+import KeyValueObjectView from '@Components/Common/Forms/KeyValueObjectView.tsx'
 import {
     defineEntitySchema,
     type InferCreate,
@@ -8,9 +11,9 @@ import { useServicesStore } from '@StorageImpl'
 // Схема события
 export interface Event {
     id: number
-    type_id: number
-    time: Date
-    info: string
+    event_type_id: number
+    timestamp: Date
+    info: Record<string, unknown> | null
     instance_id: number
 }
 
@@ -34,7 +37,7 @@ export const eventSchema = defineEntitySchema<Event, EventCreateContext>()({
             read: { visible: false },
             form: { input: 'number' },
         },
-        type_id: {
+        event_type_id: {
             common: {
                 label: 'Тип события',
                 description: 'Идентификатор типа события',
@@ -70,7 +73,7 @@ export const eventSchema = defineEntitySchema<Event, EventCreateContext>()({
                 },
             },
         },
-        time: {
+        timestamp: {
             common: {
                 label: 'Время события',
                 description: 'Дата и время события',
@@ -87,16 +90,36 @@ export const eventSchema = defineEntitySchema<Event, EventCreateContext>()({
         },
         info: {
             common: {
-                label: 'Описание',
+                label: 'Поля события',
                 description: 'Дополнительная информация о событии',
             },
             create: {
                 policy: 'optional',
-                visible: false,
-                defaultValue: () => '',
+                visible: true,
+                defaultValue: () => ({}),
             },
-            update: { policy: 'optional' },
-            form: { input: 'text' },
+            update: { policy: 'optional', visible: true },
+            read: {
+                printValue: value =>
+                    createElement(KeyValueObjectView, { value }),
+            },
+            form: {
+                input: 'kv-object',
+                validator: value => {
+                    if (!value) {
+                        return null
+                    }
+
+                    const invalidKey = Object.keys(value).find(
+                        key => key.trim().length === 0,
+                    )
+                    if (invalidKey !== undefined) {
+                        return 'Ключи словаря не должны быть пустыми'
+                    }
+
+                    return null
+                },
+            },
         },
         instance_id: {
             common: {
@@ -129,6 +152,11 @@ export const eventSchema = defineEntitySchema<Event, EventCreateContext>()({
 export interface EventType {
     id: number
     name: string
+}
+
+export interface EventTypeTypeLink {
+    event_type_id: number
+    type_id: number
 }
 
 export type EventTypeCreateContext = Record<string, never>
@@ -164,7 +192,6 @@ export const eventTypeSchema = defineEntitySchema<
 
 // Замена - таблица, связанная с событием и дающее доп информацию по ней (1-1 связь)
 export interface ReplacementEvent {
-    id: number
     event_id: number
     new_instance_id: number
 }
@@ -178,18 +205,8 @@ export const replacementEventSchema = defineEntitySchema<
     ReplacementEventCreateContext
 >()({
     entity: 'ReplacementEvent',
-    resource: 'replacement_events',
+    resource: 'replacements',
     fields: {
-        id: {
-            common: {
-                label: 'ID',
-                description: 'Уникальный идентификатор',
-            },
-            create: { policy: 'forbidden', visible: false },
-            update: { policy: 'forbidden', visible: false },
-            read: { visible: false },
-            form: { input: 'number' },
-        },
         event_id: {
             common: {
                 label: 'Событие',
@@ -209,7 +226,7 @@ export const replacementEventSchema = defineEntitySchema<
                 description: 'Идентификатор нового экземпляра',
             },
             create: { policy: 'required' },
-            update: { policy: 'optional' },
+            update: { policy: 'forbidden' },
             form: { input: 'number' },
         },
     },
@@ -220,6 +237,8 @@ export type EventUpdate = InferUpdate<typeof eventSchema>
 
 export type EventTypeAdd = InferCreate<typeof eventTypeSchema>
 export type EventTypeUpdate = InferUpdate<typeof eventTypeSchema>
+
+export type EventTypeTypeLinkAdd = EventTypeTypeLink
 
 export type ReplacementEventAdd = InferCreate<typeof replacementEventSchema>
 export type ReplacementEventUpdate = InferUpdate<typeof replacementEventSchema>

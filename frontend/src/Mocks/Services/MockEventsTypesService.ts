@@ -20,4 +20,16 @@ export default class MockEventsTypesService
             name: data.name,
         })
     }
+
+    public async getEventTypesByTypeId(typeId: number): Promise<EventType[]> {
+        const eventTypeIds = new Set(
+            this.store.eventTypeRelations
+                .filter(link => link.type_id === typeId)
+                .map(link => link.event_type_id),
+        )
+
+        return this.store.eventTypes.filter(eventType =>
+            eventTypeIds.has(eventType.id),
+        )
+    }
 }

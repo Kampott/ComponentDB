@@ -15,6 +15,7 @@ import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { ObjectType } from '@Schemas'
 import { useServicesStore } from '@StorageImpl'
+import TypeEventTypesTab from './TypeEventTypesTab.tsx'
 import TypeMainInfo from './TypeMainInfo.tsx'
 import TypeObjectsTab from './TypeObjectsTab.tsx'
 import TypePropertiesTab from './TypePropertiesTab.tsx'
@@ -85,9 +86,10 @@ function TypePage() {
             </LoadEffect>
 
             <Tabs defaultValue='instances' className='mb-4'>
-                <TabsList className='grid h-auto w-full grid-cols-3'>
+                <TabsList className='grid h-auto w-full grid-cols-4'>
                     <TabsTrigger value='instances'>Объекты</TabsTrigger>
                     <TabsTrigger value='properties'>Свойства</TabsTrigger>
+                    <TabsTrigger value='event-types'>Типы событий</TabsTrigger>
                     <TabsTrigger value='structure'>Структура</TabsTrigger>
                 </TabsList>
 
@@ -97,6 +99,11 @@ function TypePage() {
                 <TabsContent value='properties'>
                     {objectType && (
                         <TypePropertiesTab objectType={objectType} />
+                    )}
+                </TabsContent>
+                <TabsContent value='event-types'>
+                    {objectType && (
+                        <TypeEventTypesTab objectType={objectType} />
                     )}
                 </TabsContent>
                 <TabsContent value='structure'>

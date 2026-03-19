@@ -6,6 +6,7 @@ from watchfiles import awatch
 
 from app.crud.core.default import DefaultQueries
 from app.models.core import *
+from app.models.events import EventTypesTypes
 from app.schemas.core import *
 from typing import List, Optional
 from fastapi import HTTPException
@@ -15,7 +16,8 @@ from fastapi import HTTPException
 async def get_types(db: AsyncSession,
                     name: Optional[str] = None,
                     parent_id: Optional[int] = None,
-                    root_id: Optional[int] = None
+                    root_id: Optional[int] = None,
+                    event_type_id: Optional[int] = None,
                     ) -> List[Types]:
     query = select(Types)
 
@@ -26,6 +28,12 @@ async def get_types(db: AsyncSession,
         filters.append(Types.parent_id == parent_id)
     if root_id is not None:
         filters.append(Types.root_id == root_id)
+    if event_type_id is not None:
+        query = query.join(
+            EventTypesTypes,
+            Types.id == EventTypesTypes.type_id,
+        )
+        filters.append(EventTypesTypes.event_type_id == event_type_id)
 
     if filters:
         query = query.where(and_(*filters))

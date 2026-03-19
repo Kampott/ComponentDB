@@ -1,8 +1,8 @@
-"""initial revision
+"""initial
 
-Revision ID: 9a95d41bb8bc
+Revision ID: cd11423ca7e0
 Revises: 
-Create Date: 2026-03-07 21:31:20.599103
+Create Date: 2026-03-14 15:21:09.125788
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9a95d41bb8bc'
+revision: str = 'cd11423ca7e0'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -192,13 +192,11 @@ def upgrade() -> None:
     )
     op.create_table('replacements',
     sa.Column('event_id', sa.Integer(), nullable=False),
-    sa.Column('replaced_id', sa.Integer(), nullable=False),
-    sa.Column('replacement_id', sa.Integer(), nullable=False),
+    sa.Column('new_instance_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['event_id'], ['events.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['replaced_id'], ['instances.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['replacement_id'], ['instances.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('event_id', 'replaced_id', 'replacement_id'),
-    sa.UniqueConstraint('replaced_id')
+    sa.ForeignKeyConstraint(['new_instance_id'], ['instances.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('event_id', 'new_instance_id'),
+    sa.UniqueConstraint('event_id')
     )
     # ### end Alembic commands ###
 

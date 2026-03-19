@@ -19,6 +19,14 @@ export default class ObjectsTypesService
         super(client, objectTypeSchema)
     }
 
+    public async getAllTypes(): Promise<ObjectType[]> {
+        return await this.list()
+    }
+
+    public async getRootTypes(): Promise<ObjectType[]> {
+        return await this.client.get<ObjectType[]>('/data-manip/root-types')
+    }
+
     public async getTypesByParentId(parentId: number): Promise<ObjectType[]> {
         return await this.list({
             parent_id: parentId,

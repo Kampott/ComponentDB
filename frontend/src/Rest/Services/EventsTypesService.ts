@@ -18,4 +18,10 @@ export default class EventsTypesService
     public constructor(client: RestApiClient) {
         super(client, eventTypeSchema)
     }
+
+    public async getEventTypesByTypeId(typeId: number): Promise<EventType[]> {
+        return await this.client.get<EventType[]>('/event_types/', {
+            type_id: typeId,
+        })
+    }
 }

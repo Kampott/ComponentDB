@@ -1,14 +1,22 @@
-import type { ICrudService } from '@/Interfaces/Services/CrudInterfaces.ts'
-import type {
-    ReplacementEvent,
-    ReplacementEventAdd,
-    ReplacementEventUpdate,
-} from '@Schemas'
+import type { ReplacementEvent, ReplacementEventAdd } from '@Schemas'
 
-export default interface IReplacementEventsService extends ICrudService<
-    ReplacementEvent,
-    ReplacementEventAdd,
-    ReplacementEventUpdate
-> {
+export type ReplacementEventQuery = Partial<{
+    event_id: number
+    new_instance_id: number
+}>
+
+export default interface IReplacementEventsService {
+    list(query?: ReplacementEventQuery): Promise<ReplacementEvent[]>
+    read(eventId: number, newInstanceId: number): Promise<ReplacementEvent>
+    create(data: ReplacementEventAdd): Promise<ReplacementEvent>
+    delete(eventId: number, newInstanceId: number): Promise<null>
+    undo(
+        eventId: number,
+        newInstanceId: number,
+    ): Promise<{
+        message: string
+        event_id: number
+        new_instance_id: number
+    }>
     getReplacementEventsByEventId(eventId: number): Promise<ReplacementEvent[]>
 }

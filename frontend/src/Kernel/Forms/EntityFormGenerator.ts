@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import type { FormField } from '@Kernel/Forms/FormTypes.ts'
 import {
     getCreateFieldKeys,
@@ -203,7 +205,7 @@ export async function generateUpdateFormFromSchema<
 export type ReadViewField = {
     key: string
     label: string
-    value: string
+    value: ReactNode
 }
 
 function printPrimitiveValue(value: unknown): string {
@@ -240,7 +242,7 @@ export async function generateReadViewFromSchema<
                   fieldMeta.read.printValue as (
                       value: unknown,
                       context: Context,
-                  ) => string | Promise<string>
+                  ) => ReactNode | Promise<ReactNode>
               )(rawValue, context)
             : printPrimitiveValue(rawValue)
 

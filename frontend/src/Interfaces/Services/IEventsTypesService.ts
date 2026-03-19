@@ -5,4 +5,6 @@ export default interface IEventsTypesService extends ICrudService<
     EventType,
     EventTypeAdd,
     EventTypeUpdate
-> {}
+> {
+    getEventTypesByTypeId(typeId: number): Promise<EventType[]>
+}

@@ -1,6 +1,7 @@
 import type {
     Event,
     EventType,
+    EventTypeTypeLink,
     InstanceProperty,
     Object as ObjectEntity,
     ObjectInstance,
@@ -26,6 +27,7 @@ type CounterKey =
 export default class MockDataStore {
     public readonly users: User[]
     public readonly eventTypes: EventType[]
+    public readonly eventTypeRelations: EventTypeTypeLink[]
     public readonly events: Event[]
     public readonly replacementEvents: ReplacementEvent[]
     public readonly objectTypes: ObjectType[]
@@ -41,6 +43,7 @@ export default class MockDataStore {
         this.users = [{ id: 1, email: 'demo@local', level: 10 }]
 
         this.eventTypes = [{ id: 1, name: 'Замена' }]
+        this.eventTypeRelations = [{ event_type_id: 1, type_id: 1 }]
         this.events = []
         this.replacementEvents = []
 

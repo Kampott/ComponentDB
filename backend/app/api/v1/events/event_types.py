@@ -29,8 +29,9 @@ async def read_event_types(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(require_permissions("read_event_types")),
     name: Optional[str] = Query(None),
+    type_id: Optional[int] = Query(None),
     log: LogCallable = Depends(LoggerInterface("event_types"))):
-    event_types = await db.get_event_types(session, name)
+    event_types = await db.get_event_types(session, name, type_id)
 
     try:
         await log(action="read_event_types")
