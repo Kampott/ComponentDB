@@ -13,17 +13,55 @@ from app.models.auth import User
 
 from app.logging.deps import LoggerInterface, LogCallable 
 
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
+
 router = APIRouter(prefix="/properties", tags=["DB: Core: Properties"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 @router.get("/", response_model=list[PropertiesRead])
-async def read_properties(session: AsyncSession = Depends(get_async_session),
-                        current_user: User = Depends(require_permissions("read_properties")),
-                          property_id: Optional[int] = Query(None),
-                          value: Optional[str] = Query(None),
-                          object_id: Optional[int] = Query(None),
-    log: LogCallable = Depends(LoggerInterface("properties"))):
-    properties = await db.get_properties(session, property_id, value, object_id)
+async def read_properties(
+    session: AsyncSession = Depends(get_async_session),
+    # Фильтры
+    object_id: Optional[int] = Query(None),
+    object_id__in: Optional[List[int]] = Query(None),
+    
+    property_id: Optional[int] = Query(None),
+    property_id__in: Optional[List[int]] = Query(None),
+    
+    value: Optional[str] = Query(None),
+    value__like: Optional[str] = Query(None),
+    
+    id: Optional[int] = Query(None),
+    id__in: Optional[List[int]] = Query(None),
+    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    current_user: User = Depends(require_permissions("read_properties")),
+    log: LogCallable = Depends(LoggerInterface("properties"))
+):
+    params = {
+        "object_id": object_id,
+        "object_id__in": object_id__in,
+        "property_id": property_id,
+        "property_id__in": property_id__in,
+        "value": value,
+        "value__like": value__like,
+        "id": id,
+        "id__in": id__in,
+        "id__sort": id__sort,
+    }
+    
+    QueryBuilder.validate_params(Properties, params, SEARCH_CONFIG[Properties])
+    filters = QueryBuilder.parse_query_params(params)
+    
+    query = select(Properties)
+    query = QueryBuilder.apply_filters(query, Properties, filters)
+    query = QueryBuilder.apply_sorting(query, Properties, filters)
+    
+    result = await session.execute(query)
+    properties = result.scalars().all()
     
     try:
         await log(action="read_properties")
@@ -31,18 +69,6 @@ async def read_properties(session: AsyncSession = Depends(get_async_session),
         pass
     
     return properties
-
-
-@router.get("/{property_id}", response_model=PropertiesRead)
-async def read_property(property_id: int,
-                         current_user: User = Depends(require_permissions("read_properties")),
-                         session: AsyncSession = Depends(get_async_session),
-    log: LogCallable = Depends(LoggerInterface("properties"))):
-    property_ = await db.get_property(session, property_id)
-    if not property_:
-        raise HTTPException(status_code=404, detail="Property not found")
-    await log(action="read_property", details={"property_id": property_id})
-    return property_
 
 
 @router.post("/", response_model=PropertiesCreate)

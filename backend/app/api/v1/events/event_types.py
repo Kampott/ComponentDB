@@ -19,6 +19,11 @@ from app.core.security import get_current_user
 
 from app.logging.deps import LoggerInterface, LogCallable
 
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
+
 router = APIRouter(prefix="/event_types", tags=["DB: Events: EventTypes"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -27,11 +32,36 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 @router.get("/", response_model=list[EventTypesRead])
 async def read_event_types(
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions("read_event_types")),
+    # Фильтры
     name: Optional[str] = Query(None),
-    type_id: Optional[int] = Query(None),
-    log: LogCallable = Depends(LoggerInterface("event_types"))):
-    event_types = await db.get_event_types(session, name, type_id)
+    name__like: Optional[str] = Query(None),
+    name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    id: Optional[int] = Query(None),
+    id__in: Optional[List[int]] = Query(None),
+    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    current_user: User = Depends(require_permissions("read_event_types")),
+    log: LogCallable = Depends(LoggerInterface("event_types"))
+):
+    params = {
+        "name": name,
+        "name__like": name__like,
+        "name__sort": name__sort,
+        "id": id,
+        "id__in": id__in,
+        "id__sort": id__sort,
+    }
+    
+    QueryBuilder.validate_params(EventTypes, params, SEARCH_CONFIG[EventTypes])
+    filters = QueryBuilder.parse_query_params(params)
+    
+    query = select(EventTypes)
+    query = QueryBuilder.apply_filters(query, EventTypes, filters)
+    query = QueryBuilder.apply_sorting(query, EventTypes, filters)
+    
+    result = await session.execute(query)
+    event_types = result.scalars().all()
 
     try:
         await log(action="read_event_types")
@@ -39,17 +69,6 @@ async def read_event_types(
         pass
 
     return event_types
-
-@router.get("/{event_type_id}", response_model=EventTypesRead)
-async def read_event_type(event_type_id: int,
-                         current_user: User = Depends(require_permissions("read_event_types")),
-                         session: AsyncSession = Depends(get_async_session),
-    log: LogCallable = Depends(LoggerInterface("event_types"))):
-    event_type_ = await db.get_event_type(session, event_type_id)
-    if not event_type_:
-        raise HTTPException(status_code=404, detail="Event types not found")
-    await log(action="read_event_types", details={"event_type_id": event_type_id})
-    return event_type_
 
 @router.post("/", response_model=EventTypesRead)
 async def add_event_types(data: EventTypesCreate,

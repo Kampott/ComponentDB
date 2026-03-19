@@ -21,6 +21,11 @@ from app.core.security import get_current_user
 
 from app.logging.deps import LoggerInterface, LogCallable
 
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
+
 router = APIRouter(prefix="/instances", tags=["DB: Core: Instances"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -28,15 +33,56 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 @router.get("/", response_model=list[InstancesRead])
 async def read_instances(
     session: AsyncSession = Depends(get_async_session),
+    # Фильтры
     name: Optional[str] = Query(None),
+    name__like: Optional[str] = Query(None),
+    name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
     object_id: Optional[int] = Query(None),
+    object_id__in: Optional[List[int]] = Query(None),
+    object_id__gte: Optional[int] = Query(None),
+    object_id__lte: Optional[int] = Query(None),
+    
     root_id: Optional[int] = Query(None),
+    root_id__in: Optional[List[int]] = Query(None),
+    
     parent_id: Optional[int] = Query(None),
+    parent_id__in: Optional[List[int]] = Query(None),
+    
     is_active: Optional[bool] = Query(None),
+    
+    id: Optional[int] = Query(None),
+    id__in: Optional[List[int]] = Query(None),
+    id__gte: Optional[int] = Query(None),
+    id__lte: Optional[int] = Query(None),
+    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
     current_user: User = Depends(get_current_user),
     log: LogCallable = Depends(LoggerInterface("instances"))
 ):
-
+    params = {
+        "name": name,
+        "name__like": name__like,
+        "name__sort": name__sort,
+        "object_id": object_id,
+        "object_id__in": object_id__in,
+        "object_id__gte": object_id__gte,
+        "object_id__lte": object_id__lte,
+        "root_id": root_id,
+        "root_id__in": root_id__in,
+        "parent_id": parent_id,
+        "parent_id__in": parent_id__in,
+        "is_active": is_active,
+        "id": id,
+        "id__in": id__in,
+        "id__gte": id__gte,
+        "id__lte": id__lte,
+        "id__sort": id__sort,
+    }
+    
+    QueryBuilder.validate_params(Instances, params, SEARCH_CONFIG[Instances])
+    filters = QueryBuilder.parse_query_params(params)
+    
     # Fetch user permissions
     result_user = await session.execute(
         select(User)
@@ -50,6 +96,12 @@ async def read_instances(
     user_perms = {perm.name for role in user.roles for perm in role.permissions}
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
+    # Build query
+    query = select(Instances)
+    query = QueryBuilder.apply_filters(query, Instances, filters)
+    query = QueryBuilder.apply_sorting(query, Instances, filters)
+
+    # Apply access control
     if not has_super_permission:
         # Fetch allowed root_ids for each level with can_read=True
         result_instance = await session.execute(
@@ -78,22 +130,7 @@ async def read_instances(
             )
         )
         allowed_type_roots = [row[0] for row in result_type.all()]
-
-    # Build the query
-    query = select(Instances)
-
-    if name:
-        query = query.where(Instances.name.ilike(f"%{name}%"))
-    if object_id:
-        query = query.where(Instances.object_id == object_id)
-    if root_id:
-        query = query.where(Instances.root_id == root_id)
-    if parent_id:
-        query = query.where(Instances.parent_id == parent_id)
-    if is_active is not None:
-        query = query.where(Instances.is_active == is_active)
-
-    if not has_super_permission:
+        
         query = query.join(Objects, Instances.object_id == Objects.id)
         query = query.join(Types, Objects.type_id == Types.id)
         query = query.where(
@@ -113,20 +150,6 @@ async def read_instances(
         pass
     
     return instances
-
-@router.get("/{instance_id}", response_model=InstancesRead)
-async def read_instance(
-    instance_id: int,
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_instance_permission(write=False)),
-    log: LogCallable = Depends(LoggerInterface("instances")) 
-):
-    instance = await db.get_instance(session, instance_id)
-    if not instance:
-        raise HTTPException(status_code=404, detail="Instance not found")
-    
-    await log(action="read_instance", details={"instance_id": instance_id})
-    return instance
 
 
 @router.post("/", response_model=InstanceCreated)

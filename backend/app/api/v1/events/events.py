@@ -16,6 +16,11 @@ from app.models.events import Events
 from app.core.security import get_current_user
 from app.logging.deps import LoggerInterface, LogCallable
 
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
+
 router = APIRouter(prefix="/events", tags=["DB: Events: Events"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -23,12 +28,51 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 @router.get("/", response_model=list[EventsRead])
 async def read_events(
     session: AsyncSession = Depends(get_async_session),
+    # Фильтры
     event_type_id: Optional[int] = Query(None),
+    event_type_id__in: Optional[List[int]] = Query(None),
+    
     instance_id: Optional[int] = Query(None),
+    instance_id__in: Optional[List[int]] = Query(None),
+    
+    timestamp: Optional[datetime] = Query(None),
+    timestamp__gte: Optional[datetime] = Query(None),
+    timestamp__lte: Optional[datetime] = Query(None),
+    timestamp__gt: Optional[datetime] = Query(None),
+    timestamp__lt: Optional[datetime] = Query(None),
+    timestamp__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    id: Optional[int] = Query(None),
+    id__in: Optional[List[int]] = Query(None),
+    id__gte: Optional[int] = Query(None),
+    id__lte: Optional[int] = Query(None),
+    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
     current_user: User = Depends(get_current_user),
     _: None = Depends(require_permissions("read_events")),
     log: LogCallable = Depends(LoggerInterface("events"))
 ):
+    params = {
+        "event_type_id": event_type_id,
+        "event_type_id__in": event_type_id__in,
+        "instance_id": instance_id,
+        "instance_id__in": instance_id__in,
+        "timestamp": timestamp,
+        "timestamp__gte": timestamp__gte,
+        "timestamp__lte": timestamp__lte,
+        "timestamp__gt": timestamp__gt,
+        "timestamp__lt": timestamp__lt,
+        "timestamp__sort": timestamp__sort,
+        "id": id,
+        "id__in": id__in,
+        "id__gte": id__gte,
+        "id__lte": id__lte,
+        "id__sort": id__sort,
+    }
+    
+    QueryBuilder.validate_params(Events, params, SEARCH_CONFIG[Events])
+    filters = QueryBuilder.parse_query_params(params)
+    
     # Fetch user permissions
     result_user = await session.execute(
         select(User)
@@ -42,6 +86,17 @@ async def read_events(
     user_perms = {perm.name for role in user.roles for perm in role.permissions}
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
+    # Build the query with joins for access control
+    query = select(Events).join(Instances, Events.instance_id == Instances.id)
+    
+    if not has_super_permission:
+        query = query.join(Objects, Instances.object_id == Objects.id)
+        query = query.join(Types, Objects.type_id == Types.id)
+    
+    # Apply filters through QueryBuilder
+    query = QueryBuilder.apply_filters(query, Events, filters)
+    
+    # Apply access control
     if not has_super_permission:
         # Fetch allowed root_ids for each level
         result_instance = await session.execute(
@@ -70,22 +125,7 @@ async def read_events(
             )
         )
         allowed_type_roots = [row[0] for row in result_type.all()]
-
-    # Build the query with joins for access control
-    query = select(Events).join(Instances, Events.instance_id == Instances.id)
-    
-    if not has_super_permission:
-        query = query.join(Objects, Instances.object_id == Objects.id)
-        query = query.join(Types, Objects.type_id == Types.id)
-    
-    # Apply filters
-    if event_type_id:
-        query = query.where(Events.event_type_id == event_type_id)
-    if instance_id:
-        query = query.where(Events.instance_id == instance_id)
-
-    # Apply access control
-    if not has_super_permission:
+        
         query = query.where(
             or_(
                 Instances.root_id.in_(allowed_instance_roots) if allowed_instance_roots else false(),
@@ -93,8 +133,12 @@ async def read_events(
                 Types.root_id.in_(allowed_type_roots) if allowed_type_roots else false()
             )
         )
-
-    query = query.order_by(Events.timestamp.desc())
+    
+    # Apply sorting (default to timestamp desc if no sort specified)
+    if not any("sort" in ops for ops in filters.values()):
+        query = query.order_by(Events.timestamp.desc())
+    else:
+        query = QueryBuilder.apply_sorting(query, Events, filters)
     
     result = await session.execute(query)
     events = result.scalars().all()
@@ -105,102 +149,6 @@ async def read_events(
         pass
 
     return events
-
-
-@router.get("/{event_id}", response_model=EventsRead)
-async def read_event(
-    event_id: int,
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user),
-    _: None = Depends(require_permissions("read_events")),
-    log: LogCallable = Depends(LoggerInterface("events"))
-):
-    # Get the event
-    event = await db.get_event(session, event_id)
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
-
-    # Check user has access to the instance
-    result_user = await session.execute(
-        select(User)
-        .where(User.id == current_user.id)
-        .options(selectinload(User.roles).selectinload(Role.permissions))
-    )
-    user = result_user.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
-    has_super_permission = "SUPER_PERMISSION" in user_perms
-
-    if not has_super_permission:
-        # Get instance with its hierarchy
-        instance_result = await session.execute(
-            select(Instances)
-            .where(Instances.id == event.instance_id)
-        )
-        instance = instance_result.scalar_one_or_none()
-        
-        if not instance:
-            raise HTTPException(status_code=404, detail="Instance not found")
-
-        # Get object and type roots
-        object_result = await session.execute(
-            select(Objects).where(Objects.id == instance.object_id)
-        )
-        obj = object_result.scalar_one_or_none()
-        
-        type_result = await session.execute(
-            select(Types).where(Types.id == obj.type_id)
-        )
-        type_ = type_result.scalar_one_or_none()
-
-        # Check access at any level
-        has_access = False
-        
-        # Check instance access
-        instance_access = await session.execute(
-            select(UserInstanceAccess)
-            .where(
-                UserInstanceAccess.user_id == current_user.id,
-                UserInstanceAccess.root_id == instance.root_id,
-                UserInstanceAccess.can_read.is_(True)
-            )
-        )
-        if instance_access.scalar_one_or_none():
-            has_access = True
-        
-        # Check object access
-        if not has_access:
-            object_access = await session.execute(
-                select(UserObjectAccess)
-                .where(
-                    UserObjectAccess.user_id == current_user.id,
-                    UserObjectAccess.root_id == obj.root_id,
-                    UserObjectAccess.can_read.is_(True)
-                )
-            )
-            if object_access.scalar_one_or_none():
-                has_access = True
-        
-        # Check type access
-        if not has_access:
-            type_access = await session.execute(
-                select(UserTypeAccess)
-                .where(
-                    UserTypeAccess.user_id == current_user.id,
-                    UserTypeAccess.root_id == type_.root_id,
-                    UserTypeAccess.can_read.is_(True)
-                )
-            )
-            if type_access.scalar_one_or_none():
-                has_access = True
-        
-        if not has_access:
-            raise HTTPException(status_code=403, detail="Access denied to this event's instance")
-
-    await log(action="read_event", details={"event_id": event_id})
-    return event
 
 
 @router.post("/", response_model=EventsRead)
