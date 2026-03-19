@@ -27,13 +27,13 @@ interface Props {
 }
 
 function normalizeEvent(event: Event): Event {
-    if (event.time instanceof Date) {
+    if (event.timestamp instanceof Date) {
         return event
     }
 
     return {
         ...event,
-        time: new Date(String(event.time)),
+        timestamp: new Date(String(event.timestamp)),
     }
 }
 
@@ -96,8 +96,8 @@ function EventsSection({
             (events ?? []).map(event => ({
                 event: event,
                 eventTypeName:
-                    eventTypeNameById.get(event.type_id) ??
-                    `Тип #${event.type_id}`,
+                    eventTypeNameById.get(event.event_type_id) ??
+                    `Тип #${event.event_type_id}`,
             })),
         [events, eventTypeNameById],
     )
@@ -198,7 +198,7 @@ function EventsSection({
                 <AddEntityForm
                     schema={eventSchema}
                     context={defaultCreateContext}
-                    defaults={{ info: '' }}
+                    defaults={{ info: {} }}
                     title='Добавление события'
                     submitCallback={handleCreateEvent}
                 />
@@ -208,8 +208,8 @@ function EventsSection({
                     schema={eventSchema}
                     context={{
                         instanceId: editTargetEvent.instance_id,
-                        defaultTypeId: editTargetEvent.type_id,
-                        defaultTime: editTargetEvent.time,
+                        defaultTypeId: editTargetEvent.event_type_id,
+                        defaultTime: editTargetEvent.timestamp,
                     }}
                     source={editTargetEvent}
                     title={`Изменение события #${editTargetEvent.id}`}
@@ -221,8 +221,8 @@ function EventsSection({
                     schema={eventSchema}
                     context={{
                         instanceId: viewTargetEvent.instance_id,
-                        defaultTypeId: viewTargetEvent.type_id,
-                        defaultTime: viewTargetEvent.time,
+                        defaultTypeId: viewTargetEvent.event_type_id,
+                        defaultTime: viewTargetEvent.timestamp,
                     }}
                     source={viewTargetEvent}
                     title={`Событие #${viewTargetEvent.id}`}

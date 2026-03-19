@@ -171,7 +171,7 @@ function EventsTable({
                                     <TableCell>#{row.event.id}</TableCell>
                                     <TableCell>{row.eventTypeName}</TableCell>
                                     <TableCell>
-                                        {toTimestamp(row.event.time)}
+                                        {toTimestamp(row.event.timestamp)}
                                     </TableCell>
                                     <TableCell>
                                         <Button

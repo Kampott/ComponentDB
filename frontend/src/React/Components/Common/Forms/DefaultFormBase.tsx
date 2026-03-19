@@ -3,6 +3,7 @@ import { ru } from 'date-fns/locale'
 import { ChevronDownIcon } from 'lucide-react'
 import { type Dispatch, type SetStateAction, useEffect, useState } from 'react'
 
+import KeyValueObjectEditor from '@Components/Common/Forms/KeyValueObjectEditor.tsx'
 import { Button } from '@Components/ui/button'
 import { Calendar } from '@Components/ui/calendar'
 import { Checkbox } from '@Components/ui/checkbox'
@@ -287,6 +288,27 @@ function DefaultFormBase<T>({
                                     aria-invalid={!!errors[field.bindData]}
                                 />
                             </div>
+                        ) : field.type === 'kv-object' ? (
+                            <KeyValueObjectEditor
+                                initialValue={
+                                    getField(field.bindData) as
+                                        | Record<string, unknown>
+                                        | null
+                                        | undefined
+                                }
+                                onChange={value =>
+                                    updateField(
+                                        field.bindData,
+                                        value as T[keyof T],
+                                    )
+                                }
+                                onErrorChange={error =>
+                                    setErrors(prev => ({
+                                        ...prev,
+                                        [field.bindData]: error,
+                                    }))
+                                }
+                            />
                         ) : (
                             <Input
                                 type={field.type}

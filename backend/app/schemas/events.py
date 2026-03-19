@@ -37,7 +37,8 @@ class EventTypesTypesRead(EventTypesTypesBase):
 class EventsBase(BaseModel):
     event_type_id: int
     instance_id: int
-    info: Optional[dict] = None
+    info: Optional[dict[str, object]] = None
+    timestamp: datetime
 
 class EventsCreate(EventsBase):
     pass
@@ -45,11 +46,11 @@ class EventsCreate(EventsBase):
 class EventsUpdate(BaseModel):
     event_type_id: int | None = None
     instance_id: int | None = None
-    info: Optional[dict] = None
+    info: Optional[dict[str, object]] = None
+    timestamp: datetime | None = None
 
 class EventsRead(EventsBase):
     id: int
-    timestamp: datetime
 
     class Config:
         from_attributes = True
@@ -58,8 +59,7 @@ class EventsRead(EventsBase):
 # Replacements
 class ReplacementsBase(BaseModel):
     event_id: int
-    replaced_id: int
-    replacement_id: int
+    new_instance_id: int
 
 class ReplacementsCreate(ReplacementsBase):
     pass

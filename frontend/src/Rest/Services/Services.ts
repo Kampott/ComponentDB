@@ -1,4 +1,5 @@
 import type IAuthService from '@/Interfaces/Services/IAuthService.ts'
+import type IEventTypeRelationsService from '@/Interfaces/Services/IEventTypeRelationsService.ts'
 import type IEventsService from '@/Interfaces/Services/IEventsService.ts'
 import type IEventsTypesService from '@/Interfaces/Services/IEventsTypesService.ts'
 import type IInstancesPropertiesService from '@/Interfaces/Services/IInstancesPropertiesService.ts'
@@ -10,6 +11,7 @@ import type IPropertiesTypesService from '@/Interfaces/Services/IPropertiesTypes
 import type IReplacementEventsService from '@/Interfaces/Services/IReplacementEventsService.ts'
 import MockAuthService from '@/Mocks/Services/MockAuthService.ts'
 import MockDataStore from '@/Mocks/Services/MockDataStore.ts'
+import MockEventTypeRelationsService from '@/Mocks/Services/MockEventTypeRelationsService.ts'
 import MockEventsService from '@/Mocks/Services/MockEventsService.ts'
 import MockEventsTypesService from '@/Mocks/Services/MockEventsTypesService.ts'
 import MockInstancesPropertiesService from '@/Mocks/Services/MockInstancesPropertiesService.ts'
@@ -22,6 +24,7 @@ import MockReplacementEventsService from '@/Mocks/Services/MockReplacementEvents
 import AxiosClient from '@Rest/AxiosClient.ts'
 import type RestApiClient from '@Rest/RestApiClient.ts'
 import AuthService from './AuthService.ts'
+import EventTypeRelationsService from './EventTypeRelationsService.ts'
 import EventsService from './EventsService.ts'
 import EventsTypesService from './EventsTypesService.ts'
 import InstancesPropertiesService from './InstancesPropertiesService.ts'
@@ -37,6 +40,7 @@ export default class Services {
 
     public readonly authService: IAuthService
     public readonly eventsService: IEventsService
+    public readonly eventTypeRelationsService: IEventTypeRelationsService
     public readonly eventsTypesService: IEventsTypesService
     public readonly instancesPropertiesService: IInstancesPropertiesService
     public readonly objectService: IObjectsService
@@ -57,6 +61,9 @@ export default class Services {
             this.restApiClient = null
             this.authService = new MockAuthService(store)
             this.eventsService = new MockEventsService(store)
+            this.eventTypeRelationsService = new MockEventTypeRelationsService(
+                store,
+            )
             this.eventsTypesService = new MockEventsTypesService(store)
             this.instancesPropertiesService =
                 new MockInstancesPropertiesService(store)
@@ -81,6 +88,9 @@ export default class Services {
 
         this.authService = new AuthService(this.restApiClient)
         this.eventsService = new EventsService(this.restApiClient)
+        this.eventTypeRelationsService = new EventTypeRelationsService(
+            this.restApiClient,
+        )
         this.eventsTypesService = new EventsTypesService(this.restApiClient)
         this.instancesPropertiesService = new InstancesPropertiesService(
             this.restApiClient,

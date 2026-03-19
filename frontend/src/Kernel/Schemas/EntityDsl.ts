@@ -21,6 +21,7 @@ export type EntityInputType =
     | 'select'
     | 'datetime'
     | 'password'
+    | 'kv-object'
 
 export type EntityFieldOption<Value> = {
     label: string
@@ -48,7 +49,7 @@ export type EntityFieldRead<Schema, Field extends keyof Schema, Context> = {
     printValue?: (
         value: Schema[Field],
         context: Context,
-    ) => string | Promise<string>
+    ) => import('react').ReactNode | Promise<import('react').ReactNode>
 }
 
 export type EntityFieldForm<Schema, Field extends keyof Schema, Context> = {

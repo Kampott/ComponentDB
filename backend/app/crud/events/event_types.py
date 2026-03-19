@@ -41,12 +41,22 @@ async def get_valid_event_types_for_instance(
     
     return result.scalars().all()
 
-async def get_event_types(db: AsyncSession, name: Optional[str] = None) -> List[EventTypes]:
+async def get_event_types(
+    db: AsyncSession,
+    name: Optional[str] = None,
+    type_id: Optional[int] = None,
+) -> List[EventTypes]:
     query = select(EventTypes)
     
     filters = []
     if name is not None:
         filters.append(EventTypes.name == name)
+    if type_id is not None:
+        query = query.join(
+            EventTypesTypes,
+            EventTypes.id == EventTypesTypes.event_type_id,
+        )
+        filters.append(EventTypesTypes.type_id == type_id)
     
     if filters:
         query = query.where(and_(*filters))

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date, datetime
 from typing import Any
 
 
@@ -61,13 +62,24 @@ class ApiClient:
         self._client.headers["Authorization"] = f"Bearer {token}"
 
     async def get(self, path: str, query: dict[str, Any] | None = None) -> Any:
-        return await self._request("GET", path, params=query)
+        return await self._request("GET", path, params=self._to_jsonable(query) if query else query)
 
     async def post(self, path: str, payload: dict[str, Any] | None = None) -> Any:
-        return await self._request("POST", path, json=payload or {})
+        return await self._request("POST", path, json=self._to_jsonable(payload or {}))
 
     async def patch(self, path: str, payload: dict[str, Any]) -> Any:
-        return await self._request("PATCH", path, json=payload)
+        return await self._request("PATCH", path, json=self._to_jsonable(payload))
+
+    def _to_jsonable(self, value: Any) -> Any:
+        if isinstance(value, datetime | date):
+            return value.isoformat()
+        if isinstance(value, dict):
+            return {key: self._to_jsonable(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [self._to_jsonable(item) for item in value]
+        if isinstance(value, tuple):
+            return [self._to_jsonable(item) for item in value]
+        return value
 
     async def _request(self, method: str, path: str, retry_on_401: bool = True, **kwargs: Any) -> Any:
         if self._client is None:

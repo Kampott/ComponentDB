@@ -31,15 +31,18 @@ function DefaultPopupForm<T>({
 
     function handleSubmit() {
         let hasError = false
-        const newErrors: Partial<Record<keyof T, string | null>> = {}
+        const newErrors: Partial<Record<keyof T, string | null>> = {
+            ...errors,
+        }
 
         fields.forEach(f => {
             if (f.validator) {
                 const err = f.validator(data[f.bindData])
                 newErrors[f.bindData] = err
-                if (err) hasError = true
             }
         })
+
+        hasError = Object.values(newErrors).some(Boolean)
         setErrors(newErrors)
 
         if (!hasError) {

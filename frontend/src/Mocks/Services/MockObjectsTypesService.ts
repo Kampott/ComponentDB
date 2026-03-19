@@ -28,6 +28,14 @@ export default class MockObjectsTypesService
         })
     }
 
+    public async getAllTypes(): Promise<ObjectType[]> {
+        return [...this.store.objectTypes]
+    }
+
+    public async getRootTypes(): Promise<ObjectType[]> {
+        return this.store.objectTypes.filter(type => type.parent_id === null)
+    }
+
     public async getTypesByParentId(parentId: number): Promise<ObjectType[]> {
         return await this.list({ parent_id: parentId })
     }

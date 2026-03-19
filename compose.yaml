@@ -130,6 +130,7 @@ services:
       - -c
       - |
         test -n "$$REVISION_MESSAGE"
+        alembic -c /app/postgres/python_core/alembic.ini upgrade head
         alembic -c /app/postgres/python_core/alembic.ini revision --autogenerate -m "$$REVISION_MESSAGE"
     volumes:
       - ./backend:/app/backend
@@ -158,6 +159,7 @@ services:
       - -c
       - |
         test -n "$$REVISION_MESSAGE"
+        alembic -c /app/postgres/python_core/alembic_logs.ini upgrade head
         alembic -c /app/postgres/python_core/alembic_logs.ini revision --autogenerate -m "$$REVISION_MESSAGE"
     volumes:
       - ./backend:/app/backend

@@ -49,7 +49,7 @@ function ViewEntityInfo<
                         <Label className='text-muted-foreground text-xs'>
                             {field.label}
                         </Label>
-                        <div className='bg-muted/30 rounded-md border px-3 py-2 text-sm'>
+                        <div className='bg-muted/30 rounded-md border px-3 py-2 text-sm whitespace-pre-wrap'>
                             {field.value}
                         </div>
                     </div>

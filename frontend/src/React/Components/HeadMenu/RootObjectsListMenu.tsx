@@ -47,7 +47,9 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
     async function loadRootObjectTypes() {
         setRootObjectTypes(null)
         try {
-            setRootObjectTypes(await services.objectsTypesService.list())
+            setRootObjectTypes(
+                await services.objectsTypesService.getRootTypes(),
+            )
         } catch (error) {
             handleApiError(error as RestApiError, {
                 navigate,

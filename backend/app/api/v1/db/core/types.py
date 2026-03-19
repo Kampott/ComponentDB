@@ -1,25 +1,24 @@
+from typing import Optional
+
+import app.crud.core.types as db
+from app.core.security import get_current_user
+from app.crud.auth.auth import (
+    _check_permission,
+    _check_type_permission,
+    require_type_permission,
+)
+from app.db.database import get_async_session
+from app.logging.deps import LogCallable, LoggerInterface
+from app.models.auth import Role, User, UserTypeAccess
+from app.models.core import Types
+from app.models.events import EventTypesTypes
+from app.schemas.core import TypesCreate, TypesRead, TypesUpdate
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
-from sqlalchemy import select, or_
-from sqlalchemy.sql import true, false
 from sqlalchemy.orm import selectinload
-import typing
-
-from app.schemas.core import TypesRead, TypesCreate, TypesUpdate
-import app.crud.core.types as db
-from app.db.database import get_async_session
-
-from app.crud.auth.auth import require_permission as require_permissions
-from app.models.auth import User
-
-from app.crud.auth.auth import _check_permission,require_type_permission, get_type_root_id, _check_type_permission
-from app.models.auth import User, Role, Permission, UserTypeAccess, UserRole, RolePermission
-from app.core.security import get_current_user
-from app.models.core import Types
-
-from app.logging.deps import LoggerInterface, LogCallable
+from sqlalchemy.sql import false
 
 router = APIRouter(prefix="/types", tags=["DB: Core: Types"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -32,6 +31,7 @@ async def read_types(
     name: Optional[str] = Query(None),
     parent_id: Optional[int] = Query(None),
     root_id: Optional[int] = Query(None),
+    event_type_id: Optional[int] = Query(None),
     current_user: User = Depends(get_current_user),
     log: LogCallable = Depends(LoggerInterface("types"))
 ):
@@ -66,8 +66,13 @@ async def read_types(
         query = query.where(Types.name.ilike(f"%{name}%"))
     if root_id:
         query = query.where(Types.root_id == root_id)
-    if parent_id:
+    if parent_id is not None:
         query = query.where(Types.parent_id == parent_id)
+    if event_type_id is not None:
+        query = query.join(
+            EventTypesTypes,
+            Types.id == EventTypesTypes.type_id,
+        ).where(EventTypesTypes.event_type_id == event_type_id)
 
     if not has_super_permission:
         query = query.where(

@@ -254,7 +254,7 @@ async def seed_azure_pdm() -> None:
             session.add(event)
             await session.flush()
 
-            session.add(Replacements(event_id=event.id, replaced_id=old_inst.id, replacement_id=new_inst.id))
+            session.add(Replacements(event_id=event.id, new_instance_id=new_inst.id))
             current_comp_instances[key] = new_inst
 
             if i % 500 == 0:
