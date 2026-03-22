@@ -8,6 +8,7 @@ import FileSystemTreeView, {
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
+import { objectInstanceUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { ObjectInstance, ObjectInstanceUpdate } from '@Schemas'
@@ -161,6 +162,7 @@ function InstanceTreeView({ instance }: Props) {
             {editTargetInstance && (
                 <EditEntityForm
                     schema={objectInstanceSchema}
+                    uiSchema={objectInstanceUiSchema}
                     context={{
                         objectId: editTargetInstance.object_id,
                         parentId: editTargetInstance.parent_id,
@@ -173,7 +175,7 @@ function InstanceTreeView({ instance }: Props) {
             )}
             {viewTargetInstance && (
                 <ViewEntityModal
-                    schema={objectInstanceSchema}
+                    uiSchema={objectInstanceUiSchema}
                     context={{
                         objectId: viewTargetInstance.object_id,
                         parentId: viewTargetInstance.parent_id,

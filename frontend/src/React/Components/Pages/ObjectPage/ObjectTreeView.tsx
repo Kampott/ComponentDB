@@ -10,6 +10,7 @@ import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
 import { Button } from '@Components/ui/button'
+import { objectUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { Object, ObjectAdd, ObjectUpdate } from '@Schemas'
@@ -182,6 +183,7 @@ function ObjectTreeView({ object }: Props) {
             {formShow && (
                 <AddEntityForm
                     schema={objectSchema}
+                    uiSchema={objectUiSchema}
                     context={{
                         parentTypeId: formParentObject.type_id,
                         parentObjectId: formParentObject.id,
@@ -194,6 +196,7 @@ function ObjectTreeView({ object }: Props) {
             {editTargetObject && (
                 <EditEntityForm
                     schema={objectSchema}
+                    uiSchema={objectUiSchema}
                     context={{
                         parentTypeId: editTargetObject.type_id,
                         parentObjectId: editTargetObject.parent_id,
@@ -205,7 +208,7 @@ function ObjectTreeView({ object }: Props) {
             )}
             {viewTargetObject && (
                 <ViewEntityModal
-                    schema={objectSchema}
+                    uiSchema={objectUiSchema}
                     context={{
                         parentTypeId: viewTargetObject.type_id,
                         parentObjectId: viewTargetObject.parent_id,

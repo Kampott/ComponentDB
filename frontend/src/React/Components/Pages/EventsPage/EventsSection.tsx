@@ -7,6 +7,7 @@ import EventsTable, {
 } from '@Components/Pages/EventsPage/EventsTable.tsx'
 import { Button } from '@Components/ui/button'
 import { Input } from '@Components/ui/input'
+import { eventUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import {
@@ -197,6 +198,7 @@ function EventsSection({
             {showAddEventForm && (
                 <AddEntityForm
                     schema={eventSchema}
+                    uiSchema={eventUiSchema}
                     context={defaultCreateContext}
                     defaults={{ info: {} }}
                     title='Добавление события'
@@ -206,6 +208,7 @@ function EventsSection({
             {editTargetEvent && (
                 <EditEntityForm
                     schema={eventSchema}
+                    uiSchema={eventUiSchema}
                     context={{
                         instanceId: editTargetEvent.instance_id,
                         defaultTypeId: editTargetEvent.event_type_id,
@@ -218,7 +221,7 @@ function EventsSection({
             )}
             {viewTargetEvent && (
                 <ViewEntityModal
-                    schema={eventSchema}
+                    uiSchema={eventUiSchema}
                     context={{
                         instanceId: viewTargetEvent.instance_id,
                         defaultTypeId: viewTargetEvent.event_type_id,

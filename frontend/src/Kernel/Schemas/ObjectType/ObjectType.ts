@@ -2,9 +2,7 @@ import {
     defineEntitySchema,
     type InferCreate,
     type InferUpdate,
-} from '@Kernel/Schemas/EntityDsl.ts'
-import { useServicesStore } from '@StorageImpl'
-import { ObjectTypeValidator } from './ObjectTypeValidator.ts'
+} from '@EntityDsl/Core'
 
 export interface ObjectType {
     id: number
@@ -25,70 +23,20 @@ export const objectTypeSchema = defineEntitySchema<
     resource: 'types',
     fields: {
         id: {
-            common: {
-                label: 'ID',
-                description: 'Уникальный идентификатор',
-            },
-            create: { policy: 'forbidden', visible: false },
-            update: { policy: 'forbidden', visible: false },
-            read: { visible: false },
-            form: { input: 'number' },
+            create: { policy: 'forbidden' },
+            update: { policy: 'forbidden' },
         },
         name: {
-            common: {
-                label: 'Название',
-                description: 'Название типа объекта',
-            },
             create: { policy: 'required' },
             update: { policy: 'optional' },
-            form: {
-                input: 'text',
-                validator: ObjectTypeValidator.name,
-            },
         },
         parent_id: {
-            common: {
-                label: 'Родительский тип',
-                description: 'ID родительского типа',
-            },
-            create: {
-                policy: 'required',
-                visible: false,
-                defaultValue: context => context.parentTypeId,
-            },
+            create: { policy: 'required' },
             update: { policy: 'forbidden' },
-            read: {
-                printValue: async (value): Promise<string> => {
-                    if (value === null) {
-                        return 'Корневой тип'
-                    }
-
-                    try {
-                        const typeService = useServicesStore.getState()
-                            .services as unknown as {
-                            objectsTypesService: {
-                                read: (id: number) => Promise<{ name: string }>
-                            }
-                        }
-                        const parentType =
-                            await typeService.objectsTypesService.read(value)
-                        return parentType.name
-                    } catch {
-                        return String(value)
-                    }
-                },
-            },
-            form: { input: 'number' },
         },
         root_id: {
-            common: {
-                label: 'Корневой тип',
-                description: 'ID корневого типа',
-            },
-            create: { policy: 'forbidden', visible: false },
-            update: { policy: 'forbidden', visible: false },
-            read: { visible: false },
-            form: { input: 'number' },
+            create: { policy: 'forbidden' },
+            update: { policy: 'forbidden' },
         },
     },
 })

@@ -1,9 +1,9 @@
-import type { HasId } from '@Kernel/Schemas/DefaultProps.ts'
+import type { HasId } from '@EntityDsl/Core'
 import {
     defineEntitySchema,
     type InferCreate,
     type InferUpdate,
-} from '@Kernel/Schemas/EntityDsl.ts'
+} from '@EntityDsl/Core'
 
 export interface InstanceProperty extends HasId {
     value: string
@@ -22,36 +22,16 @@ export const instancePropertySchema = defineEntitySchema<
     resource: 'instanceproperties',
     fields: {
         id: {
-            common: {
-                label: 'ID',
-                description: 'Уникальный идентификатор',
-            },
-            create: { policy: 'forbidden', visible: false },
-            update: { policy: 'forbidden', visible: false },
-            read: { visible: false },
-            form: { input: 'number' },
+            create: { policy: 'forbidden' },
+            update: { policy: 'forbidden' },
         },
         value: {
-            common: {
-                label: 'Значение',
-                description: 'Значение свойства экземпляра',
-            },
             create: { policy: 'required' },
             update: { policy: 'optional' },
-            form: { input: 'text' },
         },
         instance_id: {
-            common: {
-                label: 'ID экземпляра',
-                description: 'Идентификатор связанного экземпляра',
-            },
-            create: {
-                policy: 'required',
-                visible: false,
-                defaultValue: context => context.instanceId,
-            },
+            create: { policy: 'required' },
             update: { policy: 'forbidden' },
-            form: { input: 'number' },
         },
     },
 })

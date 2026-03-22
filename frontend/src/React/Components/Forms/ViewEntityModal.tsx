@@ -7,25 +7,28 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@Components/ui/dialog'
-import type { EntityFields, EntitySchema, InferEntity } from '@Schemas'
+import type {
+    EntityContext,
+    EntityCoreSchema,
+    InferEntity,
+} from '@EntityDsl/Core'
+import type { EntityUiSchema } from '@EntityDsl/Ui'
 
-interface Props<
-    Schema extends object,
-    Context,
-    Fields extends EntityFields<Schema, Context>,
-> {
-    schema: EntitySchema<Schema, Context, Fields>
-    context: Context
-    source: InferEntity<EntitySchema<Schema, Context, Fields>>
+interface Props<S extends EntityCoreSchema<any, any, any>> {
+    uiSchema: EntityUiSchema<S>
+    context: EntityContext<S>
+    source: InferEntity<S>
     title: string
     onClose: () => void
 }
 
-function ViewEntityModal<
-    Schema extends object,
-    Context,
-    Fields extends EntityFields<Schema, Context>,
->({ schema, context, source, title, onClose }: Props<Schema, Context, Fields>) {
+function ViewEntityModal<S extends EntityCoreSchema<any, any, any>>({
+    uiSchema,
+    context,
+    source,
+    title,
+    onClose,
+}: Props<S>) {
     return (
         <Dialog open={true} onOpenChange={open => !open && onClose()}>
             <DialogContent className='sm:max-w-[560px]'>
@@ -33,7 +36,7 @@ function ViewEntityModal<
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
                 <ViewEntityInfo
-                    schema={schema}
+                    uiSchema={uiSchema}
                     context={context}
                     source={source}
                 />

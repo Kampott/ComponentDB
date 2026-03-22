@@ -1,5 +1,4 @@
-export * from './DefaultProps.ts'
-export * from './EntityDsl.ts'
+export * from '@EntityDsl/Core'
 
 export * from './Validator/DefaultValidator.ts'
 export * from './Validator/Types.ts'

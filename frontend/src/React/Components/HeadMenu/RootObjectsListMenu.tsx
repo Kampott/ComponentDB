@@ -12,6 +12,7 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@Components/ui/sheet'
+import { objectTypeUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { ObjectType, ObjectTypeAdd, ObjectTypeUpdate } from '@Schemas'
@@ -141,6 +142,7 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
             {formShow && (
                 <AddEntityForm
                     schema={objectTypeSchema}
+                    uiSchema={objectTypeUiSchema}
                     context={{ parentTypeId: null }}
                     defaults={{ name: '' }}
                     title='Добавление нового типа'
@@ -150,6 +152,7 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
             {editTargetType && (
                 <EditEntityForm
                     schema={objectTypeSchema}
+                    uiSchema={objectTypeUiSchema}
                     context={{ parentTypeId: editTargetType.parent_id }}
                     source={editTargetType}
                     title={`Изменение типа "${editTargetType.name}"`}
@@ -158,7 +161,7 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
             )}
             {viewTargetType && (
                 <ViewEntityModal
-                    schema={objectTypeSchema}
+                    uiSchema={objectTypeUiSchema}
                     context={{ parentTypeId: viewTargetType.parent_id }}
                     source={viewTargetType}
                     title={`Просмотр типа "${viewTargetType.name}"`}

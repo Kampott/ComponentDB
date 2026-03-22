@@ -36,6 +36,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@Components/ui/select'
+import { eventTypeUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import {
@@ -611,6 +612,7 @@ function EventTypesSection(): ReactNode {
             {showAddEventTypeForm && (
                 <AddEntityForm
                     schema={eventTypeSchema}
+                    uiSchema={eventTypeUiSchema}
                     context={{}}
                     defaults={{ name: '' }}
                     title='Добавление типа события'
@@ -621,6 +623,7 @@ function EventTypesSection(): ReactNode {
             {editTargetEventType && (
                 <EditEntityForm
                     schema={eventTypeSchema}
+                    uiSchema={eventTypeUiSchema}
                     context={{}}
                     source={editTargetEventType}
                     title={`Изменение типа события "${editTargetEventType.name}"`}
