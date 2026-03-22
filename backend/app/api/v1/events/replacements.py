@@ -21,6 +21,11 @@ from app.models.auth import (
 from app.models.core import Instances, Objects, Types
 from app.schemas.events import ReplacementsCreate, ReplacementsRead
 
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
+
 router = APIRouter(prefix="/replacements", tags=["DB: Events: Replacements"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -99,13 +104,33 @@ async def _load_user_with_roles(
 @router.get("/", response_model=list[ReplacementsRead])
 async def read_replacements(
     session: AsyncSession = Depends(get_async_session),
+    # Фильтры
     event_id: Optional[int] = Query(None),
+    event_id__in: Optional[List[int]] = Query(None),
+    
     new_instance_id: Optional[int] = Query(None),
+    new_instance_id__in: Optional[List[int]] = Query(None),
+    
     current_user: User = Depends(get_current_user),
     _: None = Depends(require_permissions("read_replacements")),
-    log: LogCallable = Depends(LoggerInterface("replacements")),
+    log: LogCallable = Depends(LoggerInterface("replacements"))
 ):
-    replacements = await db.get_replacements(session, event_id, new_instance_id)
+    params = {
+        "event_id": event_id,
+        "event_id__in": event_id__in,
+        "new_instance_id": new_instance_id,
+        "new_instance_id__in": new_instance_id__in,
+    }
+    
+    QueryBuilder.validate_params(Replacements, params, SEARCH_CONFIG[Replacements])
+    filters = QueryBuilder.parse_query_params(params)
+    
+    query = select(Replacements)
+    query = QueryBuilder.apply_filters(query, Replacements, filters)
+    query = QueryBuilder.apply_sorting(query, Replacements, filters)
+    
+    result = await session.execute(query)
+    replacements = result.scalars().all()
 
     try:
         await log(action="read_replacements")
@@ -113,26 +138,6 @@ async def read_replacements(
         pass
 
     return replacements
-
-
-@router.get("/{event_id}/{new_instance_id}", response_model=ReplacementsRead)
-async def read_replacement(
-    event_id: int,
-    new_instance_id: int,
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user),
-    _: None = Depends(require_permissions("read_replacements")),
-    log: LogCallable = Depends(LoggerInterface("replacements")),
-):
-    replacement = await db.get_replacement(session, event_id, new_instance_id)
-    if not replacement:
-        raise HTTPException(status_code=404, detail="Replacement not found")
-
-    await log(
-        action="read_replacement",
-        details={"event_id": event_id, "new_instance_id": new_instance_id},
-    )
-    return replacement
 
 
 @router.post("/", response_model=ReplacementsRead)

@@ -12,20 +12,56 @@ from app.models.auth import User
 
 from app.logging.deps import LoggerInterface, LogCallable
 
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
+
 router = APIRouter(prefix="/property_types", tags=["DB: Core: Property Types"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 @router.get("/", response_model=list[PropertyTypesRead])
 async def list_property_types(
-        current_user: User = Depends(require_permissions("read_property_types")),
-        type_id: Optional[int] = Query(None),
-        name: Optional[str] = Query(None),
-        is_static: Optional[bool] = Query(None),
-        session: AsyncSession = Depends(get_async_session),
-        log: LogCallable = Depends(LoggerInterface("property_types"))
+    session: AsyncSession = Depends(get_async_session),
+    # Фильтры
+    type_id: Optional[int] = Query(None),
+    type_id__in: Optional[List[int]] = Query(None),
+    
+    name: Optional[str] = Query(None),
+    name__like: Optional[str] = Query(None),
+    name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    is_static: Optional[bool] = Query(None),
+    
+    id: Optional[int] = Query(None),
+    id__in: Optional[List[int]] = Query(None),
+    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    current_user: User = Depends(require_permissions("read_property_types")),
+    log: LogCallable = Depends(LoggerInterface("property_types"))
 ):
-    property_types = await db.get_propertytypes(session, type_id, name, is_static)
+    params = {
+        "type_id": type_id,
+        "type_id__in": type_id__in,
+        "name": name,
+        "name__like": name__like,
+        "name__sort": name__sort,
+        "is_static": is_static,
+        "id": id,
+        "id__in": id__in,
+        "id__sort": id__sort,
+    }
+    
+    QueryBuilder.validate_params(PropertyTypes, params, SEARCH_CONFIG[PropertyTypes])
+    filters = QueryBuilder.parse_query_params(params)
+    
+    query = select(PropertyTypes)
+    query = QueryBuilder.apply_filters(query, PropertyTypes, filters)
+    query = QueryBuilder.apply_sorting(query, PropertyTypes, filters)
+    
+    result = await session.execute(query)
+    property_types = result.scalars().all()
     
     try:
         await log(action="read_property_types")
@@ -33,16 +69,6 @@ async def list_property_types(
         pass
     
     return property_types
-
-
-@router.get("/{property_type_id}", response_model=PropertyTypesRead)
-async def read_property_type(property_type_id: int, current_user: User = Depends(require_permissions("read_property_types")), session: AsyncSession = Depends(get_async_session),
-    log: LogCallable = Depends(LoggerInterface("property_types"))):
-    property_type = await db.get_propertytype(session, property_type_id)
-    if not property_type:
-        raise HTTPException(status_code=404, detail="Type proprety not found")
-    await log(action="read_property_type", details={"property_type_id": property_type_id}) 
-    return property_type
 
 
 @router.post("/", response_model=PropertyTypesCreate)

@@ -8,6 +8,10 @@ from app.db.database import get_async_session
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
 from app.logging.deps import LoggerInterface, LogCallable
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
 
 router = APIRouter(prefix="/permissions", tags=["DB: Auth: Permissions"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -29,28 +33,43 @@ async def permission_create(
 @router.get("/", response_model=list[PermissionOut])
 async def read_permissions(
     session: AsyncSession = Depends(get_async_session),
-    name: Optional[str] = None,
-    description: Optional[str] = Query(None),
+    # Фильтры
+    name: Optional[str] = Query(None),
+    name__like: Optional[str] = Query(None),
+    name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    id: Optional[int] = Query(None),
+    id__in: Optional[List[int]] = Query(None),
+    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
     current_user: User = Depends(require_permissions("read_permission")),
     log: LogCallable = Depends(LoggerInterface("permissions"))
 ):
-    permissions = await get_permissions(session, name, description)
+    params = {
+        "name": name,
+        "name__like": name__like,
+        "name__sort": name__sort,
+        "id": id,
+        "id__in": id__in,
+        "id__sort": id__sort,
+    }
+    
+    QueryBuilder.validate_params(Permission, params, SEARCH_CONFIG[Permission])
+    filters = QueryBuilder.parse_query_params(params)
+    
+    query = select(Permission)
+    query = QueryBuilder.apply_filters(query, Permission, filters)
+    query = QueryBuilder.apply_sorting(query, Permission, filters)
+    
+    result = await session.execute(query)
+    permissions = result.scalars().all()
+    
     try:
         await log(action="read_permissions")
     except Exception:
         pass
+    
     return permissions
-
-@router.get("/{permission_id}/", response_model=PermissionOut)
-async def read_permission(
-    permission_id: int,
-    current_user: User = Depends(require_permissions("read_permission")),
-    session: AsyncSession = Depends(get_async_session),
-    log: LogCallable = Depends(LoggerInterface("permissions"))
-):
-    perm = await get_permission(session, permission_id)
-    await log(action="read_permission", details={"permission_id": permission_id})
-    return perm
 
 @router.delete("/{permission_id}/", status_code=204)
 async def delete_permissions(

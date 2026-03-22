@@ -12,47 +12,63 @@ from app.logging.deps import LoggerInterface, LogCallable
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
 
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
+
 
 router = APIRouter(prefix="/instanceproperties", tags=["DB: Core: Instance Properties"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 @router.get("/", response_model=list[InstancePropertiesRead])
-async def read_instance_properties(session: AsyncSession = Depends(get_async_session),
-                                    current_user: User = Depends(require_permissions("read_instance_properties")),
-                                   instance_id: Optional[int] = None,
-                                   value: Optional[str] = None,
-                                   property_type_id: Optional[int] = None,
-                                log: LogCallable = Depends(LoggerInterface("instance_properties"))):
-    result = await db.get_instanceproperties(session, instance_id, value, property_type_id)
+async def read_instance_properties(
+    session: AsyncSession = Depends(get_async_session),
+    # Фильтры
+    instance_id: Optional[int] = Query(None),
+    instance_id__in: Optional[List[int]] = Query(None),
+    
+    property_type_id: Optional[int] = Query(None),
+    property_type_id__in: Optional[List[int]] = Query(None),
+    
+    value: Optional[str] = Query(None),
+    value__like: Optional[str] = Query(None),
+    
+    id: Optional[int] = Query(None),
+    id__in: Optional[List[int]] = Query(None),
+    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    current_user: User = Depends(require_permissions("read_instance_properties")),
+    log: LogCallable = Depends(LoggerInterface("instance_properties"))
+):
+    params = {
+        "instance_id": instance_id,
+        "instance_id__in": instance_id__in,
+        "property_type_id": property_type_id,
+        "property_type_id__in": property_type_id__in,
+        "value": value,
+        "value__like": value__like,
+        "id": id,
+        "id__in": id__in,
+        "id__sort": id__sort,
+    }
+    
+    QueryBuilder.validate_params(InstanceProperties, params, SEARCH_CONFIG[InstanceProperties])
+    filters = QueryBuilder.parse_query_params(params)
+    
+    query = select(InstanceProperties)
+    query = QueryBuilder.apply_filters(query, InstanceProperties, filters)
+    query = QueryBuilder.apply_sorting(query, InstanceProperties, filters)
+    
+    result = await session.execute(query)
+    instance_properties = result.scalars().all()
+    
     try:
-        await log(
-            action="read_instance_properties",
-            details={
-                "value": value
-            }
-        )
+        await log(action="read_instance_properties")
     except Exception:
         pass
-    return result
-
-
-@router.get("/{instance_property_id}", response_model=InstancePropertiesRead)
-async def read_instance_properties(instance_property_id: int,
-        current_user: User = Depends(require_permissions("read_instance_properties")),
-        session: AsyncSession = Depends(get_async_session),
-        log: LogCallable = Depends(LoggerInterface("instance_properties"))):
-    obj = await db.get_instanceproperty(session, instance_property_id)
-    if not obj:
-        raise HTTPException(status_code=404, detail="Instance property not found")
-    try:
-        await log(
-            action="read_instance_properties",
-            details={
-            }
-        )
-    except Exception:
-        pass   
-    return obj
+    
+    return instance_properties
 
 
 @router.post("/", response_model=InstancePropertiesRead)

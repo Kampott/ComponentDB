@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Optional, List
+from app.core.query_builder import QueryBuilder
 
 import app.crud.core.types as db
 from app.core.security import get_current_user
@@ -19,6 +20,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import false
+from app.core.search_config import SEARCH_CONFIG
+
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
 
 router = APIRouter(prefix="/types", tags=["DB: Core: Types"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -28,13 +35,51 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 @router.get("/", response_model=list[TypesRead])
 async def read_types(
     session: AsyncSession = Depends(get_async_session),
+    # Базовые фильтры
     name: Optional[str] = Query(None),
+    name__like: Optional[str] = Query(None),
+    name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
     parent_id: Optional[int] = Query(None),
+    parent_id__in: Optional[List[int]] = Query(None),
+    
     root_id: Optional[int] = Query(None),
+    root_id__in: Optional[List[int]] = Query(None),
+    
+    id: Optional[int] = Query(None),
+    id__in: Optional[List[int]] = Query(None),
+    id__gte: Optional[int] = Query(None),
+    id__lte: Optional[int] = Query(None),
+    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    # Специальный фильтр для event_type
     event_type_id: Optional[int] = Query(None),
+    
     current_user: User = Depends(get_current_user),
     log: LogCallable = Depends(LoggerInterface("types"))
 ):
+    # Собираем все параметры
+    params = {
+        "name": name,
+        "name__like": name__like,
+        "name__sort": name__sort,
+        "parent_id": parent_id,
+        "parent_id__in": parent_id__in,
+        "root_id": root_id,
+        "root_id__in": root_id__in,
+        "id": id,
+        "id__in": id__in,
+        "id__gte": id__gte,
+        "id__lte": id__lte,
+        "id__sort": id__sort,
+    }
+    
+    # Валидируем параметры согласно конфигурации
+    QueryBuilder.validate_params(Types, params, SEARCH_CONFIG[Types])
+    
+    # Парсим параметры
+    filters = QueryBuilder.parse_query_params(params)
+    
     # Fetch user permissions
     result_user = await session.execute(
         select(User)
@@ -48,6 +93,21 @@ async def read_types(
     user_perms = {perm.name for role in user.roles for perm in role.permissions}
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
+    # Строим базовый запрос
+    query = select(Types)
+    
+    # Применяем фильтры через QueryBuilder
+    query = QueryBuilder.apply_filters(query, Types, filters)
+    query = QueryBuilder.apply_sorting(query, Types, filters)
+    
+    # Специальный фильтр для event_type_id (не через QueryBuilder)
+    if event_type_id is not None:
+        query = query.join(
+            EventTypesTypes,
+            Types.id == EventTypesTypes.type_id,
+        ).where(EventTypesTypes.event_type_id == event_type_id)
+    
+    # Применяем контроль доступа
     if not has_super_permission:
         # Fetch allowed root_ids for types with can_read=True
         result_type = await session.execute(
@@ -58,55 +118,21 @@ async def read_types(
             )
         )
         allowed_type_roots = [row[0] for row in result_type.all()]
-
-    # Build the query
-    query = select(Types)
-
-    if name:
-        query = query.where(Types.name.ilike(f"%{name}%"))
-    if root_id:
-        query = query.where(Types.root_id == root_id)
-    if parent_id is not None:
-        query = query.where(Types.parent_id == parent_id)
-    if event_type_id is not None:
-        query = query.join(
-            EventTypesTypes,
-            Types.id == EventTypesTypes.type_id,
-        ).where(EventTypesTypes.event_type_id == event_type_id)
-
-    if not has_super_permission:
+        
         query = query.where(
             Types.root_id.in_(allowed_type_roots) if allowed_type_roots else false()
         )
 
+    # Выполняем запрос
     result = await session.execute(query)
     types = result.scalars().all()
 
     try:
-        await log(
-            action="read_types"
-        )
+        await log(action="read_types")
     except Exception:
         pass
+    
     return types
-
-
-@router.get("/{type_id}", response_model=TypesRead)
-async def read_type(
-    type_id: int,
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_type_permission(write=False)),
-    log: LogCallable = Depends(LoggerInterface("types"))
-):
-    type_obj = await db.get_type(session, type_id)
-    if not type_obj:
-        raise HTTPException(status_code=404, detail="Type not found")
-
-    await log(action="read_type", details={
-        "type_id": type_id
-    })
-    return type_obj
-
 
 @router.post("/", response_model=TypesCreate)
 async def add_type(

@@ -9,6 +9,10 @@ from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
 from app.logging.deps import LoggerInterface, LogCallable
 import uuid
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
 
 router = APIRouter(prefix="/user_object_access", tags=["DB: Auth: User Object Access"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -30,16 +34,43 @@ async def user_object_access_create(
 @router.get("/", response_model=list[UserObjectAccessOut])
 async def read_user_object_access(
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions("read_user_object_access")),
-    user_id: Optional[uuid.UUID] = None,
+    # Фильтры
+    user_id: Optional[uuid.UUID] = Query(None),
+    user_id__in: Optional[List[uuid.UUID]] = Query(None),
+    
     root_id: Optional[int] = Query(None),
+    root_id__in: Optional[List[int]] = Query(None),
+    
+    can_read: Optional[bool] = Query(None),
+    can_write: Optional[bool] = Query(None),
+    
+    current_user: User = Depends(require_permissions("read_user_object_access")),
     log: LogCallable = Depends(LoggerInterface("user_access"))
 ):
-    access_list = await get_user_object_access(session, user_id, root_id)
+    params = {
+        "user_id": user_id,
+        "user_id__in": user_id__in,
+        "root_id": root_id,
+        "root_id__in": root_id__in,
+        "can_read": can_read,
+        "can_write": can_write,
+    }
+    
+    QueryBuilder.validate_params(UserObjectAccess, params, SEARCH_CONFIG[UserObjectAccess])
+    filters = QueryBuilder.parse_query_params(params)
+    
+    query = select(UserObjectAccess)
+    query = QueryBuilder.apply_filters(query, UserObjectAccess, filters)
+    query = QueryBuilder.apply_sorting(query, UserObjectAccess, filters)
+    
+    result = await session.execute(query)
+    access_list = result.scalars().all()
+    
     try:
         await log(action="read_user_object_access")
     except Exception:
         pass
+    
     return access_list
 
 @router.delete("/{root_id}/{user_id}", status_code=204)

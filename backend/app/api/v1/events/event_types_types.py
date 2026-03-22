@@ -22,6 +22,11 @@ from app.models.events import EventTypesTypes
 
 from app.logging.deps import LoggerInterface, LogCallable
 
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
+
 router = APIRouter(prefix="/event_types_types", tags=["DB: Events: EventTypesTypes"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -29,12 +34,27 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 @router.get("/", response_model=list[EventTypesTypesRead])
 async def read_event_types_types(
     session: AsyncSession = Depends(get_async_session),
+    # Фильтры
     event_type_id: Optional[int] = Query(None),
+    event_type_id__in: Optional[List[int]] = Query(None),
+    
     type_id: Optional[int] = Query(None),
+    type_id__in: Optional[List[int]] = Query(None),
+    
     current_user: User = Depends(get_current_user),
     _: None = Depends(require_permissions("read_event_types_types")),
     log: LogCallable = Depends(LoggerInterface("event_types_types"))
 ):
+    params = {
+        "event_type_id": event_type_id,
+        "event_type_id__in": event_type_id__in,
+        "type_id": type_id,
+        "type_id__in": type_id__in,
+    }
+    
+    QueryBuilder.validate_params(EventTypesTypes, params, SEARCH_CONFIG[EventTypesTypes])
+    filters = QueryBuilder.parse_query_params(params)
+    
     # Fetch user permissions
     result_user = await session.execute(
         select(User)
@@ -48,6 +68,15 @@ async def read_event_types_types(
     user_perms = {perm.name for role in user.roles for perm in role.permissions}
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
+    # Build query with JOIN to Types for access control
+    query = select(EventTypesTypes).join(
+        Types, EventTypesTypes.type_id == Types.id
+    )
+    
+    query = QueryBuilder.apply_filters(query, EventTypesTypes, filters)
+    query = QueryBuilder.apply_sorting(query, EventTypesTypes, filters)
+
+    # Apply access control
     if not has_super_permission:
         result_type = await session.execute(
             select(UserTypeAccess.root_id)
@@ -57,17 +86,7 @@ async def read_event_types_types(
             )
         )
         allowed_type_roots = [row[0] for row in result_type.all()]
-
-    query = select(EventTypesTypes).join(
-        Types, EventTypesTypes.type_id == Types.id
-    )
-
-    if event_type_id:
-        query = query.where(EventTypesTypes.event_type_id == event_type_id)
-    if type_id:
-        query = query.where(EventTypesTypes.type_id == type_id)
-
-    if not has_super_permission:
+        
         query = query.where(
             Types.root_id.in_(allowed_type_roots) if allowed_type_roots else false()
         )
@@ -81,59 +100,6 @@ async def read_event_types_types(
         pass
     
     return event_types_types
-
-
-@router.get("/{event_type_id}/{type_id}", response_model=EventTypesTypesRead)
-async def read_event_types_type(
-    event_type_id: int,
-    type_id: int,
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user),
-    _: None = Depends(require_permissions("read_event_types_types")),
-    log: LogCallable = Depends(LoggerInterface("event_types_types"))
-):
-    result_user = await session.execute(
-        select(User)
-        .where(User.id == current_user.id)
-        .options(selectinload(User.roles).selectinload(Role.permissions))
-    )
-    user = result_user.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
-    has_super_permission = "SUPER_PERMISSION" in user_perms
-
-    if not has_super_permission:
-        type_result = await session.execute(
-            select(Types.root_id).where(Types.id == type_id)
-        )
-        type_root = type_result.scalar_one_or_none()
-        
-        if type_root is None:
-            raise HTTPException(status_code=404, detail="Type not found")
-        
-        access_result = await session.execute(
-            select(UserTypeAccess)
-            .where(
-                UserTypeAccess.user_id == current_user.id,
-                UserTypeAccess.root_id == type_root,
-                UserTypeAccess.can_read.is_(True)
-            )
-        )
-        
-        if not access_result.scalar_one_or_none():
-            raise HTTPException(status_code=403, detail="Access denied to this type")
-    
-    event_types_type = await db.get_event_types_type(session, event_type_id, type_id)
-    if not event_types_type:
-        raise HTTPException(status_code=404, detail="Event type-type relationship not found")
-    
-    await log(
-        action="read_event_types_type",
-        details={"event_type_id": event_type_id, "type_id": type_id}
-    )
-    return event_types_type
 
 
 @router.post("/", response_model=EventTypesTypesRead)

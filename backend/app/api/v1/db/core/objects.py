@@ -20,6 +20,11 @@ from app.models.core import Objects, Types
 
 from app.logging.deps import LoggerInterface, LogCallable 
 
+from typing import List
+from datetime import datetime
+from app.core.query_builder import QueryBuilder
+from app.core.search_config import SEARCH_CONFIG
+
 router = APIRouter(prefix="/objects", tags=["DB: Core: Objects"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -27,13 +32,55 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 @router.get("/", response_model=list[ObjectsRead])
 async def read_objects(
     session: AsyncSession = Depends(get_async_session),
+    # Фильтры
     name: Optional[str] = Query(None),
+    name__like: Optional[str] = Query(None),
+    name__in: Optional[List[str]] = Query(None),
+    name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
     type_id: Optional[int] = Query(None),
+    type_id__in: Optional[List[int]] = Query(None),
+    type_id__gte: Optional[int] = Query(None),
+    type_id__lte: Optional[int] = Query(None),
+    
     parent_id: Optional[int] = Query(None),
+    parent_id__in: Optional[List[int]] = Query(None),
+    
     root_id: Optional[int] = Query(None),
+    root_id__in: Optional[List[int]] = Query(None),
+    
+    id: Optional[int] = Query(None),
+    id__in: Optional[List[int]] = Query(None),
+    id__gte: Optional[int] = Query(None),
+    id__lte: Optional[int] = Query(None),
+    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
     current_user: User = Depends(get_current_user),
-    log: LogCallable = Depends(LoggerInterface("objects")) 
+    log: LogCallable = Depends(LoggerInterface("objects"))
 ):
+    params = {
+        "name": name,
+        "name__like": name__like,
+        "name__in": name__in,
+        "name__sort": name__sort,
+        "type_id": type_id,
+        "type_id__in": type_id__in,
+        "type_id__gte": type_id__gte,
+        "type_id__lte": type_id__lte,
+        "parent_id": parent_id,
+        "parent_id__in": parent_id__in,
+        "root_id": root_id,
+        "root_id__in": root_id__in,
+        "id": id,
+        "id__in": id__in,
+        "id__gte": id__gte,
+        "id__lte": id__lte,
+        "id__sort": id__sort,
+    }
+    
+    QueryBuilder.validate_params(Objects, params, SEARCH_CONFIG[Objects])
+    filters = QueryBuilder.parse_query_params(params)
+    
     # Fetch user permissions
     result_user = await session.execute(
         select(User)
@@ -47,6 +94,12 @@ async def read_objects(
     user_perms = {perm.name for role in user.roles for perm in role.permissions}
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
+    # Build query
+    query = select(Objects)
+    query = QueryBuilder.apply_filters(query, Objects, filters)
+    query = QueryBuilder.apply_sorting(query, Objects, filters)
+
+    # Apply access control
     if not has_super_permission:
         # Fetch allowed root_ids for each level with can_read=True
         result_object = await session.execute(
@@ -66,20 +119,7 @@ async def read_objects(
             )
         )
         allowed_type_roots = [row[0] for row in result_type.all()]
-
-    # Build the query
-    query = select(Objects)
-
-    if name:
-        query = query.where(Objects.name.ilike(f"%{name}%"))
-    if type_id:
-        query = query.where(Objects.type_id == type_id)
-    if root_id:
-        query = query.where(Objects.root_id == root_id)
-    if parent_id:
-        query = query.where(Objects.parent_id == parent_id)
-
-    if not has_super_permission:
+        
         query = query.join(Types, Objects.type_id == Types.id)
         query = query.where(
             or_(
@@ -92,24 +132,11 @@ async def read_objects(
     objects = result.scalars().all()
     
     try:
-        await log(action="read_objects") 
+        await log(action="read_objects")
     except Exception:
         pass
     
     return objects
-
-@router.get("/{object_id}", response_model=ObjectsRead)
-async def read_object(
-    object_id: int,
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_object_permission(write=False)),
-    log: LogCallable = Depends(LoggerInterface("objects"))
-):
-    obj = await db_objects.get_object(session, object_id)
-    if not obj:
-        raise HTTPException(status_code=404, detail="Object not found")
-    await log(action="read_object", details={"object_id": object_id})
-    return obj
 
 
 @router.post("/", response_model=ObjectsCreate)
