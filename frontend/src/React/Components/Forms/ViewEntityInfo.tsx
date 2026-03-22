@@ -2,33 +2,31 @@ import { useEffect, useState } from 'react'
 
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import { Label } from '@Components/ui/label'
-import {
-    generateReadViewFromSchema,
-    type ReadViewField,
-} from '@Kernel/Forms/EntityFormGenerator.ts'
-import type { EntityFields, EntitySchema, InferEntity } from '@Schemas'
+import type {
+    EntityContext,
+    EntityCoreSchema,
+    InferEntity,
+} from '@EntityDsl/Core'
+import type { EntityUiSchema } from '@EntityDsl/Ui'
+import { generateReadViewFromSchema, type ReadViewField } from '@EntityDsl/Ui'
 
-interface Props<
-    Schema extends object,
-    Context,
-    Fields extends EntityFields<Schema, Context>,
-> {
-    schema: EntitySchema<Schema, Context, Fields>
-    context: Context
-    source: InferEntity<EntitySchema<Schema, Context, Fields>>
+interface Props<S extends EntityCoreSchema<any, any, any>> {
+    uiSchema: EntityUiSchema<S>
+    context: EntityContext<S>
+    source: InferEntity<S>
 }
 
-function ViewEntityInfo<
-    Schema extends object,
-    Context,
-    Fields extends EntityFields<Schema, Context>,
->({ schema, context, source }: Props<Schema, Context, Fields>) {
+function ViewEntityInfo<S extends EntityCoreSchema<any, any, any>>({
+    uiSchema,
+    context,
+    source,
+}: Props<S>) {
     const [readFields, setReadFields] = useState<ReadViewField[] | null>(null)
 
     useEffect(() => {
         async function load() {
             const fields = await generateReadViewFromSchema(
-                schema,
+                uiSchema,
                 context,
                 source,
             )
@@ -36,7 +34,7 @@ function ViewEntityInfo<
         }
 
         load()
-    }, [schema, context, source])
+    }, [uiSchema, context, source])
 
     return (
         <LoadEffect

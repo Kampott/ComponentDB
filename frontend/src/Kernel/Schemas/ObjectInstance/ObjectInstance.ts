@@ -2,9 +2,7 @@ import {
     defineEntitySchema,
     type InferCreate,
     type InferUpdate,
-} from '@Kernel/Schemas/EntityDsl.ts'
-import { useServicesStore } from '@StorageImpl'
-import { ObjectInstanceValidator } from './ObjectInstanceValidator.ts'
+} from '@EntityDsl/Core'
 
 export interface ObjectInstance {
     id: number
@@ -29,97 +27,28 @@ export const objectInstanceSchema = defineEntitySchema<
     resource: 'instances',
     fields: {
         id: {
-            common: {
-                label: 'ID',
-                description: 'Уникальный идентификатор',
-            },
-            create: { policy: 'forbidden', visible: false },
-            update: { policy: 'forbidden', visible: false },
-            read: { visible: false },
-            form: { input: 'number' },
+            create: { policy: 'forbidden' },
+            update: { policy: 'forbidden' },
         },
         name: {
-            common: {
-                label: 'Название',
-                description: 'Название экземпляра объекта',
-            },
             create: { policy: 'required' },
             update: { policy: 'optional' },
-            form: {
-                input: 'text',
-                validator: ObjectInstanceValidator.name,
-            },
         },
         object_id: {
-            common: {
-                label: 'Объект',
-                description: 'Объект экземпляра',
-            },
-            create: {
-                policy: 'required',
-                visible: false,
-                defaultValue: context => context.objectId,
-            },
+            create: { policy: 'required' },
             update: { policy: 'forbidden' },
-            form: { input: 'number' },
         },
         parent_id: {
-            common: {
-                label: 'Родительский экземпляр',
-                description: 'ID родительского экземпляра',
-            },
-            create: {
-                policy: 'optional',
-                visible: false,
-                defaultValue: context => context.parentId ?? null,
-            },
+            create: { policy: 'optional' },
             update: { policy: 'optional' },
-            read: {
-                printValue: async (value): Promise<string> => {
-                    if (value === null) {
-                        return 'Корневой экземпляр'
-                    }
-
-                    try {
-                        const instanceService = useServicesStore.getState()
-                            .services as unknown as {
-                            objectsInstancesService: {
-                                read: (id: number) => Promise<{ name: string }>
-                            }
-                        }
-                        const parentInstance =
-                            await instanceService.objectsInstancesService.read(
-                                value,
-                            )
-                        return parentInstance.name
-                    } catch {
-                        return String(value)
-                    }
-                },
-            },
-            form: { input: 'number' },
         },
         is_active: {
-            common: {
-                label: 'Активен',
-                description: 'Статус активности экземпляра',
-            },
-            create: {
-                policy: 'optional',
-                defaultValue: context => context.defaultIsActive ?? true,
-            },
+            create: { policy: 'optional' },
             update: { policy: 'optional' },
-            form: { input: 'boolean' },
         },
         root_id: {
-            common: {
-                label: 'Корневой объект',
-                description: 'ID корневого объекта',
-            },
-            create: { policy: 'forbidden', visible: false },
-            update: { policy: 'forbidden', visible: false },
-            read: { visible: false },
-            form: { input: 'number' },
+            create: { policy: 'forbidden' },
+            update: { policy: 'forbidden' },
         },
     },
 })

@@ -13,6 +13,16 @@ export default defineConfig({
     resolve: {
         alias: [
             { find: '@', replacement: path.resolve(__dirname, 'src') },
+            {
+                find: '@EntityDsl/Core',
+                replacement: path.resolve(__dirname, 'src/EntityDsl/Core/index.ts'),
+            },
+            {
+                find: '@EntityDsl/Ui',
+                replacement: path.resolve(__dirname, 'src/EntityDsl/Ui/index.ts'),
+            },
+            { find: '@EntityDsl', replacement: path.resolve(__dirname, 'src/EntityDsl') },
+            { find: '@EntityUi', replacement: path.resolve(__dirname, 'src/React/EntityUi/index.ts') },
             { find: '@Kernel', replacement: path.resolve(__dirname, 'src/Kernel') },
             { find: '@React', replacement: path.resolve(__dirname, 'src/React') },
             { find: '@Components', replacement: path.resolve(__dirname, 'src/React/Components') },

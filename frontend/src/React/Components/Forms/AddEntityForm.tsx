@@ -2,22 +2,24 @@ import { useEffect, useState } from 'react'
 
 import DefaultPopupForm from '@Components/Common/Forms/DefaultPopupForm.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
-import { generateCreateFormFromSchema } from '@Kernel/Forms/EntityFormGenerator.ts'
+import type {
+    EntityContext,
+    EntityCoreSchema,
+    InferCreate,
+} from '@EntityDsl/Core'
+import {
+    generateCreateFormFromSchema,
+    type EntityUiSchema,
+} from '@EntityDsl/Ui'
 import type { FormField } from '@Kernel/Forms/FormTypes.ts'
-import type { EntityFields, EntitySchema, InferCreate } from '@Schemas'
 
-interface Props<
-    Schema extends object,
-    Context,
-    Fields extends EntityFields<Schema, Context>,
-> {
-    schema: EntitySchema<Schema, Context, Fields>
-    context: Context
-    defaults?: Partial<InferCreate<EntitySchema<Schema, Context, Fields>>>
+interface Props<S extends EntityCoreSchema<any, any, any>> {
+    schema: S
+    uiSchema: EntityUiSchema<S>
+    context: EntityContext<S>
+    defaults?: Partial<InferCreate<S>>
     title: string
-    submitCallback: (
-        data: InferCreate<EntitySchema<Schema, Context, Fields>> | null,
-    ) => void
+    submitCallback: (data: InferCreate<S> | null) => void
 }
 
 /**
@@ -25,35 +27,26 @@ interface Props<
  * Построение полей полностью делегируется generateCreateFormFromSchema(...),
  * компонент отвечает только за асинхронную загрузку и рендер
  */
-function AddEntityForm<
-    Schema extends object,
-    Context,
-    Fields extends EntityFields<Schema, Context>,
->({
+function AddEntityForm<S extends EntityCoreSchema<any, any, any>>({
     schema,
+    uiSchema,
     context,
     defaults,
     title,
     submitCallback,
-}: Props<Schema, Context, Fields>) {
-    type SchemaDefinition = EntitySchema<Schema, Context, Fields>
-
+}: Props<S>) {
     const [formFields, setFormFields] = useState<
-        | FormField<
-              InferCreate<SchemaDefinition>,
-              keyof InferCreate<SchemaDefinition>
-          >[]
-        | null
+        FormField<InferCreate<S>, keyof InferCreate<S>>[] | null
     >(null)
-    const [defaultData, setDefaultData] = useState<
-        InferCreate<SchemaDefinition>
-    >({} as InferCreate<SchemaDefinition>)
+    const [defaultData, setDefaultData] = useState<InferCreate<S>>(
+        {} as InferCreate<S>,
+    )
 
     useEffect(() => {
         async function load() {
-            // Собираем типизированные контролы и стартовый payload из DSL-схемы
             const result = await generateCreateFormFromSchema(
                 schema,
+                uiSchema,
                 context,
                 defaults ?? {},
             )
@@ -62,7 +55,7 @@ function AddEntityForm<
         }
 
         load()
-    }, [schema, context, defaults])
+    }, [schema, uiSchema, context, defaults])
 
     return (
         <LoadEffect

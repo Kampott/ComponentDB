@@ -6,6 +6,7 @@ import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
 import { Button } from '@Components/ui/button'
+import { propertyTypeUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type {
@@ -164,6 +165,7 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
             {formShow && (
                 <AddEntityForm
                     schema={propertyTypeSchema}
+                    uiSchema={propertyTypeUiSchema}
                     context={{
                         objectTypeId: objectType.id,
                         defaultIsStatic: true,
@@ -176,6 +178,7 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
             {editTargetPropertyType && (
                 <EditEntityForm
                     schema={propertyTypeSchema}
+                    uiSchema={propertyTypeUiSchema}
                     context={{
                         objectTypeId: editTargetPropertyType.type_id,
                         defaultIsStatic: editTargetPropertyType.is_static,
@@ -187,7 +190,7 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
             )}
             {viewTargetPropertyType && (
                 <ViewEntityModal
-                    schema={propertyTypeSchema}
+                    uiSchema={propertyTypeUiSchema}
                     context={{
                         objectTypeId: viewTargetPropertyType.type_id,
                         defaultIsStatic: viewTargetPropertyType.is_static,

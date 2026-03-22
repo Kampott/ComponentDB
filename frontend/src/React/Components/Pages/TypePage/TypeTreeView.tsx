@@ -9,6 +9,7 @@ import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
 import { Button } from '@Components/ui/button'
+import { objectTypeUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import type { ObjectType, ObjectTypeAdd, ObjectTypeUpdate } from '@Schemas'
@@ -185,6 +186,7 @@ function TypeTreeView({ objectType }: Props) {
             {formShow && (
                 <AddEntityForm
                     schema={objectTypeSchema}
+                    uiSchema={objectTypeUiSchema}
                     context={{ parentTypeId: formParentObjectType.id }}
                     defaults={{ name: '' }}
                     title='Добавление нового типа'
@@ -194,6 +196,7 @@ function TypeTreeView({ objectType }: Props) {
             {editTargetType && (
                 <EditEntityForm
                     schema={objectTypeSchema}
+                    uiSchema={objectTypeUiSchema}
                     context={{ parentTypeId: editTargetType.parent_id }}
                     source={editTargetType}
                     title={`Изменение типа "${editTargetType.name}"`}
@@ -202,7 +205,7 @@ function TypeTreeView({ objectType }: Props) {
             )}
             {viewTargetType && (
                 <ViewEntityModal
-                    schema={objectTypeSchema}
+                    uiSchema={objectTypeUiSchema}
                     context={{ parentTypeId: viewTargetType.parent_id }}
                     source={viewTargetType}
                     title={`Просмотр типа "${viewTargetType.name}"`}

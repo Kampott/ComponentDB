@@ -2,7 +2,7 @@ import {
     defineEntitySchema,
     type InferCreate,
     type InferUpdate,
-} from '@Kernel/Schemas/EntityDsl.ts'
+} from '@EntityDsl/Core'
 
 export interface Property {
     id: number
@@ -24,49 +24,20 @@ export const propertySchema = defineEntitySchema<
     resource: 'properties',
     fields: {
         id: {
-            common: {
-                label: 'ID',
-                description: 'Уникальный идентификатор',
-            },
-            create: { policy: 'forbidden', visible: false },
-            update: { policy: 'forbidden', visible: false },
-            read: { visible: false },
-            form: { input: 'number' },
+            create: { policy: 'forbidden' },
+            update: { policy: 'forbidden' },
         },
         property_id: {
-            common: {
-                label: 'Свойство',
-                description: 'Выберите свойство',
-            },
-            create: {
-                policy: 'required',
-                visible: false,
-                defaultValue: context => context.propertyTypeId,
-            },
+            create: { policy: 'required' },
             update: { policy: 'forbidden' },
-            form: { input: 'number' },
         },
         value: {
-            common: {
-                label: 'Значение',
-                description: 'Значение свойства',
-            },
             create: { policy: 'required' },
             update: { policy: 'optional' },
-            form: { input: 'text' },
         },
         object_id: {
-            common: {
-                label: 'Объект',
-                description: 'Выберите объект',
-            },
-            create: {
-                policy: 'required',
-                visible: false,
-                defaultValue: context => context.objectId,
-            },
+            create: { policy: 'required' },
             update: { policy: 'forbidden' },
-            form: { input: 'number' },
         },
     },
 })

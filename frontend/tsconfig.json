@@ -8,6 +8,12 @@
         "baseUrl": ".",
         "paths": {
             "@/*": ["src/*"],
+            "@EntityDsl": ["src/EntityDsl/index.ts"],
+            "@EntityDsl/*": ["src/EntityDsl/*"],
+            "@EntityDsl/Core": ["src/EntityDsl/Core/index.ts"],
+            "@EntityDsl/Ui": ["src/EntityDsl/Ui/index.ts"],
+            "@EntityUi": ["src/React/EntityUi/index.ts"],
+            "@EntityUi/*": ["src/React/EntityUi/*"],
             "@Kernel/*": ["src/Kernel/*"],
             "@React/*": ["src/React/*"],
             "@Components/*": ["src/React/Components/*"],

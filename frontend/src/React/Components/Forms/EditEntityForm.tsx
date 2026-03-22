@@ -2,48 +2,42 @@ import { useEffect, useState } from 'react'
 
 import DefaultPopupForm from '@Components/Common/Forms/DefaultPopupForm.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
-import { generateUpdateFormFromSchema } from '@Kernel/Forms/EntityFormGenerator.ts'
-import type { FormField } from '@Kernel/Forms/FormTypes.ts'
 import type {
-    EntityFields,
-    EntitySchema,
+    EntityContext,
+    EntityCoreSchema,
     InferEntity,
     InferUpdate,
-} from '@Schemas'
+} from '@EntityDsl/Core'
+import {
+    generateUpdateFormFromSchema,
+    type EntityUiSchema,
+} from '@EntityDsl/Ui'
+import type { FormField } from '@Kernel/Forms/FormTypes.ts'
 
-interface Props<
-    Schema extends object,
-    Context,
-    Fields extends EntityFields<Schema, Context>,
-> {
-    schema: EntitySchema<Schema, Context, Fields>
-    context: Context
-    source: InferEntity<EntitySchema<Schema, Context, Fields>>
-    defaults?: Partial<InferUpdate<EntitySchema<Schema, Context, Fields>>>
+interface Props<S extends EntityCoreSchema<any, any, any>> {
+    schema: S
+    uiSchema: EntityUiSchema<S>
+    context: EntityContext<S>
+    source: InferEntity<S>
+    defaults?: Partial<InferUpdate<S>>
     title: string
-    submitCallback: (
-        data: InferUpdate<EntitySchema<Schema, Context, Fields>> | null,
-    ) => void
+    submitCallback: (data: InferUpdate<S> | null) => void
 }
 
 /**
  * Универсальная модальная "update"-форма для произвольной схемы сущности
  * Форма генерируется из update-политик и предзаполняется данными из `source`
  */
-function EditEntityForm<
-    Schema extends object,
-    Context,
-    Fields extends EntityFields<Schema, Context>,
->({
+function EditEntityForm<S extends EntityCoreSchema<any, any, any>>({
     schema,
+    uiSchema,
     context,
     source,
     defaults,
     title,
     submitCallback,
-}: Props<Schema, Context, Fields>) {
-    type SchemaDefinition = EntitySchema<Schema, Context, Fields>
-    type UpdateModel = InferUpdate<SchemaDefinition>
+}: Props<S>) {
+    type UpdateModel = InferUpdate<S>
 
     const [formFields, setFormFields] = useState<
         FormField<UpdateModel, keyof UpdateModel>[] | null
@@ -56,6 +50,7 @@ function EditEntityForm<
         async function load() {
             const result = await generateUpdateFormFromSchema(
                 schema,
+                uiSchema,
                 context,
                 source,
                 defaults ?? {},
@@ -65,7 +60,7 @@ function EditEntityForm<
         }
 
         load()
-    }, [schema, context, source, defaults])
+    }, [schema, uiSchema, context, source, defaults])
 
     return (
         <LoadEffect

@@ -22,6 +22,7 @@ import {
 import { Input } from '@Components/ui/input'
 import { Label } from '@Components/ui/label'
 import { Slider } from '@Components/ui/slider'
+import { eventTypeUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import {
@@ -332,6 +333,7 @@ function TypeEventTypesTab({ objectType }: Props): ReactNode {
             {editTarget && (
                 <EditEntityForm
                     schema={eventTypeSchema}
+                    uiSchema={eventTypeUiSchema}
                     context={{}}
                     source={editTarget}
                     title={`Изменение типа события "${editTarget.name}"`}
