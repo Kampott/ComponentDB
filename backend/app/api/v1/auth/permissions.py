@@ -71,6 +71,17 @@ async def read_permissions(
     
     return permissions
 
+@router.get("/{permission_id}/", response_model=PermissionOut)
+async def read_permission(
+    permission_id: int,
+    current_user: User = Depends(require_permissions("read_permission")),
+    session: AsyncSession = Depends(get_async_session),
+    log: LogCallable = Depends(LoggerInterface("permissions"))
+):
+    perm = await get_permission(session, permission_id)
+    await log(action="read_permission", details={"permission_id": permission_id})
+    return perm
+
 @router.delete("/{permission_id}/", status_code=204)
 async def delete_permissions(
     permission_id: int,

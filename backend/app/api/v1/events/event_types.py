@@ -70,6 +70,18 @@ async def read_event_types(
 
     return event_types
 
+
+@router.get("/{event_type_id}", response_model=EventTypesRead)
+async def read_event_type(event_type_id: int,
+                         current_user: User = Depends(require_permissions("read_event_types")),
+                         session: AsyncSession = Depends(get_async_session),
+    log: LogCallable = Depends(LoggerInterface("event_types"))):
+    event_type_ = await db.get_event_type(session, event_type_id)
+    if not event_type_:
+        raise HTTPException(status_code=404, detail="Event types not found")
+    await log(action="read_event_types", details={"event_type_id": event_type_id})
+    return event_type_
+
 @router.post("/", response_model=EventTypesRead)
 async def add_event_types(data: EventTypesCreate,
                         current_user: User = Depends(require_permissions("create_event_types")),

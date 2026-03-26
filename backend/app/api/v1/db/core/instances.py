@@ -152,6 +152,21 @@ async def read_instances(
     return instances
 
 
+@router.get("/{instance_id}", response_model=InstancesRead)
+async def read_instance(
+    instance_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_instance_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("instances")) 
+):
+    instance = await db.get_instance(session, instance_id)
+    if not instance:
+        raise HTTPException(status_code=404, detail="Instance not found")
+    
+    await log(action="read_instance", details={"instance_id": instance_id})
+    return instance
+
+
 @router.post("/", response_model=InstanceCreated)
 async def add_instance(
     data: InstancesCreate,

@@ -138,6 +138,19 @@ async def read_objects(
     
     return objects
 
+@router.get("/{object_id}", response_model=ObjectsRead)
+async def read_object(
+    object_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_object_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("objects"))
+):
+    obj = await db_objects.get_object(session, object_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Object not found")
+    await log(action="read_object", details={"object_id": object_id})
+    return obj
+
 
 @router.post("/", response_model=ObjectsCreate)
 async def add_object(
