@@ -71,6 +71,19 @@ async def read_properties(
     return properties
 
 
+
+
+@router.get("/{property_id}", response_model=PropertiesRead)
+async def read_property(property_id: int,
+                         current_user: User = Depends(require_permissions("read_properties")),
+                         session: AsyncSession = Depends(get_async_session),
+    log: LogCallable = Depends(LoggerInterface("properties"))):
+    property_ = await db.get_property(session, property_id)
+    if not property_:
+        raise HTTPException(status_code=404, detail="Property not found")
+    await log(action="read_property", details={"property_id": property_id})
+    return property_
+
 @router.post("/", response_model=PropertiesCreate)
 async def add_properties(data: PropertiesCreate,
                         current_user: User = Depends(require_permissions("create_properties")),

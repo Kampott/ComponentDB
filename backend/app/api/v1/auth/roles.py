@@ -72,6 +72,19 @@ async def read_roles(
     return roles
 
 
+
+@router.get("/{role_id}/", response_model=RoleOut)
+async def read_role_endpoint(
+    role_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_permissions("read_role")),
+    log: LogCallable = Depends(LoggerInterface("roles"))
+):
+    role = await get_role(session, role_id)
+    await log(action="read_role", details={"role_id": role_id})
+    return role
+
+
 @router.delete("/{role_id}/", status_code=204)
 async def delete_role_endpoint(
     role_id: int,

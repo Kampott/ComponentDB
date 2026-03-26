@@ -71,6 +71,15 @@ async def list_property_types(
     return property_types
 
 
+@router.get("/{property_type_id}", response_model=PropertyTypesRead)
+async def read_property_type(property_type_id: int, current_user: User = Depends(require_permissions("read_property_types")), session: AsyncSession = Depends(get_async_session),
+    log: LogCallable = Depends(LoggerInterface("property_types"))):
+    property_type = await db.get_propertytype(session, property_type_id)
+    if not property_type:
+        raise HTTPException(status_code=404, detail="Type proprety not found")
+    await log(action="read_property_type", details={"property_type_id": property_type_id}) 
+    return property_type
+
 @router.post("/", response_model=PropertyTypesCreate)
 async def add_property_type(data: PropertyTypesCreate, current_user: User = Depends(require_permissions("create_property_types")), session: AsyncSession = Depends(get_async_session),
     log: LogCallable = Depends(LoggerInterface("property_types"))):

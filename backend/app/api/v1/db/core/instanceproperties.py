@@ -70,6 +70,24 @@ async def read_instance_properties(
     
     return instance_properties
 
+@router.get("/{instance_property_id}", response_model=InstancePropertiesRead)
+async def read_instance_properties(instance_property_id: int,
+        current_user: User = Depends(require_permissions("read_instance_properties")),
+        session: AsyncSession = Depends(get_async_session),
+        log: LogCallable = Depends(LoggerInterface("instance_properties"))):
+    obj = await db.get_instanceproperty(session, instance_property_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Instance property not found")
+    try:
+        await log(
+            action="read_instance_properties",
+            details={
+                "instance_property_id": instance_property_id
+            }
+        )
+    except Exception:
+        pass   
+    return obj
 
 @router.post("/", response_model=InstancePropertiesRead)
 async def add_instanceproperty(data: InstancePropertiesCreate,

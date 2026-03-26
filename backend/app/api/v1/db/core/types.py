@@ -22,10 +22,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import false
 from app.core.search_config import SEARCH_CONFIG
 
-from typing import List
-from datetime import datetime
-from app.core.query_builder import QueryBuilder
-from app.core.search_config import SEARCH_CONFIG
+
 
 router = APIRouter(prefix="/types", tags=["DB: Core: Types"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -133,6 +130,23 @@ async def read_types(
         pass
     
     return types
+
+
+@router.get("/{type_id}", response_model=TypesRead)
+async def read_type(
+    type_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_type_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("types"))
+):
+    type_obj = await db.get_type(session, type_id)
+    if not type_obj:
+        raise HTTPException(status_code=404, detail="Type not found")
+
+    await log(action="read_type", details={
+        "type_id": type_id
+    })
+    return type_obj
 
 @router.post("/", response_model=TypesCreate)
 async def add_type(

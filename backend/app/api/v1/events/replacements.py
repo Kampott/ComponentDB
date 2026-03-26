@@ -140,6 +140,26 @@ async def read_replacements(
     return replacements
 
 
+@router.get("/{event_id}/{new_instance_id}", response_model=ReplacementsRead)
+async def read_replacement(
+    event_id: int,
+    new_instance_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+    _: None = Depends(require_permissions("read_replacements")),
+    log: LogCallable = Depends(LoggerInterface("replacements")),
+):
+    replacement = await db.get_replacement(session, event_id, new_instance_id)
+    if not replacement:
+        raise HTTPException(status_code=404, detail="Replacement not found")
+
+    await log(
+        action="read_replacement",
+        details={"event_id": event_id, "new_instance_id": new_instance_id},
+    )
+    return replacement
+
+
 @router.post("/", response_model=ReplacementsRead)
 async def create_replacement(
     data: ReplacementsCreate,
