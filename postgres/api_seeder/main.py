@@ -8,7 +8,6 @@ from .client import ApiClient
 from .progress import build_progress_reporter
 from .seed import SeedConfig, Seeder
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -17,7 +16,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default=default_base_url(), help="Backend base URL, for example http://localhost:8000")
     parser.add_argument("--username", default=default_superuser_email(), help="User email for /auth/login")
     parser.add_argument("--password", default=default_superuser_password(), help="User password for /auth/login")
-    parser.add_argument("--prefix", default="seed-techdb", help="Unique prefix for all root trees and event types")
+    parser.add_argument("--prefix", default="", help="Unique prefix for all root trees and event types")
     parser.add_argument("--instances-per-root-object", type=int, default=5)
     parser.add_argument("--events-per-instance-min", type=int, default=10)
     parser.add_argument("--events-per-instance-max", type=int, default=12)

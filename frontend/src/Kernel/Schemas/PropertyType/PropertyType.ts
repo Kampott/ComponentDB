@@ -22,6 +22,12 @@ export const propertyTypeSchema = defineEntitySchema<
 >()({
     entity: 'PropertyType',
     resource: 'property_types',
+    query: {
+        type_id: ['exact', 'in'],
+        name: ['exact', 'like', 'sort'],
+        is_static: ['exact'],
+        id: ['exact', 'in', 'sort'],
+    },
     fields: {
         id: {
             create: { policy: 'forbidden' },

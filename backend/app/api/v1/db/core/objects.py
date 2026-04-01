@@ -193,9 +193,8 @@ async def create_instance_from_root_object(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(require_object_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("objects")) 
-) -> InstancesRead: 
-    root_instance: InstancesRead | None = await db_instances.create_instance_from_object_tree(session, 
-    object_id)
+):
+    root_instance = await db_instances.create_instance_from_object_tree(session, object_id)
     if root_instance is None:
         raise HTTPException(status_code=422, detail="Something went wrong")
     await log(
@@ -215,8 +214,8 @@ async def update_object(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(require_object_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("objects"))
-) -> ObjectsRead | None:
-    updated_object: ObjectsRead | None = await db_objects.update_object(session, object_id, data)
+):
+    updated_object = await db_objects.update_object(session, object_id, data)
     if not updated_object:
         raise HTTPException(
             status_code=404,

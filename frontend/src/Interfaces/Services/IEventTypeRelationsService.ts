@@ -9,6 +9,10 @@ import type {
 export type EventTypeRelationsQuery = Partial<
     Pick<EventTypeTypeLink, 'event_type_id' | 'type_id'>
 > &
+    Partial<{
+        event_type_id__in: number[] | readonly number[]
+        type_id__in: number[] | readonly number[]
+    }> &
     CrudQuery
 
 export default interface IEventTypeRelationsService {

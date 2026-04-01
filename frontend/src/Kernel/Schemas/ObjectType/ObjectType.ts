@@ -15,12 +15,28 @@ export interface ObjectTypeCreateContext {
     parentTypeId: number | null
 }
 
+export interface ObjectTypeQuery {
+    id: number
+    name: string
+    parent_id: number
+    root_id: number
+    event_type_id: number
+}
+
 export const objectTypeSchema = defineEntitySchema<
     ObjectType,
-    ObjectTypeCreateContext
+    ObjectTypeCreateContext,
+    ObjectTypeQuery
 >()({
     entity: 'ObjectType',
     resource: 'types',
+    query: {
+        name: ['exact', 'like', 'sort'],
+        parent_id: ['exact', 'in'],
+        root_id: ['exact', 'in'],
+        id: ['exact', 'in', 'gte', 'lte', 'sort'],
+        event_type_id: ['exact'],
+    },
     fields: {
         id: {
             create: { policy: 'forbidden' },

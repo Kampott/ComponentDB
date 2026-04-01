@@ -1,18 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie, Query
-from typing import Optional
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.auth import UserObjectAccessCreate, UserObjectAccessOut, UserObjectAccessUpdate
-from app.crud.auth.user_object_access import create_user_object_access, delete_user_object_access, get_user_object_access, update_user_object_access
-from app.db.database import get_async_session
-from app.crud.auth.auth import require_permission as require_permissions
-from app.models.auth import User
-from app.logging.deps import LoggerInterface, LogCallable
 import uuid
-from typing import List
-from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.query_builder import QueryBuilder
 from app.core.search_config import SEARCH_CONFIG
+from app.crud.auth.user_object_access import create_user_object_access, delete_user_object_access, get_user_object_access, update_user_object_access
+from app.crud.auth.auth import require_permission as require_permissions
+from app.db.database import get_async_session
+from app.logging.deps import LoggerInterface, LogCallable
+from app.models.auth import User, UserObjectAccess
+from app.schemas.auth import UserObjectAccessCreate, UserObjectAccessOut, UserObjectAccessUpdate
+from app.logging.deps import LoggerInterface, LogCallable
+from typing import List
 
 router = APIRouter(prefix="/user_object_access", tags=["DB: Auth: User Object Access"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -97,7 +100,7 @@ async def _update_user_object_access(
     if not updated:
         raise HTTPException(status_code=404, detail="User Object M2M not found")
     
-    details = {"user_id": str(user_id), "root_id": root_id}
+    details: dict[str, object] = {"user_id": str(user_id), "root_id": root_id}
     if data.can_read is not None:
         details["can_read"] = data.can_read
     if data.can_write is not None:

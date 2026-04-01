@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
@@ -9,11 +10,9 @@ from app.db.database import get_async_session
 
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
+from app.models.core import PropertyTypes
 
 from app.logging.deps import LoggerInterface, LogCallable
-
-from typing import List
-from datetime import datetime
 from app.core.query_builder import QueryBuilder
 from app.core.search_config import SEARCH_CONFIG
 
@@ -106,14 +105,14 @@ async def delete_property_types(property_type_id: int, current_user: User = Depe
 @router.patch("/{property_type_id}")
 async def update_property_type(property_type_id: int, data: PropertyTypesUpdate,  current_user: User = Depends(require_permissions("edit_property_types")),
                           session: AsyncSession = Depends(get_async_session),
-    log: LogCallable = Depends(LoggerInterface("property_types"))  ) -> PropertyTypesRead:
-    updated_property_type: PropertyTypesRead | None = await db.update_property_type(session, property_type_id, data)
+    log: LogCallable = Depends(LoggerInterface("property_types"))  ):
+    updated_property_type = await db.update_property_type(session, property_type_id, data)
     if not updated_property_type:
         raise HTTPException(
             status_code=404,
             detail="Тип свойства не найден"
         )
-    details = {"property_type_id": property_type_id}
+    details: dict[str, object] = {"property_type_id": property_type_id}
     if data.name is not None:
         details["name"] = data.name
     if data.is_static is not None:

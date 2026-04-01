@@ -25,6 +25,14 @@ export const objectInstanceSchema = defineEntitySchema<
 >()({
     entity: 'ObjectInstance',
     resource: 'instances',
+    query: {
+        name: ['exact', 'like', 'in', 'sort'],
+        object_id: ['exact', 'in', 'gte', 'lte'],
+        parent_id: ['exact', 'in'],
+        root_id: ['exact', 'in'],
+        is_active: ['exact'],
+        id: ['exact', 'in', 'gte', 'lte', 'sort'],
+    },
     fields: {
         id: {
             create: { policy: 'forbidden' },

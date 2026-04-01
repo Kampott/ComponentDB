@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import insert
 from app.models.log import APILog
 from datetime import datetime
 from typing import List
@@ -23,17 +24,17 @@ async def create_log(session: AsyncSession, log_obj: dict) -> APILog:
     return log
 
 async def create_logs_bulk(session: AsyncSession, logs: List[dict]) -> None:
-    records = [APILog(
-        ts = datetime.utcnow(),
-        user_id = l.get("user_id"),
-        method = l["method"],
-        path = l["path"],
-        status_code = l["status_code"],
-        duration_ms = l["duration_ms"],
-        resource = l.get("resource"),
-        action = l.get("action"),
-        details = l.get("details"),
-    ) for l in logs]
+    records = [{
+        "ts": l.get("ts", datetime.utcnow()),
+        "user_id": l.get("user_id"),
+        "method": l["method"],
+        "path": l["path"],
+        "status_code": l["status_code"],
+        "duration_ms": l["duration_ms"],
+        "resource": l.get("resource"),
+        "action": l.get("action"),
+        "details": l.get("details"),
+    } for l in logs]
     """
     records — список словарей с ключами: user_id, method, path, status_code, duration_ms, resource, action, details, ts(optional)
     Используем insert(...).values(list_of_dicts) — это efficient bulk insert.

@@ -26,7 +26,7 @@ async def get_replacements(
         query = query.where(and_(*filters))
 
     result = await db.execute(query)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def get_replacement(

@@ -1,9 +1,13 @@
-import type { ReplacementEvent, ReplacementEventAdd } from '@Schemas'
+import type {
+    InferListQuery,
+    ReplacementEvent,
+    ReplacementEventAdd,
+    replacementEventSchema,
+} from '@Schemas'
 
-export type ReplacementEventQuery = Partial<{
-    event_id: number
-    new_instance_id: number
-}>
+export type ReplacementEventQuery = InferListQuery<
+    typeof replacementEventSchema
+>
 
 export default interface IReplacementEventsService {
     list(query?: ReplacementEventQuery): Promise<ReplacementEvent[]>

@@ -23,7 +23,7 @@ from app.crud.core.instances import create_instance as crud_create_instance, del
 CSV_OUT = f"benchmark_results_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.csv"
 SAMPLE_COUNTS = [100]
 BRANCHING = (1, 10, 100, 100)  # уровни: root, 10, 10*100=1000, 1000*100=100000
-INSTANCE_NUMBER = [10, 100, 1000]
+INSTANCE_NUMBER_OPTIONS = [10, 100, 1000]
 MAX_LEVEL = len(BRANCHING)  # 4
 ROOT_IDS_CACHE: list[int] = []
 INSTANCE_NUMBER = 100
@@ -178,7 +178,7 @@ async def generate_instances_for_tree(session: AsyncSession, root_object_id: int
     p = 0
     for k in range(n_instances):
         print(f"Generating instance number {k}")
-        stack = [(root_obj, None)]
+        stack: list[tuple[Objects, Objects | None]] = [(root_obj, None)]
         suffix = f"_{k}"
         p = p+1
         while stack:

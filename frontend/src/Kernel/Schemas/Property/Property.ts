@@ -22,6 +22,12 @@ export const propertySchema = defineEntitySchema<
 >()({
     entity: 'Property',
     resource: 'properties',
+    query: {
+        object_id: ['exact', 'in'],
+        property_id: ['exact', 'in'],
+        value: ['exact', 'like'],
+        id: ['exact', 'in', 'sort'],
+    },
     fields: {
         id: {
             create: { policy: 'forbidden' },

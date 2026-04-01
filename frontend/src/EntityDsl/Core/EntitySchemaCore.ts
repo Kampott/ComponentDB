@@ -13,6 +13,28 @@ export type EntityCreatePolicy = 'required' | 'optional' | 'forbidden'
  */
 export type EntityUpdatePolicy = 'optional' | 'forbidden'
 
+export type EntityQueryOperator =
+    | 'exact'
+    | 'like'
+    | 'in'
+    | 'gte'
+    | 'lte'
+    | 'gt'
+    | 'lt'
+    | 'sort'
+
+export type EntityQuerySortDirection = 'asc' | 'desc'
+
+export type EntityQueryScalar = string | number | boolean | Date
+export type EntityQueryValue =
+    | EntityQueryScalar
+    | EntityQueryScalar[]
+    | readonly EntityQueryScalar[]
+export type EntityQueryParams = Record<string, EntityQueryValue | undefined>
+export type EntityQueryConfig<QueryShape extends object> = {
+    [Field in keyof QueryShape & string]?: readonly EntityQueryOperator[]
+}
+
 declare const entitySchemaPartsBrand: unique symbol
 
 export type EntityCoreFieldCreate<Context> = {
@@ -40,27 +62,31 @@ export type EntityCoreFields<Schema, Context> = {
  * UI/runtime-детали намеренно остаются вне этого слоя.
  */
 export type EntityCoreSchema<
-    Schema,
+    Schema extends object,
     Context,
     Fields extends EntityCoreFields<Schema, Context>,
+    QueryShape extends object = Schema,
 > = {
     entity: string
     resource: string
     fields: Fields
+    query: EntityQueryConfig<QueryShape>
     // Phantom-brand удерживает точные generic-параметры схемы
     // для последующего извлечения через InferCreate/InferUpdate.
     [entitySchemaPartsBrand]?: {
         schema: Schema
         context: Context
         fields: Fields
+        queryShape: QueryShape
+        query: EntityQueryConfig<QueryShape>
         resource: string
     }
 }
 
 export const defineEntityCoreSchema =
-    <Schema, Context>() =>
+    <Schema extends object, Context, QueryShape extends object = Schema>() =>
     <const Fields extends EntityCoreFields<Schema, Context>>(
-        schema: EntityCoreSchema<Schema, Context, Fields>,
+        schema: EntityCoreSchema<Schema, Context, Fields, QueryShape>,
     ) =>
         schema
 
@@ -71,12 +97,16 @@ type ExtractEntityParts<S> = S extends {
           schema: infer Schema
           context: infer Context
           fields: infer Fields
+          queryShape: infer QueryShape
+          query: infer Query
           resource: string
       }
         ? {
               schema: Schema
               context: Context
               fields: Fields
+              queryShape: QueryShape
+              query: Query
               resource: string
           }
         : never
@@ -91,6 +121,7 @@ export type InferEntity<S> = ExtractEntityParts<S>['schema']
 export type EntityContext<S> = ExtractEntityParts<S>['context']
 export type EntityResource<S> = ExtractEntityParts<S>['resource']
 export type EntityFieldsOf<S> = ExtractEntityParts<S>['fields']
+export type AnyEntitySchema = EntityCoreSchema<any, any, any, any>
 
 type FieldsOf<S> = EntityFieldsOf<S>
 type FieldConfig<S, K extends keyof FieldsOf<S>> = Extract<
@@ -137,8 +168,96 @@ export type InferUpdate<S> = Flatten<
     Partial<Pick<EntityObject<S>, OptionalUpdateKeys<S>>>
 >
 
+type EntityQueryObject<S> = ExtractEntityParts<S>['queryShape'] extends object
+    ? ExtractEntityParts<S>['queryShape']
+    : never
+
+type QueryConfigOf<S> = ExtractEntityParts<S>['query']
+type QueryConfigOps<
+    Config,
+    Field extends keyof Config,
+> = Config[Field] extends readonly EntityQueryOperator[]
+    ? Config[Field][number]
+    : never
+type QueryFieldsByOperator<S, Operator extends EntityQueryOperator> = {
+    [Field in keyof QueryConfigOf<S>]: Operator extends QueryConfigOps<
+        QueryConfigOf<S>,
+        Field
+    >
+        ? Field
+        : never
+}[keyof QueryConfigOf<S>] &
+    keyof EntityQueryObject<S> &
+    string
+
+type QueryScalarFor<Value> = Value extends Date ? Date | string : Value
+type QueryListFor<Value> =
+    | QueryScalarFor<Value>[]
+    | readonly QueryScalarFor<Value>[]
+
+type ExactQueryFields<S> = Partial<{
+    [Field in QueryFieldsByOperator<S, 'exact'>]: QueryScalarFor<
+        EntityQueryObject<S>[Field]
+    >
+}>
+
+type LikeQueryFields<S> = Partial<{
+    [Field in QueryFieldsByOperator<S, 'like'> as `${Field}__like`]: string
+}>
+
+type InQueryFields<S> = Partial<{
+    [Field in QueryFieldsByOperator<S, 'in'> as `${Field}__in`]: QueryListFor<
+        EntityQueryObject<S>[Field]
+    >
+}>
+
+type GteQueryFields<S> = Partial<{
+    [Field in QueryFieldsByOperator<
+        S,
+        'gte'
+    > as `${Field}__gte`]: QueryScalarFor<EntityQueryObject<S>[Field]>
+}>
+
+type LteQueryFields<S> = Partial<{
+    [Field in QueryFieldsByOperator<
+        S,
+        'lte'
+    > as `${Field}__lte`]: QueryScalarFor<EntityQueryObject<S>[Field]>
+}>
+
+type GtQueryFields<S> = Partial<{
+    [Field in QueryFieldsByOperator<S, 'gt'> as `${Field}__gt`]: QueryScalarFor<
+        EntityQueryObject<S>[Field]
+    >
+}>
+
+type LtQueryFields<S> = Partial<{
+    [Field in QueryFieldsByOperator<S, 'lt'> as `${Field}__lt`]: QueryScalarFor<
+        EntityQueryObject<S>[Field]
+    >
+}>
+
+type SortQueryFields<S> = Partial<{
+    [Field in QueryFieldsByOperator<
+        S,
+        'sort'
+    > as `${Field}__sort`]: EntityQuerySortDirection
+}>
+
+export type InferListQuery<S> = Flatten<
+    EntityQueryParams &
+        ExactQueryFields<S> &
+        LikeQueryFields<S> &
+        InQueryFields<S> &
+        GteQueryFields<S> &
+        LteQueryFields<S> &
+        GtQueryFields<S> &
+        LtQueryFields<S> &
+        SortQueryFields<S>
+>
+
 export function getCreateFieldKeys<
-    Schema,
+    Schema extends object,
     Context,
     Fields extends EntityCoreFields<Schema, Context>,
 >(
@@ -159,7 +278,7 @@ export function getCreateFieldKeys<
 }
 
 export function getUpdateFieldKeys<
-    Schema,
+    Schema extends object,
     Context,
     Fields extends EntityCoreFields<Schema, Context>,
 >(

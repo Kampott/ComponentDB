@@ -34,7 +34,7 @@ async def get_events(
     query = query.order_by(Events.timestamp.desc())
     
     result = await db.execute(query)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def get_event(db: AsyncSession, event_id: int) -> Optional[Events]:
@@ -65,6 +65,8 @@ async def create_event(db: AsyncSession, data: EventsCreate) -> Events:
         select(Objects).where(Objects.id == instance.object_id)
     )
     obj = object_result.scalar_one_or_none()
+    if obj is None:
+        raise HTTPException(status_code=404, detail="Object not found")
     
     # Check if this event type is allowed for this instance's type
     event_type_link = await db.execute(
@@ -142,6 +144,8 @@ async def update_event(db: AsyncSession, event_id: int, data: EventsUpdate) -> O
             select(Objects).where(Objects.id == instance.object_id)
         )
         obj = object_result.scalar_one_or_none()
+        if obj is None:
+            raise HTTPException(status_code=404, detail="Object not found")
 
         event_type_link = await db.execute(
             select(EventTypesTypes).where(

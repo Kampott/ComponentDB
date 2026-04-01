@@ -187,11 +187,15 @@ async def create_event(
             select(Objects).where(Objects.id == instance.object_id)
         )
         obj = object_result.scalar_one_or_none()
+        if obj is None:
+            raise HTTPException(status_code=404, detail="Object not found")
         
         type_result = await session.execute(
             select(Types).where(Types.id == obj.type_id)
         )
         type_ = type_result.scalar_one_or_none()
+        if type_ is None:
+            raise HTTPException(status_code=404, detail="Type not found")
 
         # Check WRITE access at any level
         has_write_access = False
@@ -281,16 +285,22 @@ async def delete_event(
             select(Instances).where(Instances.id == event.instance_id)
         )
         instance = instance_result.scalar_one_or_none()
+        if instance is None:
+            raise HTTPException(status_code=404, detail="Instance not found")
 
         object_result = await session.execute(
             select(Objects).where(Objects.id == instance.object_id)
         )
         obj = object_result.scalar_one_or_none()
+        if obj is None:
+            raise HTTPException(status_code=404, detail="Object not found")
 
         type_result = await session.execute(
             select(Types).where(Types.id == obj.type_id)
         )
         type_ = type_result.scalar_one_or_none()
+        if type_ is None:
+            raise HTTPException(status_code=404, detail="Type not found")
 
         has_write_access = False
         
@@ -368,16 +378,22 @@ async def update_event(
             select(Instances).where(Instances.id == event.instance_id)
         )
         instance = instance_result.scalar_one_or_none()
+        if instance is None:
+            raise HTTPException(status_code=404, detail="Instance not found")
 
         object_result = await session.execute(
             select(Objects).where(Objects.id == instance.object_id)
         )
         obj = object_result.scalar_one_or_none()
+        if obj is None:
+            raise HTTPException(status_code=404, detail="Object not found")
 
         type_result = await session.execute(
             select(Types).where(Types.id == obj.type_id)
         )
         type_ = type_result.scalar_one_or_none()
+        if type_ is None:
+            raise HTTPException(status_code=404, detail="Type not found")
 
         has_write_access = False
 

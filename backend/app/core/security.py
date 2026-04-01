@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Any, Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
@@ -36,9 +36,10 @@ async def get_current_user(db: AsyncSession = Depends(get_async_session), token:
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id_str: str = payload.get("sub")
-        if user_id_str is None:
+        user_id_raw = payload.get("sub")
+        if not isinstance(user_id_raw, str):
             raise credentials_exception
+        user_id_str = user_id_raw
         try:
             user_id = uuid.UUID(user_id_str)
         except ValueError:
@@ -76,7 +77,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def create_refresh_token(data: dict) -> dict:
+def create_refresh_token(data: dict[str, Any]) -> dict[str, Any]:
     """Creating refresh token"""
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     jti_uuid = uuid.uuid4()
@@ -89,7 +90,7 @@ def create_refresh_token(data: dict) -> dict:
     return {"token": token, "jti": jti_uuid, "expires_at": expire}
 
 
-def decode_token(token: str) -> dict:
+def decode_token(token: str) -> dict[str, Any] | None:
     """Decoding token"""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])

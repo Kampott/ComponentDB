@@ -24,7 +24,7 @@ async def read_users_me(
         pass
     return {"id": current_user.id, "email": current_user.email}
 
-@router.get("/user/{user_email}", response_model=UserOut)
+@router.get("/user/{email}", response_model=UserOut)
 async def read_user(
     email: str,
     session: AsyncSession = Depends(get_async_session),

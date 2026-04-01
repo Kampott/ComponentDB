@@ -11,6 +11,7 @@ export type EntityInputType =
     | 'number'
     | 'boolean'
     | 'select'
+    | 'search-select'
     | 'datetime'
     | 'password'
     | 'kv-object'

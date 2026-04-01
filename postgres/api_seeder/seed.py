@@ -170,6 +170,8 @@ class Seeder:
         return sum(count(root) for root in ROOT_SPECS)
 
     async def _guard_prefix(self) -> None:
+        if not self.config.prefix:
+            return
         roots = await self.client.get("/data-manip/root-types") or []
         self.existing_roots = [
             item["name"]
@@ -446,7 +448,7 @@ class Seeder:
         else:
             created = await asyncio.gather(
                 *(
-                    self.client.post("/event_types/", EventTypesCreate(name=f"{self.config.prefix} :: {spec.name}").model_dump())
+                    self.client.post("/event_types/", EventTypesCreate(name=self._prefixed_name(spec.name)).model_dump())
                     for spec in EVENT_TYPES
                 )
             )
@@ -728,11 +730,16 @@ class Seeder:
 
     def _type_name(self, spec: NodeSpec, depth: int) -> str:
         if depth == 0:
-            return f"{self.config.prefix} :: {spec.name}"
+            return self._prefixed_name(spec.name)
         return spec.name
 
     def _object_name(self, name: str, path_code: str, ordinal: int) -> str:
-        return f"{self.config.prefix} :: {name} [{path_code}.{ordinal}]"
+        return self._prefixed_name(f"{name} [{path_code}.{ordinal}]")
+
+    def _prefixed_name(self, name: str) -> str:
+        if not self.config.prefix:
+            return name
+        return f"{self.config.prefix} :: {name}"
 
     @staticmethod
     def _find_exact(items: list[dict] | None, predicate) -> dict | None:

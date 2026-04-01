@@ -14,13 +14,13 @@ from app.db.database import get_async_session
 
 
 from app.crud.auth.auth import require_permission as require_permissions
-from app.models.auth import User
+from app.models.auth import Role, User, UserInstanceAccess, UserObjectAccess, UserTypeAccess
 from app.core.security import get_current_user
+from app.models.core import Instances, Objects, Types
+from app.models.events import EventTypes
 
 from app.logging.deps import LoggerInterface, LogCallable
 
-from typing import List
-from datetime import datetime
 from app.core.query_builder import QueryBuilder
 from app.core.search_config import SEARCH_CONFIG
 
@@ -112,14 +112,14 @@ async def delete_event_types(event_type_id: int,
 async def update_event_types(event_type_id: int, data: EventTypesUpdate,
                         current_user: User = Depends(require_permissions("edit_event_types")),
                                session: AsyncSession = Depends(get_async_session),
-    log: LogCallable = Depends(LoggerInterface("event_types"))) -> EventTypesRead:
-    updated_event_type: EventTypesRead | None = await db.update_event_type(session, event_type_id, data)
+    log: LogCallable = Depends(LoggerInterface("event_types"))):
+    updated_event_type = await db.update_event_type(session, event_type_id, data)
     if not updated_event_type:
         raise HTTPException(
             status_code=404,
             detail="Event Type value not found"
         )
-    details = {"event_type_id": event_type_id}
+    details: dict[str, object] = {"event_type_id": event_type_id}
     if data.name is not None:
         details["name"] = data.name
     
@@ -166,11 +166,15 @@ async def get_event_types_for_instance(
             select(Objects).where(Objects.id == instance.object_id)
         )
         obj = object_result.scalar_one_or_none()
+        if obj is None:
+            raise HTTPException(status_code=404, detail="Object not found")
         
         type_result = await session.execute(
             select(Types).where(Types.id == obj.type_id)
         )
         type_ = type_result.scalar_one_or_none()
+        if type_ is None:
+            raise HTTPException(status_code=404, detail="Type not found")
 
         # Check READ access at any level
         has_access = False

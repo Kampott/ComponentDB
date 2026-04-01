@@ -7,6 +7,7 @@ from watchfiles import awatch
 
 from app.crud.core.default import DefaultQueries
 from app.models.events import *
+from app.models.core import Instances, Objects
 from app.schemas.events import *
 from typing import List, Optional
 from fastapi import HTTPException
@@ -31,6 +32,8 @@ async def get_valid_event_types_for_instance(
         select(Objects).where(Objects.id == instance.object_id)
     )
     obj = object_result.scalar_one_or_none()
+    if obj is None:
+        raise HTTPException(status_code=404, detail="Object not found")
     
     # Get all event types linked to this type
     result = await db.execute(
@@ -39,7 +42,7 @@ async def get_valid_event_types_for_instance(
         .where(EventTypesTypes.type_id == obj.type_id)
     )
     
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 async def get_event_types(
     db: AsyncSession,
@@ -62,7 +65,7 @@ async def get_event_types(
         query = query.where(and_(*filters))
 
     result = await db.execute(query)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 async def get_event_type(db: AsyncSession, event_type_id: int) -> Optional[EventTypes]:
     result = await db.execute(select(EventTypes).where(EventTypes.id == event_type_id))

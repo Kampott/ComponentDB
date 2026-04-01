@@ -1,9 +1,46 @@
 import { type AxiosInstance, type AxiosResponse, default as axios } from 'axios'
 
 import logError from '@/Utility/log_error.ts'
+import type { EntityQueryParams, EntityQueryScalar } from '@EntityDsl/Core'
 import type { LoginResponse } from '@Schemas'
 import type RestApiClient from './RestApiClient.ts'
 import { RestApiError } from './RestApiClient.ts'
+
+function serializeQueryScalar(value: EntityQueryScalar): string {
+    if (value instanceof Date) {
+        return value.toISOString()
+    }
+
+    return String(value)
+}
+
+function serializeQueryParams(params?: EntityQueryParams): string {
+    const searchParams = new URLSearchParams()
+
+    if (!params) {
+        return searchParams.toString()
+    }
+
+    for (const [key, rawValue] of Object.entries(params)) {
+        if (rawValue === undefined || rawValue === null) {
+            continue
+        }
+
+        if (Array.isArray(rawValue)) {
+            for (const item of rawValue as readonly EntityQueryScalar[]) {
+                searchParams.append(key, serializeQueryScalar(item))
+            }
+            continue
+        }
+
+        searchParams.append(
+            key,
+            serializeQueryScalar(rawValue as EntityQueryScalar),
+        )
+    }
+
+    return searchParams.toString()
+}
 
 export default class AxiosClient implements RestApiClient {
     private axiosInstance: AxiosInstance
@@ -15,6 +52,9 @@ export default class AxiosClient implements RestApiClient {
     ) {
         this.axiosInstance = axios.create({
             baseURL: baseUrl,
+            paramsSerializer: {
+                serialize: serializeQueryParams,
+            },
             withCredentials: true,
         })
 
@@ -108,7 +148,7 @@ export default class AxiosClient implements RestApiClient {
 
     async get<ReturnData>(
         url: string,
-        query?: Record<string, number | string>,
+        query?: EntityQueryParams,
         headers?: Record<string, string[]>,
     ): Promise<ReturnData> {
         const response = await this.axiosInstance.get<ReturnData>(url, {
@@ -121,7 +161,7 @@ export default class AxiosClient implements RestApiClient {
     async post<PostData, ReturnData>(
         url: string,
         data: PostData,
-        query?: Record<string, number | string>,
+        query?: EntityQueryParams,
         headers?: Record<string, string[]>,
     ): Promise<ReturnData> {
         console.info(
@@ -139,7 +179,7 @@ export default class AxiosClient implements RestApiClient {
     async patch<PatchData, ReturnData>(
         url: string,
         data: PatchData,
-        query?: Record<string, number | string>,
+        query?: EntityQueryParams,
         headers?: Record<string, string[]>,
     ): Promise<ReturnData> {
         console.info(
@@ -157,7 +197,7 @@ export default class AxiosClient implements RestApiClient {
     async put<PutData, ReturnData>(
         url: string,
         data: PutData,
-        query?: Record<string, number | string>,
+        query?: EntityQueryParams,
         headers?: Record<string, string[]>,
     ): Promise<ReturnData> {
         console.info(
@@ -174,7 +214,7 @@ export default class AxiosClient implements RestApiClient {
 
     async delete<ReturnData>(
         url: string,
-        query?: Record<string, number | string>,
+        query?: EntityQueryParams,
         headers?: Record<string, string[]>,
     ): Promise<ReturnData> {
         console.info(

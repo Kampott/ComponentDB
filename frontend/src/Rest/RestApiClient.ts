@@ -1,3 +1,5 @@
+import type { EntityQueryParams } from '@EntityDsl/Core'
+
 export interface ApiErrorPayload {
     message?: string
     detail?: Record<string, string[] | string>
@@ -25,34 +27,34 @@ export class RestApiError extends Error {
 export default interface RestApiClient {
     get<ReturnData>(
         url: string,
-        query?: Record<string, number | string>,
+        query?: EntityQueryParams,
         headers?: Record<string, string[]>,
     ): Promise<ReturnData>
 
     post<PostData, ReturnData>(
         url: string,
         data: PostData,
-        query?: Record<string, number | string>,
+        query?: EntityQueryParams,
         headers?: Record<string, string[]>,
     ): Promise<ReturnData>
 
     patch<PatchData, ReturnData>(
         url: string,
         data: PatchData,
-        query?: Record<string, number | string>,
+        query?: EntityQueryParams,
         headers?: Record<string, string[]>,
     ): Promise<ReturnData>
 
     put<PutData, ReturnData>(
         url: string,
         data: PutData,
-        query?: Record<string, number | string>,
+        query?: EntityQueryParams,
         headers?: Record<string, string[]>,
     ): Promise<ReturnData>
 
     delete<ReturnData>(
         url: string,
-        query?: Record<string, number | string>,
+        query?: EntityQueryParams,
         headers?: Record<string, string[]>,
     ): Promise<ReturnData>
 }

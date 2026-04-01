@@ -1,8 +1,25 @@
+import { Plus } from 'lucide-react'
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+    type MouseEvent,
+    type ReactNode,
+} from 'react'
+
+import type { DataTableColumnSchema } from '@/lib/dataTableSchema.ts'
+import { useDataTableState } from '@/lib/useDataTableState.ts'
+import CompactDataTableToolbar from '@Components/Common/CompactDataTableToolbar.tsx'
 import {
     buildContextMenuOptions,
     hasContextMenuActions,
 } from '@Components/Common/context_actions.ts'
+import DataTable from '@Components/Common/DataTable.tsx'
+import SearchableSelect from '@Components/Common/Forms/SearchableSelect.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import ToolbarActionButton from '@Components/Common/ToolbarActionButton.tsx'
+import TruncatedText from '@Components/Common/TruncatedText.tsx'
 import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import { Button } from '@Components/ui/button'
@@ -21,41 +38,21 @@ import {
     DialogTitle,
 } from '@Components/ui/dialog'
 import { Label } from '@Components/ui/label'
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from '@Components/ui/pagination'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@Components/ui/select'
 import { eventTypeUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
 import {
     eventTypeSchema,
+    objectTypeSchema,
     type EventType,
     type EventTypeAdd,
     type EventTypeUpdate,
     type ObjectType,
 } from '@Schemas'
 import { useContextMenuStore, useServicesStore } from '@StorageImpl'
-import {
-    useEffect,
-    useMemo,
-    useState,
-    type MouseEvent,
-    type ReactNode,
-} from 'react'
 
-const PAGE_SIZE = 8
+type EventTypeColumnId = 'name' | 'id'
+type LinkedTypeColumnId = 'name' | 'id' | 'parentId'
 
 function EventTypesSection(): ReactNode {
     const services = useServicesStore(state => state.services)
@@ -64,6 +61,9 @@ function EventTypesSection(): ReactNode {
     const [eventTypes, setEventTypes] = useState<EventType[] | null>(null)
     const [allTypes, setAllTypes] = useState<ObjectType[] | null>(null)
     const [linkedTypes, setLinkedTypes] = useState<ObjectType[] | null>(null)
+    const [linkedTypeIds, setLinkedTypeIds] = useState<
+        readonly number[] | null
+    >(null)
     const [selectedEventType, setSelectedEventType] =
         useState<EventType | null>(null)
     const [showAddEventTypeForm, setShowAddEventTypeForm] = useState(false)
@@ -72,12 +72,139 @@ function EventTypesSection(): ReactNode {
     const [showAddRelationDialog, setShowAddRelationDialog] = useState(false)
     const [selectedTypeIdForRelation, setSelectedTypeIdForRelation] =
         useState<string>('')
-    const [eventTypesPage, setEventTypesPage] = useState(1)
-    const [linkedTypesPage, setLinkedTypesPage] = useState(1)
 
-    async function loadEventTypes(): Promise<void> {
+    const eventTypeColumns = useMemo(
+        (): readonly DataTableColumnSchema<
+            EventType,
+            typeof eventTypeSchema,
+            EventTypeColumnId
+        >[] => [
+            {
+                id: 'name',
+                label: 'Название',
+                queryField: 'name',
+                renderCell: eventType => (
+                    <TruncatedText text={eventType.name} maxLength={48} />
+                ),
+                getValue: eventType => eventType.name,
+                getSortValue: eventType => eventType.name,
+                visibleByDefault: true,
+                hideable: false,
+                headerClassName: 'w-[75%]',
+                cellClassName: 'overflow-hidden',
+                filter: {
+                    variant: 'text',
+                    operators: ['exact', 'like', 'in'],
+                    placeholder: 'Название типа события',
+                },
+            },
+            {
+                id: 'id',
+                label: 'ID',
+                queryField: 'id',
+                renderCell: eventType => `#${eventType.id}`,
+                getValue: eventType => eventType.id,
+                getSortValue: eventType => eventType.id,
+                visibleByDefault: true,
+                headerClassName: 'w-[25%]',
+                filter: {
+                    variant: 'number',
+                    operators: ['exact', 'in'],
+                    placeholder: 'Например: 3 или 1,2,3',
+                },
+            },
+        ],
+        [],
+    )
+
+    const linkedTypeColumns = useMemo(
+        (): readonly DataTableColumnSchema<
+            ObjectType,
+            typeof objectTypeSchema,
+            LinkedTypeColumnId
+        >[] => [
+            {
+                id: 'name',
+                label: 'Название',
+                queryField: 'name',
+                renderCell: type => (
+                    <TruncatedText text={type.name} maxLength={48} />
+                ),
+                getValue: type => type.name,
+                getSortValue: type => type.name,
+                visibleByDefault: true,
+                hideable: false,
+                headerClassName: 'w-[55%]',
+                cellClassName: 'overflow-hidden',
+                filter: {
+                    variant: 'text',
+                    operators: ['exact', 'like', 'in'],
+                    placeholder: 'Название типа объекта',
+                },
+            },
+            {
+                id: 'id',
+                label: 'ID',
+                queryField: 'id',
+                renderCell: type => `#${type.id}`,
+                getValue: type => type.id,
+                getSortValue: type => type.id,
+                visibleByDefault: true,
+                headerClassName: 'w-[20%]',
+                filter: {
+                    variant: 'number',
+                    operators: ['exact', 'in'],
+                    placeholder: 'Например: 7 или 1,2,3',
+                },
+            },
+            {
+                id: 'parentId',
+                label: 'Родитель',
+                queryField: 'parent_id',
+                renderCell: type =>
+                    type.parent_id === null ? '—' : `#${type.parent_id}`,
+                getValue: type => type.parent_id,
+                visibleByDefault: true,
+                headerClassName: 'w-[25%]',
+                filter: {
+                    variant: 'number',
+                    operators: ['exact', 'in'],
+                    placeholder: 'ID родителя',
+                },
+            },
+        ],
+        [],
+    )
+
+    const eventTypesTableState = useDataTableState({
+        schema: eventTypeSchema,
+        columns: eventTypeColumns,
+        defaultPageSize: 10,
+        pageSizeOptions: [10, 20, 50, 'all'],
+        defaultSorting: {
+            field: 'name',
+            direction: 'asc',
+        },
+    })
+
+    const linkedTypesTableState = useDataTableState({
+        schema: objectTypeSchema,
+        columns: linkedTypeColumns,
+        defaultPageSize: 10,
+        pageSizeOptions: [10, 20, 50, 'all'],
+        defaultSorting: {
+            field: 'name',
+            direction: 'asc',
+        },
+    })
+
+    const loadEventTypes = useCallback(async (): Promise<void> => {
+        setEventTypes(null)
+
         try {
-            const loadedEventTypes = await services.eventsTypesService.list()
+            const loadedEventTypes = await services.eventsTypesService.list(
+                eventTypesTableState.query,
+            )
             setEventTypes(loadedEventTypes)
             setSelectedEventType(current => {
                 if (!loadedEventTypes.length) {
@@ -98,9 +225,9 @@ function EventTypesSection(): ReactNode {
                 showToast: m => alert(m),
             })
         }
-    }
+    }, [eventTypesTableState.query, services.eventsTypesService])
 
-    async function loadAllTypes(): Promise<void> {
+    const loadAllTypes = useCallback(async (): Promise<void> => {
         try {
             setAllTypes(await services.objectsTypesService.getAllTypes())
         } catch (error) {
@@ -108,45 +235,77 @@ function EventTypesSection(): ReactNode {
                 showToast: m => alert(m),
             })
         }
-    }
+    }, [services.objectsTypesService])
 
-    async function loadLinkedTypes(eventTypeId: number | null): Promise<void> {
-        if (eventTypeId === null) {
-            setLinkedTypes([])
-            return
-        }
+    const loadLinkedTypes = useCallback(
+        async (eventTypeId: number | null): Promise<void> => {
+            if (eventTypeId === null) {
+                setLinkedTypeIds([])
+                setLinkedTypes([])
+                return
+            }
 
-        try {
-            setLinkedTypes(
-                await services.eventTypeRelationsService.getTypesByEventTypeId(
-                    eventTypeId,
-                ),
-            )
-        } catch (error) {
-            handleApiError(error as RestApiError, {
-                showToast: m => alert(m),
-            })
-        }
-    }
+            setLinkedTypes(null)
+
+            try {
+                const relations = await services.eventTypeRelationsService.list(
+                    {
+                        event_type_id: eventTypeId,
+                    },
+                )
+                const relationTypeIds = relations.map(
+                    relation => relation.type_id,
+                )
+                setLinkedTypeIds(relationTypeIds)
+
+                if (relationTypeIds.length === 0) {
+                    setLinkedTypes([])
+                    return
+                }
+
+                const requestedIds = Array.isArray(
+                    linkedTypesTableState.query.id__in,
+                )
+                    ? linkedTypesTableState.query.id__in
+                    : null
+
+                setLinkedTypes(
+                    await services.objectsTypesService.list({
+                        ...linkedTypesTableState.query,
+                        event_type_id: eventTypeId,
+                        id__in: requestedIds
+                            ? relationTypeIds.filter(id =>
+                                  requestedIds.includes(id),
+                              )
+                            : relationTypeIds,
+                    }),
+                )
+            } catch (error) {
+                handleApiError(error as RestApiError, {
+                    showToast: m => alert(m),
+                })
+            }
+        },
+        [
+            linkedTypesTableState.query,
+            services.eventTypeRelationsService,
+            services.objectsTypesService,
+        ],
+    )
 
     useEffect(() => {
         setEventTypes(null)
+        void loadEventTypes()
+    }, [loadEventTypes])
+
+    useEffect(() => {
         setAllTypes(null)
-        void Promise.all([loadEventTypes(), loadAllTypes()])
-    }, [])
+        void loadAllTypes()
+    }, [loadAllTypes])
 
     useEffect(() => {
-        setLinkedTypes(null)
         void loadLinkedTypes(selectedEventType?.id ?? null)
-    }, [selectedEventType?.id])
-
-    useEffect(() => {
-        setEventTypesPage(1)
-    }, [eventTypes?.length])
-
-    useEffect(() => {
-        setLinkedTypesPage(1)
-    }, [linkedTypes?.length, selectedEventType?.id])
+    }, [loadLinkedTypes, selectedEventType?.id])
 
     async function handleCreateEventType(
         data: EventTypeAdd | null,
@@ -241,9 +400,9 @@ function EventTypesSection(): ReactNode {
     }
 
     const availableTypesForRelation = useMemo(() => {
-        const linkedIds = new Set((linkedTypes ?? []).map(type => type.id))
+        const linkedIds = new Set(linkedTypeIds ?? [])
         return (allTypes ?? []).filter(type => !linkedIds.has(type.id))
-    }, [allTypes, linkedTypes])
+    }, [allTypes, linkedTypeIds])
 
     useEffect(() => {
         if (!showAddRelationDialog) {
@@ -269,7 +428,9 @@ function EventTypesSection(): ReactNode {
     const relationMenuOptions = useMemo(
         () =>
             buildContextMenuOptions<ObjectType>({
-                onAddRequest: () => setShowAddRelationDialog(true),
+                onAddRequest: selectedEventType
+                    ? () => setShowAddRelationDialog(true)
+                    : undefined,
                 onDeleteRequest: type => {
                     void handleDeleteRelation(type)
                 },
@@ -295,27 +456,8 @@ function EventTypesSection(): ReactNode {
         [selectedEventType?.id],
     )
 
-    const eventTypesTotalPages = Math.max(
-        1,
-        Math.ceil((eventTypes ?? []).length / PAGE_SIZE),
-    )
-    const linkedTypesTotalPages = Math.max(
-        1,
-        Math.ceil((linkedTypes ?? []).length / PAGE_SIZE),
-    )
-
-    const visibleEventTypes = useMemo(() => {
-        const from = (eventTypesPage - 1) * PAGE_SIZE
-        return (eventTypes ?? []).slice(from, from + PAGE_SIZE)
-    }, [eventTypes, eventTypesPage])
-
-    const visibleLinkedTypes = useMemo(() => {
-        const from = (linkedTypesPage - 1) * PAGE_SIZE
-        return (linkedTypes ?? []).slice(from, from + PAGE_SIZE)
-    }, [linkedTypes, linkedTypesPage])
-
     function openContextMenu<T>(
-        e: MouseEvent<HTMLElement>,
+        event: MouseEvent<HTMLElement>,
         element: T,
         options: ReturnType<typeof buildContextMenuOptions<T>>,
     ): void {
@@ -323,150 +465,80 @@ function EventTypesSection(): ReactNode {
             return
         }
 
-        e.preventDefault()
-        e.stopPropagation()
-        onContextMenuCall(e, { x: e.clientX, y: e.clientY }, element, options)
+        event.preventDefault()
+        event.stopPropagation()
+        onContextMenuCall(
+            event,
+            { x: event.clientX, y: event.clientY },
+            element,
+            options,
+        )
     }
 
     return (
         <>
-            <div className='mt-4 grid gap-4 lg:grid-cols-2'>
+            <div className='mt-4 grid gap-4 xl:grid-cols-2'>
                 <Card>
                     <CardHeader>
                         <CardTitle>Типы событий</CardTitle>
                         <CardDescription className='min-h-10'>
-                            Правый клик по списку или элементу для управления
+                            Выберите тип события слева, чтобы управлять его
+                            привязками.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className='space-y-4'>
+                        <CompactDataTableToolbar
+                            state={eventTypesTableState}
+                            columns={eventTypeColumns}
+                            actions={
+                                <ToolbarActionButton
+                                    type='button'
+                                    variant='default'
+                                    icon={<Plus />}
+                                    label='Добавить'
+                                    aria-label='Добавить тип события'
+                                    onClick={() =>
+                                        setShowAddEventTypeForm(true)
+                                    }
+                                />
+                            }
+                        />
+
                         <LoadEffect
                             data={eventTypes}
                             contentSize={{ height: '24px', width: '100%' }}
                         >
-                            <div
-                                className='overflow-hidden rounded-md border'
-                                onContextMenu={e =>
+                            <DataTable
+                                state={eventTypesTableState}
+                                columns={eventTypeColumns}
+                                rows={eventTypes ?? []}
+                                processingMode='manual'
+                                getRowId={eventType => eventType.id}
+                                emptyMessage='Нет типов событий'
+                                tableClassName='table-fixed'
+                                rowClassName={eventType =>
+                                    selectedEventType?.id === eventType.id
+                                        ? 'bg-primary/5 hover:bg-primary/10'
+                                        : undefined
+                                }
+                                onRowClick={eventType =>
+                                    setSelectedEventType(eventType)
+                                }
+                                onRowContextMenu={(event, eventType) =>
                                     openContextMenu(
-                                        e,
+                                        event,
+                                        eventType,
+                                        eventTypeMenuOptions,
+                                    )
+                                }
+                                onEmptyContextMenu={event =>
+                                    openContextMenu(
+                                        event,
                                         {} as EventType,
                                         addOnlyEventTypeOptions,
                                     )
                                 }
-                            >
-                                {eventTypes && eventTypes.length > 0 ? (
-                                    visibleEventTypes.map(
-                                        (eventType, index) => (
-                                            <div
-                                                key={eventType.id}
-                                                className={`hover:bg-accent/40 flex min-h-12 cursor-pointer items-center justify-between px-3 py-2 transition-colors ${
-                                                    selectedEventType?.id ===
-                                                    eventType.id
-                                                        ? 'border-primary bg-primary/5 ring-primary/20 relative z-10 border-l-4 shadow-sm'
-                                                        : ''
-                                                } ${
-                                                    index <
-                                                    visibleEventTypes.length - 1
-                                                        ? 'border-b'
-                                                        : ''
-                                                }`}
-                                                onClick={() =>
-                                                    setSelectedEventType(
-                                                        eventType,
-                                                    )
-                                                }
-                                                onContextMenu={e =>
-                                                    openContextMenu(
-                                                        e,
-                                                        eventType,
-                                                        eventTypeMenuOptions,
-                                                    )
-                                                }
-                                            >
-                                                <div className='min-w-0'>
-                                                    <div className='font-medium'>
-                                                        {eventType.name}
-                                                    </div>
-                                                    <div className='text-muted-foreground text-sm'>
-                                                        ID #{eventType.id}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ),
-                                    )
-                                ) : (
-                                    <div className='text-muted-foreground py-8 text-center text-sm'>
-                                        Нет типов событий. Правый клик для
-                                        добавления.
-                                    </div>
-                                )}
-                            </div>
-                            {eventTypes && eventTypes.length > PAGE_SIZE ? (
-                                <Pagination className='mt-4'>
-                                    <PaginationContent>
-                                        <PaginationItem>
-                                            <PaginationPrevious
-                                                href='#'
-                                                aria-disabled={
-                                                    eventTypesPage <= 1
-                                                }
-                                                className={
-                                                    eventTypesPage <= 1
-                                                        ? 'pointer-events-none opacity-50'
-                                                        : undefined
-                                                }
-                                                onClick={event => {
-                                                    event.preventDefault()
-                                                    if (eventTypesPage <= 1) {
-                                                        return
-                                                    }
-                                                    setEventTypesPage(page =>
-                                                        Math.max(1, page - 1),
-                                                    )
-                                                }}
-                                            />
-                                        </PaginationItem>
-                                        <PaginationItem>
-                                            <PaginationLink
-                                                size='default'
-                                                isActive
-                                            >
-                                                {eventTypesPage} /{' '}
-                                                {eventTypesTotalPages}
-                                            </PaginationLink>
-                                        </PaginationItem>
-                                        <PaginationItem>
-                                            <PaginationNext
-                                                href='#'
-                                                aria-disabled={
-                                                    eventTypesPage >=
-                                                    eventTypesTotalPages
-                                                }
-                                                className={
-                                                    eventTypesPage >=
-                                                    eventTypesTotalPages
-                                                        ? 'pointer-events-none opacity-50'
-                                                        : undefined
-                                                }
-                                                onClick={event => {
-                                                    event.preventDefault()
-                                                    if (
-                                                        eventTypesPage >=
-                                                        eventTypesTotalPages
-                                                    ) {
-                                                        return
-                                                    }
-                                                    setEventTypesPage(page =>
-                                                        Math.min(
-                                                            eventTypesTotalPages,
-                                                            page + 1,
-                                                        ),
-                                                    )
-                                                }}
-                                            />
-                                        </PaginationItem>
-                                    </PaginationContent>
-                                </Pagination>
-                            ) : null}
+                            />
                         </LoadEffect>
                     </CardContent>
                 </Card>
@@ -480,130 +552,59 @@ function EventTypesSection(): ReactNode {
                                 : 'Выберите тип события слева.'}
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className='space-y-4'>
+                        <CompactDataTableToolbar
+                            state={linkedTypesTableState}
+                            columns={linkedTypeColumns}
+                            actions={
+                                <ToolbarActionButton
+                                    type='button'
+                                    variant='default'
+                                    icon={<Plus />}
+                                    label='Добавить'
+                                    aria-label='Добавить связь с типом объекта'
+                                    disabled={!selectedEventType}
+                                    onClick={() =>
+                                        setShowAddRelationDialog(true)
+                                    }
+                                />
+                            }
+                        />
+
                         <LoadEffect
                             data={linkedTypes}
                             contentSize={{ height: '24px', width: '100%' }}
                         >
-                            <div
-                                className='overflow-hidden rounded-md border'
-                                onContextMenu={e =>
-                                    openContextMenu(
-                                        e,
-                                        {} as ObjectType,
-                                        addOnlyRelationOptions,
-                                    )
-                                }
-                            >
-                                {!selectedEventType ? (
-                                    <div className='text-muted-foreground py-8 text-center text-sm'>
-                                        Выберите тип события, чтобы управлять
-                                        привязками.
-                                    </div>
-                                ) : linkedTypes && linkedTypes.length > 0 ? (
-                                    visibleLinkedTypes.map((type, index) => (
-                                        <div
-                                            key={type.id}
-                                            className={`hover:bg-accent/40 flex min-h-12 items-center px-3 py-2 ${
-                                                index <
-                                                visibleLinkedTypes.length - 1
-                                                    ? 'border-b'
-                                                    : ''
-                                            }`}
-                                            onContextMenu={e =>
-                                                openContextMenu(
-                                                    e,
-                                                    type,
-                                                    relationMenuOptions,
-                                                )
-                                            }
-                                        >
-                                            <div className='min-w-0'>
-                                                <div className='font-medium'>
-                                                    {type.name}
-                                                </div>
-                                                <div className='text-muted-foreground text-sm'>
-                                                    ID #{type.id}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className='text-muted-foreground py-8 text-center text-sm'>
-                                        Нет привязанных типов. Правый клик для
-                                        добавления.
-                                    </div>
-                                )}
-                            </div>
-                            {selectedEventType &&
-                            linkedTypes &&
-                            linkedTypes.length > PAGE_SIZE ? (
-                                <Pagination className='mt-4'>
-                                    <PaginationContent>
-                                        <PaginationItem>
-                                            <PaginationPrevious
-                                                href='#'
-                                                aria-disabled={
-                                                    linkedTypesPage <= 1
-                                                }
-                                                className={
-                                                    linkedTypesPage <= 1
-                                                        ? 'pointer-events-none opacity-50'
-                                                        : undefined
-                                                }
-                                                onClick={event => {
-                                                    event.preventDefault()
-                                                    if (linkedTypesPage <= 1) {
-                                                        return
-                                                    }
-                                                    setLinkedTypesPage(page =>
-                                                        Math.max(1, page - 1),
-                                                    )
-                                                }}
-                                            />
-                                        </PaginationItem>
-                                        <PaginationItem>
-                                            <PaginationLink
-                                                size='default'
-                                                isActive
-                                            >
-                                                {linkedTypesPage} /{' '}
-                                                {linkedTypesTotalPages}
-                                            </PaginationLink>
-                                        </PaginationItem>
-                                        <PaginationItem>
-                                            <PaginationNext
-                                                href='#'
-                                                aria-disabled={
-                                                    linkedTypesPage >=
-                                                    linkedTypesTotalPages
-                                                }
-                                                className={
-                                                    linkedTypesPage >=
-                                                    linkedTypesTotalPages
-                                                        ? 'pointer-events-none opacity-50'
-                                                        : undefined
-                                                }
-                                                onClick={event => {
-                                                    event.preventDefault()
-                                                    if (
-                                                        linkedTypesPage >=
-                                                        linkedTypesTotalPages
-                                                    ) {
-                                                        return
-                                                    }
-                                                    setLinkedTypesPage(page =>
-                                                        Math.min(
-                                                            linkedTypesTotalPages,
-                                                            page + 1,
-                                                        ),
-                                                    )
-                                                }}
-                                            />
-                                        </PaginationItem>
-                                    </PaginationContent>
-                                </Pagination>
-                            ) : null}
+                            {!selectedEventType ? (
+                                <div className='text-muted-foreground rounded-md border py-8 text-center text-sm'>
+                                    Выберите тип события, чтобы управлять
+                                    привязками.
+                                </div>
+                            ) : (
+                                <DataTable
+                                    state={linkedTypesTableState}
+                                    columns={linkedTypeColumns}
+                                    rows={linkedTypes ?? []}
+                                    processingMode='manual'
+                                    getRowId={type => type.id}
+                                    emptyMessage='Нет привязанных типов объектов'
+                                    tableClassName='table-fixed'
+                                    onRowContextMenu={(event, type) =>
+                                        openContextMenu(
+                                            event,
+                                            type,
+                                            relationMenuOptions,
+                                        )
+                                    }
+                                    onEmptyContextMenu={event =>
+                                        openContextMenu(
+                                            event,
+                                            {} as ObjectType,
+                                            addOnlyRelationOptions,
+                                        )
+                                    }
+                                />
+                            )}
                         </LoadEffect>
                     </CardContent>
                 </Card>
@@ -644,24 +645,16 @@ function EventTypesSection(): ReactNode {
 
                     <div className='space-y-2'>
                         <Label>Тип объекта</Label>
-                        <Select
+                        <SearchableSelect
                             value={selectedTypeIdForRelation}
                             onValueChange={setSelectedTypeIdForRelation}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder='Выберите тип объекта' />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {availableTypesForRelation.map(type => (
-                                    <SelectItem
-                                        key={type.id}
-                                        value={String(type.id)}
-                                    >
-                                        {type.name} (#{type.id})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            placeholder='Выберите тип объекта'
+                            searchPlaceholder='Поиск типа объекта...'
+                            options={availableTypesForRelation.map(type => ({
+                                label: `${type.name} (#${type.id})`,
+                                value: String(type.id),
+                            }))}
+                        />
                     </div>
 
                     <DialogFooter>

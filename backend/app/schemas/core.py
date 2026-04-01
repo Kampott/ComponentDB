@@ -60,7 +60,7 @@ class PropertyTypesCreate(PropertyTypesBase):
 
 
 class PropertyTypesUpdate(BaseModel):
-    name: int | None = None
+    name: str | None = None
     is_static: bool | None = None
 
 
@@ -113,7 +113,7 @@ class InstanceCreated(BaseModel):
     is_active: bool
 
 class InstancesUpdate(BaseModel):
-    name: int | None = None
+    name: str | None = None
     is_active: bool | None = None
 
 

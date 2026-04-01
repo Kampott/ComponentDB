@@ -19,6 +19,7 @@ from app.models.auth import (
     UserTypeAccess,
 )
 from app.models.core import Instances, Objects, Types
+from app.models.events import Events, Replacements
 from app.schemas.events import ReplacementsCreate, ReplacementsRead
 
 from typing import List
@@ -50,9 +51,13 @@ async def _check_instance_write_access(
         select(Objects).where(Objects.id == instance.object_id)
     )
     obj = object_result.scalar_one_or_none()
+    if obj is None:
+        return False
 
     type_result = await session.execute(select(Types).where(Types.id == obj.type_id))
     type_ = type_result.scalar_one_or_none()
+    if type_ is None:
+        return False
 
     instance_access = await session.execute(
         select(UserInstanceAccess).where(
@@ -168,7 +173,8 @@ async def create_replacement(
     _: None = Depends(require_permissions("create_replacements")),
     log: LogCallable = Depends(LoggerInterface("replacements")),
 ):
-    _, has_super_permission = await _load_user_with_roles(session, current_user)
+    loaded_user, has_super_permission = await _load_user_with_roles(session, current_user)
+    del loaded_user
 
     event_model, replaced_instance = await db._get_replaced_instance_from_event(
         session,
@@ -225,8 +231,10 @@ async def delete_replacement(
     if not replacement:
         raise HTTPException(status_code=404, detail="Replacement not found")
 
-    _, has_super_permission = await _load_user_with_roles(session, current_user)
-    _, replaced_instance = await db._get_replaced_instance_from_event(session, event_id)
+    loaded_user, has_super_permission = await _load_user_with_roles(session, current_user)
+    del loaded_user
+    event_model, replaced_instance = await db._get_replaced_instance_from_event(session, event_id)
+    del event_model
 
     has_replaced_access = await _check_instance_write_access(
         session,
@@ -273,8 +281,10 @@ async def undo_replacement(
     if not replacement:
         raise HTTPException(status_code=404, detail="Replacement not found")
 
-    _, has_super_permission = await _load_user_with_roles(session, current_user)
-    _, replaced_instance = await db._get_replaced_instance_from_event(session, event_id)
+    loaded_user, has_super_permission = await _load_user_with_roles(session, current_user)
+    del loaded_user
+    event_model, replaced_instance = await db._get_replaced_instance_from_event(session, event_id)
+    del event_model
 
     has_replaced_access = await _check_instance_write_access(
         session,

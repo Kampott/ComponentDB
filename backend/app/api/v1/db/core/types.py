@@ -196,8 +196,8 @@ async def update_type(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(require_type_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("types"))
-) -> TypesRead:
-    updated_type: TypesRead | None = await db.update_type(session, type_id, data)
+):
+    updated_type = await db.update_type(session, type_id, data)
     if not updated_type:
         raise HTTPException(
             status_code=404,
@@ -208,8 +208,7 @@ async def update_type(
         details=
         {
             "type_id": type_id,
-            "name": name,
-            "parent_id": data.parent_id
+            "name": data.name,
         }
     )
     return updated_type

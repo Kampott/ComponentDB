@@ -53,7 +53,7 @@ async def get_instances(
         query = query.where(and_(*filters))
 
     result = await db.execute(query)
-    return result.mappings().all()
+    return [dict(row) for row in result.mappings().all()]
 
 # Get one type using the instances's id
 async def get_instance(db: AsyncSession, 

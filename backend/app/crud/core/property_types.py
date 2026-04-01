@@ -32,7 +32,7 @@ async def get_propertytypes(
         query = query.where(and_(*filters))
 
     result = await db.execute(query)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 # Get one type using the property types' id
