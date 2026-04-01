@@ -1,0 +1,116 @@
+@startuml
+hide circle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+package "Config_" {
+  interface "config::ConfigParser<Config>" as ConfigParser
+  class "config::YamlConfigParser<Config>" as YamlConfigParser
+  class "config::YamlNode" as YamlNode
+  class "config::Config" as Config
+  class "config::GrpcSettings" as GrpcSettings
+  class "config::BackupRuntimeSettings" as BackupRuntimeSettings
+  class "config::DatabaseSettings" as DatabaseSettings
+}
+
+package "Backup" {
+  interface "backup::ActiveBackup" as ActiveBackup
+  class "backup::FullPhysicalBackup" as FullPhysicalBackup
+  class "backup::FullPhysicalBackupOptions" as FullPhysicalBackupOptions <<data>>
+  class "backup::ActiveBackupManager" as ActiveBackupManager
+  interface "backup::BackupDataStore" as BackupDataStore
+  class "backup::SqliteBackupDataStore" as SqliteBackupDataStore
+  interface "backup::FileStorage" as FileStorage
+  class "backup::LocalFileStorage" as LocalFileStorage
+  class "backup::BackupCoordinator" as BackupCoordinator
+  class "backup::ScheduleManager" as ScheduleManager
+
+  class "backup::BackupRecord" as BackupRecord <<data>>
+  class "backup::BackupUpdate" as BackupUpdate <<data>>
+  class "backup::BackupTemplateRecord" as BackupTemplateRecord <<data>>
+  class "backup::BackupVerificationRecord" as BackupVerificationRecord <<data>>
+  class "backup::ScheduleRecord" as ScheduleRecord <<data>>
+  class "backup::ScheduleUpdate" as ScheduleUpdate <<data>>
+  class "backup::ListBackupsFilter" as ListBackupsFilter <<data>>
+  class "backup::BackupProgress" as BackupProgress <<data>>
+  class "backup::CompletedBackupData" as CompletedBackupData <<data>>
+  class "backup::ActiveBackupEvents" as ActiveBackupEvents <<data>>
+  class "backup::ActiveBackupSnapshotData" as ActiveBackupSnapshotData <<data>>
+}
+
+package "gRPC" {
+  class "BackupGrpcService" as BackupGrpcService
+}
+
+ConfigParser <|-- YamlConfigParser
+YamlConfigParser ..> YamlNode
+YamlConfigParser ..> Config
+Config *-- "1" GrpcSettings
+Config *-- "1" BackupRuntimeSettings
+Config *-- "0..*" DatabaseSettings : databases
+
+ActiveBackup <|-- FullPhysicalBackup
+BackupDataStore <|-- SqliteBackupDataStore
+FileStorage <|-- LocalFileStorage
+
+ActiveBackupManager o-- "0..*" ActiveBackup
+BackupCoordinator ..> BackupDataStore
+BackupCoordinator ..> ActiveBackupManager
+BackupCoordinator ..> FileStorage
+BackupCoordinator ..> FullPhysicalBackup
+BackupCoordinator ..> "0..*" DatabaseSettings
+BackupCoordinator ..> BackupTemplateRecord
+BackupCoordinator ..> BackupRecord
+BackupCoordinator ..> CompletedBackupData
+
+ScheduleManager ..> BackupDataStore
+ScheduleManager ..> ScheduleRecord
+ScheduleManager ..> ScheduleUpdate
+
+BackupGrpcService ..> BackupDataStore
+BackupGrpcService ..> BackupCoordinator
+BackupGrpcService ..> ActiveBackupManager
+BackupGrpcService ..> ScheduleManager
+BackupGrpcService ..> FileStorage
+BackupGrpcService ..> "0..*" DatabaseSettings
+BackupGrpcService ..> BackupRecord
+BackupGrpcService ..> BackupTemplateRecord
+BackupGrpcService ..> BackupVerificationRecord
+BackupGrpcService ..> ActiveBackupSnapshotData
+BackupGrpcService ..> ScheduleRecord
+BackupGrpcService ..> ListBackupsFilter
+
+SqliteBackupDataStore ..> BackupRecord
+SqliteBackupDataStore ..> BackupUpdate
+SqliteBackupDataStore ..> BackupTemplateRecord
+SqliteBackupDataStore ..> BackupVerificationRecord
+SqliteBackupDataStore ..> ScheduleRecord
+SqliteBackupDataStore ..> ScheduleUpdate
+SqliteBackupDataStore ..> ListBackupsFilter
+
+FullPhysicalBackup ..> FileStorage
+FullPhysicalBackup ..> DatabaseSettings
+FullPhysicalBackup ..> FullPhysicalBackupOptions
+FullPhysicalBackup ..> ActiveBackupEvents
+FullPhysicalBackup ..> BackupProgress
+FullPhysicalBackup ..> CompletedBackupData
+FullPhysicalBackup ..> ActiveBackupSnapshotData
+
+note right of BackupGrpcService
+  Внешний facade сервиса.
+  Склеивает active backups из памяти
+  и terminal backups из БД.
+end note
+
+note bottom of BackupCoordinator
+  Оркестратор запуска backup.
+  Выделяет backup_id через BackupDataStore
+  и сохраняет terminal state в БД.
+end note
+
+note bottom of ActiveBackupManager
+  Хранит только runtime-состояние
+  активных backup jobs в памяти процесса.
+end note
+
+@enduml
