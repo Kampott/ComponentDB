@@ -1,49 +1,38 @@
+import { Plus } from 'lucide-react'
+import { useMemo, type MouseEvent, type ReactNode } from 'react'
+
+import type { DataTableColumnSchema } from '@/lib/dataTableSchema.ts'
+import type { DataTableStateResult } from '@/lib/useDataTableState.ts'
+import DataTable from '@Components/Common/DataTable.tsx'
+import DataTableFilters from '@Components/Common/DataTableFilters.tsx'
+import DataTableToolbar from '@Components/Common/DataTableToolbar.tsx'
+import ToolbarActionButton from '@Components/Common/ToolbarActionButton.tsx'
+import TruncatedText from '@Components/Common/TruncatedText.tsx'
 import {
     buildContextMenuOptions,
     hasContextMenuActions,
 } from '@Components/Common/context_actions.ts'
 import { Button } from '@Components/ui/button'
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from '@Components/ui/pagination'
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@Components/ui/table'
-import type { Event } from '@Schemas'
+import { eventSchema, type Event } from '@Schemas'
 import { useContextMenuStore } from '@StorageImpl'
-import {
-    useEffect,
-    useMemo,
-    useState,
-    type MouseEvent,
-    type ReactNode,
-} from 'react'
 
 export interface EventTableRow {
     event: Event
     eventTypeName: string
 }
 
-interface Props {
-    rows: EventTableRow[]
-    pageSize?: number
-    emptyMessage?: ReactNode
-    onViewRequest?: (event: Event) => void
-    onAddRequest?: (event: Event) => void
-    onChangeRequest?: (event: Event) => void
-    onDeleteRequest?: (event: Event) => void
-    onOpenInstance: (instanceId: number) => void
-}
+export type EventTableColumnId =
+    | 'id'
+    | 'eventTypeName'
+    | 'timestamp'
+    | 'instance'
+
+export const EVENT_TABLE_QUERY_LABELS = {
+    id: 'ID',
+    event_type_id: 'ID типа события',
+    instance_id: 'ID экземпляра',
+    timestamp: 'Дата',
+} satisfies Partial<Record<keyof typeof eventSchema.query, string>>
 
 function toTimestamp(value: Date): string {
     const date = value instanceof Date ? value : new Date(String(value))
@@ -53,35 +42,122 @@ function toTimestamp(value: Date): string {
     return date.toLocaleString('ru-RU')
 }
 
+export function useEventTableColumns({
+    onOpenInstance,
+}: {
+    onOpenInstance: (instanceId: number) => void
+}): readonly DataTableColumnSchema<
+    EventTableRow,
+    typeof eventSchema,
+    EventTableColumnId
+>[] {
+    return useMemo(
+        () => [
+            {
+                id: 'id',
+                label: 'ID',
+                queryField: 'id',
+                renderCell: row => `#${row.event.id}`,
+                getValue: row => row.event.id,
+                visibleByDefault: true,
+                hideable: false,
+                headerClassName: 'w-1/5',
+                filter: {
+                    variant: 'number',
+                    operators: ['exact', 'in', 'gte', 'lte'],
+                    placeholder: 'Например: 15 или 1,2,3',
+                },
+            },
+            {
+                id: 'eventTypeName',
+                label: 'Тип',
+                queryField: 'event_type_id',
+                renderCell: row => (
+                    <TruncatedText text={row.eventTypeName} maxLength={48} />
+                ),
+                getValue: row => row.event.event_type_id,
+                visibleByDefault: true,
+                headerClassName: 'w-1/4',
+                cellClassName: 'overflow-hidden',
+                filter: {
+                    variant: 'number',
+                    operators: ['exact', 'in'],
+                    placeholder: 'ID типа события',
+                },
+            },
+            {
+                id: 'timestamp',
+                label: 'Дата',
+                queryField: 'timestamp',
+                renderCell: row => toTimestamp(row.event.timestamp),
+                getValue: row => row.event.timestamp,
+                getSortValue: row => row.event.timestamp,
+                visibleByDefault: true,
+                headerClassName: 'w-1/3',
+                filter: {
+                    variant: 'datetime-local',
+                    operators: ['exact', 'gte', 'lte', 'gt', 'lt'],
+                },
+            },
+            {
+                id: 'instance',
+                label: 'Экземпляр',
+                queryField: 'instance_id',
+                renderCell: row => (
+                    <Button
+                        type='button'
+                        variant='link'
+                        className='h-auto p-0'
+                        onClick={event => {
+                            event.stopPropagation()
+                            onOpenInstance(row.event.instance_id)
+                        }}
+                    >
+                        Экземпляр #{row.event.instance_id}
+                    </Button>
+                ),
+                getValue: row => row.event.instance_id,
+                visibleByDefault: true,
+                headerClassName: 'w-1/4',
+                filter: {
+                    variant: 'number',
+                    operators: ['exact', 'in'],
+                    placeholder: 'ID экземпляра',
+                },
+            },
+        ],
+        [onOpenInstance],
+    )
+}
+
+interface Props {
+    rows: EventTableRow[]
+    state: DataTableStateResult<typeof eventSchema, EventTableColumnId>
+    columns: readonly DataTableColumnSchema<
+        EventTableRow,
+        typeof eventSchema,
+        EventTableColumnId
+    >[]
+    showToolbar?: boolean
+    emptyMessage?: ReactNode
+    onViewRequest?: (event: Event) => void
+    onAddRequest?: (event: Event) => void
+    onChangeRequest?: (event: Event) => void
+    onDeleteRequest?: (event: Event) => void
+}
+
 function EventsTable({
     rows,
-    pageSize = 10,
+    state,
+    columns,
+    showToolbar = true,
     emptyMessage = 'Событий пока нет',
     onViewRequest,
     onAddRequest,
     onChangeRequest,
     onDeleteRequest,
-    onOpenInstance,
 }: Props): ReactNode {
     const { onContextMenuCall } = useContextMenuStore()
-    const [page, setPage] = useState(1)
-
-    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
-
-    useEffect(() => {
-        if (page > totalPages) {
-            setPage(totalPages)
-        }
-    }, [page, totalPages])
-
-    useEffect(() => {
-        setPage(1)
-    }, [rows.length])
-
-    const visibleRows = useMemo(() => {
-        const from = (page - 1) * pageSize
-        return rows.slice(from, from + pageSize)
-    }, [rows, page, pageSize])
 
     const contextMenuOptions = buildContextMenuOptions<Event>({
         onViewRequest,
@@ -125,122 +201,45 @@ function EventsTable({
 
     return (
         <div className='space-y-4'>
-            <div
-                className='overflow-hidden rounded-md border'
-                onContextMenu={
-                    visibleRows.length === 0
-                        ? handleEmptyTableContextMenu
-                        : undefined
-                }
-            >
-                <Table className='table-fixed'>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className='w-1/4'>id</TableHead>
-                            <TableHead className='w-1/4'>Тип</TableHead>
-                            <TableHead className='w-1/4'>Дата</TableHead>
-                            <TableHead className='w-1/4'>Экземпляр</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {visibleRows.length === 0 ? (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={4}
-                                    className='py-8 text-center'
-                                >
-                                    <span className='text-muted-foreground text-sm'>
-                                        {emptyMessage}
-                                    </span>
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            visibleRows.map(row => (
-                                <TableRow
-                                    key={row.event.id}
-                                    className={
-                                        onViewRequest
-                                            ? 'cursor-pointer'
-                                            : undefined
-                                    }
-                                    onClick={() => onViewRequest?.(row.event)}
-                                    onContextMenu={e =>
-                                        handleContextMenu(e, row.event)
-                                    }
-                                >
-                                    <TableCell>#{row.event.id}</TableCell>
-                                    <TableCell>{row.eventTypeName}</TableCell>
-                                    <TableCell>
-                                        {toTimestamp(row.event.timestamp)}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Button
-                                            variant='link'
-                                            className='h-auto p-0'
-                                            onClick={e => {
-                                                e.stopPropagation()
-                                                onOpenInstance(
-                                                    row.event.instance_id,
-                                                )
-                                            }}
-                                        >
-                                            Экземпляр #{row.event.instance_id}
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+            {showToolbar && (
+                <>
+                    <DataTableToolbar
+                        state={state}
+                        queryLabels={EVENT_TABLE_QUERY_LABELS}
+                        searchPlaceholder='Поиск по событиям'
+                        actions={
+                            onAddRequest ? (
+                                <ToolbarActionButton
+                                    type='button'
+                                    variant='default'
+                                    icon={<Plus />}
+                                    label='Добавить'
+                                    aria-label='Добавить событие'
+                                    onClick={() => onAddRequest({} as Event)}
+                                />
+                            ) : null
+                        }
+                    />
+                    <DataTableFilters state={state} columns={columns} />
+                </>
+            )}
 
-            <Pagination>
-                <PaginationContent>
-                    <PaginationItem>
-                        <PaginationPrevious
-                            href='#'
-                            aria-disabled={page <= 1}
-                            className={
-                                page <= 1
-                                    ? 'pointer-events-none opacity-50'
-                                    : undefined
-                            }
-                            onClick={event => {
-                                event.preventDefault()
-                                if (page <= 1) {
-                                    return
-                                }
-                                setPage(previous => Math.max(1, previous - 1))
-                            }}
-                        />
-                    </PaginationItem>
-                    <PaginationItem>
-                        <PaginationLink size='default' isActive>
-                            {page} / {totalPages}
-                        </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                        <PaginationNext
-                            href='#'
-                            aria-disabled={page >= totalPages}
-                            className={
-                                page >= totalPages
-                                    ? 'pointer-events-none opacity-50'
-                                    : undefined
-                            }
-                            onClick={event => {
-                                event.preventDefault()
-                                if (page >= totalPages) {
-                                    return
-                                }
-                                setPage(previous =>
-                                    Math.min(totalPages, previous + 1),
-                                )
-                            }}
-                        />
-                    </PaginationItem>
-                </PaginationContent>
-            </Pagination>
+            <DataTable
+                state={state}
+                columns={columns}
+                rows={rows}
+                processingMode='manual'
+                getRowId={row => row.event.id}
+                emptyMessage={emptyMessage}
+                tableClassName='table-fixed'
+                onRowClick={
+                    onViewRequest ? row => onViewRequest(row.event) : undefined
+                }
+                onRowContextMenu={(event, row) =>
+                    handleContextMenu(event, row.event)
+                }
+                onEmptyContextMenu={handleEmptyTableContextMenu}
+            />
         </div>
     )
 }

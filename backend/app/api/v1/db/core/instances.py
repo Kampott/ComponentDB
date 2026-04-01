@@ -213,13 +213,13 @@ async def update_instance(
     current_user: User = Depends(require_instance_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("instances")) 
 ):
-    updated_instance: InstancesRead | None = await db.update_instance(session, instance_id, data)
+    updated_instance = await db.update_instance(session, instance_id, data)
     if not updated_instance:
         raise HTTPException(
             status_code=404,
             detail="Экземпляр не найден"
         )
-    details = {"instance_id": instance_id}
+    details: dict[str, object] = {"instance_id": instance_id}
     if data.name is not None:
         details["name"] = data.name
     if data.is_active is not None:
@@ -227,4 +227,3 @@ async def update_instance(
     
     await log(action="update_instance", details=details)
     return updated_instance
-

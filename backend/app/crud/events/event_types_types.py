@@ -30,7 +30,7 @@ async def get_event_types_types(
         query = query.where(and_(*filters))
     
     result = await db.execute(query)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 async def get_event_types_type(
     db: AsyncSession, 
@@ -116,7 +116,7 @@ async def get_types_for_event_type(
         .join(EventTypesTypes, Types.id == EventTypesTypes.type_id)
         .where(EventTypesTypes.event_type_id == event_type_id)
     )
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def get_event_types_for_type(
@@ -129,4 +129,4 @@ async def get_event_types_for_type(
         .join(EventTypesTypes, EventTypes.id == EventTypesTypes.event_type_id)
         .where(EventTypesTypes.type_id == type_id)
     )
-    return result.scalars().all()
+    return list(result.scalars().all())

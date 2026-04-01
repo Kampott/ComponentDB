@@ -42,14 +42,14 @@ async def get_root_objects(db: AsyncSession) -> List[Objects]:
         select(Objects)
         .where(Objects.parent_id == None)
     )
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 async def get_root_types(db: AsyncSession) -> List[Types]:
     result = await db.execute(
         select(Types)
         .where(Types.parent_id == None)
     )
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def get_all_type_hierarchies(db: AsyncSession):
@@ -118,4 +118,3 @@ async def get_all_object_hierarchies(db: AsyncSession):
         if tree:
             trees.append(tree)
     return trees
-

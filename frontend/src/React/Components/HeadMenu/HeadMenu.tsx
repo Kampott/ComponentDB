@@ -17,10 +17,15 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@Components/ui/sheet'
+import { useUserStore } from '@StorageImpl'
 import RootObjectsListMenu from './RootObjectsListMenu.tsx'
 
 function HeadMenu() {
     const navigate = useNavigate()
+    const actionDisplayMode = useUserStore(state => state.actionDisplayMode)
+    const toggleActionDisplayMode = useUserStore(
+        state => state.toggleActionDisplayMode,
+    )
 
     const [showRootObjectsListMenu, setShowRootObjectsListMenu] =
         useState(false)
@@ -44,52 +49,90 @@ function HeadMenu() {
                     </Link>
 
                     <div className='hidden flex-1 items-center justify-between md:flex'>
-                        <Menubar className='ml-4 border-0 bg-transparent p-0'>
-                            <MenubarMenu>
-                                <MenubarTrigger>Разделы</MenubarTrigger>
-                                <MenubarContent>
-                                    <MenubarItem
-                                        onSelect={() =>
-                                            toggleRootObjectsListMenuShow()
-                                        }
-                                    >
-                                        Объекты
-                                    </MenubarItem>
-                                    <MenubarItem disabled>
-                                        Документы
-                                    </MenubarItem>
-                                    <MenubarItem
-                                        onSelect={() => navigate('/events')}
-                                    >
-                                        События
-                                    </MenubarItem>
-                                </MenubarContent>
-                            </MenubarMenu>
-                        </Menubar>
+                        <div className='flex items-center'>
+                            <Menubar className='ml-4 border-0 bg-transparent p-0 lg:hidden'>
+                                <MenubarMenu>
+                                    <MenubarTrigger>Разделы</MenubarTrigger>
+                                    <MenubarContent>
+                                        <MenubarItem
+                                            onSelect={() =>
+                                                toggleRootObjectsListMenuShow()
+                                            }
+                                        >
+                                            Объекты
+                                        </MenubarItem>
+                                        <MenubarItem disabled>
+                                            Документы
+                                        </MenubarItem>
+                                        <MenubarItem
+                                            onSelect={() => navigate('/events')}
+                                        >
+                                            События
+                                        </MenubarItem>
+                                    </MenubarContent>
+                                </MenubarMenu>
+                            </Menubar>
 
-                        <Menubar className='border-0 bg-transparent p-0'>
-                            <MenubarMenu>
-                                <MenubarTrigger>Справка</MenubarTrigger>
-                                <MenubarContent>
-                                    <MenubarItem disabled>
-                                        Скоро будет
-                                    </MenubarItem>
-                                </MenubarContent>
-                            </MenubarMenu>
+                            <nav className='ml-4 hidden items-center gap-1 lg:flex'>
+                                <Button
+                                    variant='ghost'
+                                    size='sm'
+                                    onClick={() =>
+                                        toggleRootObjectsListMenuShow()
+                                    }
+                                >
+                                    Объекты
+                                </Button>
+                                <Button variant='ghost' size='sm' disabled>
+                                    Документы
+                                </Button>
+                                <Button
+                                    variant='ghost'
+                                    size='sm'
+                                    onClick={() => navigate('/events')}
+                                >
+                                    События
+                                </Button>
+                            </nav>
+                        </div>
 
-                            <MenubarMenu>
-                                <MenubarTrigger>Аккаунт</MenubarTrigger>
-                                <MenubarContent>
-                                    <MenubarItem
-                                        onSelect={() => navigate('/login')}
-                                    >
-                                        Профиль
-                                    </MenubarItem>
-                                    <MenubarSeparator />
-                                    <MenubarItem disabled>Выход</MenubarItem>
-                                </MenubarContent>
-                            </MenubarMenu>
-                        </Menubar>
+                        <div className='flex items-center gap-2'>
+                            <Button
+                                variant='outline'
+                                size='sm'
+                                onClick={() => toggleActionDisplayMode()}
+                            >
+                                {actionDisplayMode === 'material'
+                                    ? 'Material'
+                                    : 'Text'}
+                            </Button>
+
+                            <Menubar className='border-0 bg-transparent p-0'>
+                                <MenubarMenu>
+                                    <MenubarTrigger>Справка</MenubarTrigger>
+                                    <MenubarContent>
+                                        <MenubarItem disabled>
+                                            Скоро будет
+                                        </MenubarItem>
+                                    </MenubarContent>
+                                </MenubarMenu>
+
+                                <MenubarMenu>
+                                    <MenubarTrigger>Аккаунт</MenubarTrigger>
+                                    <MenubarContent>
+                                        <MenubarItem
+                                            onSelect={() => navigate('/login')}
+                                        >
+                                            Профиль
+                                        </MenubarItem>
+                                        <MenubarSeparator />
+                                        <MenubarItem disabled>
+                                            Выход
+                                        </MenubarItem>
+                                    </MenubarContent>
+                                </MenubarMenu>
+                            </Menubar>
+                        </div>
                     </div>
 
                     <Button
@@ -140,6 +183,19 @@ function HeadMenu() {
                             }}
                         >
                             События
+                        </Button>
+
+                        <div className='my-2 border-t' />
+
+                        <Button
+                            variant='outline'
+                            className='w-full justify-start'
+                            onClick={() => toggleActionDisplayMode()}
+                        >
+                            Режим:{' '}
+                            {actionDisplayMode === 'material'
+                                ? 'Material'
+                                : 'Text'}
                         </Button>
 
                         <div className='my-2 border-t' />

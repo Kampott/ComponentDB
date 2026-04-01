@@ -1,8 +1,25 @@
+import { Plus } from 'lucide-react'
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+    type MouseEvent,
+    type ReactNode,
+} from 'react'
+
+import type { DataTableColumnSchema } from '@/lib/dataTableSchema.ts'
+import { useDataTableState } from '@/lib/useDataTableState.ts'
+import CompactDataTableToolbar from '@Components/Common/CompactDataTableToolbar.tsx'
 import {
     buildContextMenuOptions,
     hasContextMenuActions,
 } from '@Components/Common/context_actions.ts'
+import DataTable from '@Components/Common/DataTable.tsx'
+import SearchableSelect from '@Components/Common/Forms/SearchableSelect.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import ToolbarActionButton from '@Components/Common/ToolbarActionButton.tsx'
+import TruncatedText from '@Components/Common/TruncatedText.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import { Button } from '@Components/ui/button'
 import {
@@ -32,47 +49,143 @@ import {
     type ObjectType,
 } from '@Schemas'
 import { useContextMenuStore, useServicesStore } from '@StorageImpl'
-import {
-    useEffect,
-    useMemo,
-    useState,
-    type MouseEvent,
-    type ReactNode,
-} from 'react'
 
 interface Props {
     objectType: ObjectType
 }
+
+type TypeEventTypesColumnId = 'name' | 'id'
 
 function TypeEventTypesTab({ objectType }: Props): ReactNode {
     const services = useServicesStore(state => state.services)
     const { onContextMenuCall } = useContextMenuStore()
 
     const [eventTypes, setEventTypes] = useState<EventType[] | null>(null)
+    const [allEventTypes, setAllEventTypes] = useState<EventType[] | null>(null)
+    const [linkedEventTypeIds, setLinkedEventTypeIds] = useState<
+        readonly number[] | null
+    >(null)
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const [pendingName, setPendingName] = useState('')
+    const [selectedExistingEventTypeId, setSelectedExistingEventTypeId] =
+        useState('')
     const [createWhenMissing, setCreateWhenMissing] = useState([100])
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [editTarget, setEditTarget] = useState<EventType | null>(null)
 
-    async function loadEventTypes(): Promise<void> {
-        setEventTypes(null)
-        try {
-            setEventTypes(
-                await services.eventsTypesService.getEventTypesByTypeId(
-                    objectType.id,
+    const columns = useMemo(
+        (): readonly DataTableColumnSchema<
+            EventType,
+            typeof eventTypeSchema,
+            TypeEventTypesColumnId
+        >[] => [
+            {
+                id: 'name',
+                label: 'Название',
+                queryField: 'name',
+                renderCell: eventType => (
+                    <TruncatedText text={eventType.name} maxLength={56} />
                 ),
+                getValue: eventType => eventType.name,
+                getSortValue: eventType => eventType.name,
+                visibleByDefault: true,
+                hideable: false,
+                headerClassName: 'w-[75%]',
+                cellClassName: 'overflow-hidden',
+                filter: {
+                    variant: 'text',
+                    operators: ['exact', 'like', 'in'],
+                    placeholder: 'Название типа события',
+                },
+            },
+            {
+                id: 'id',
+                label: 'ID',
+                queryField: 'id',
+                renderCell: eventType => `#${eventType.id}`,
+                getValue: eventType => eventType.id,
+                getSortValue: eventType => eventType.id,
+                visibleByDefault: true,
+                headerClassName: 'w-[25%]',
+                filter: {
+                    variant: 'number',
+                    operators: ['exact', 'in'],
+                    placeholder: 'Например: 1 или 1,2,3',
+                },
+            },
+        ],
+        [],
+    )
+
+    const tableState = useDataTableState({
+        schema: eventTypeSchema,
+        columns,
+        defaultPageSize: 10,
+        pageSizeOptions: [10, 20, 50, 'all'],
+        defaultSorting: {
+            field: 'name',
+            direction: 'asc',
+        },
+    })
+
+    const loadEventTypes = useCallback(async (): Promise<void> => {
+        setEventTypes(null)
+
+        try {
+            const relations = await services.eventTypeRelationsService.list({
+                type_id: objectType.id,
+            })
+            const relationIds = relations.map(
+                relation => relation.event_type_id,
+            )
+            setLinkedEventTypeIds(relationIds)
+
+            if (relationIds.length === 0) {
+                setEventTypes([])
+                return
+            }
+
+            const requestedIds = Array.isArray(tableState.query.id__in)
+                ? tableState.query.id__in
+                : null
+
+            setEventTypes(
+                await services.eventsTypesService.list({
+                    ...tableState.query,
+                    id__in: requestedIds
+                        ? relationIds.filter(id => requestedIds.includes(id))
+                        : relationIds,
+                }),
             )
         } catch (error) {
             handleApiError(error as RestApiError, {
                 showToast: m => alert(m),
             })
         }
-    }
+    }, [
+        objectType.id,
+        services.eventTypeRelationsService,
+        services.eventsTypesService,
+        tableState.query,
+    ])
 
     useEffect(() => {
-        loadEventTypes()
-    }, [objectType.id])
+        void loadEventTypes()
+    }, [loadEventTypes])
+
+    useEffect(() => {
+        async function loadAllEventTypes(): Promise<void> {
+            try {
+                setAllEventTypes(await services.eventsTypesService.list())
+            } catch (error) {
+                handleApiError(error as RestApiError, {
+                    showToast: m => alert(m),
+                })
+            }
+        }
+
+        void loadAllEventTypes()
+    }, [services.eventsTypesService])
 
     async function handleDelete(eventType: EventType): Promise<void> {
         try {
@@ -100,6 +213,7 @@ function TypeEventTypesTab({ objectType }: Props): ReactNode {
             await services.eventsTypesService.update(editTarget.id, data)
             setEditTarget(null)
             await loadEventTypes()
+            setAllEventTypes(await services.eventsTypesService.list())
         } catch (error) {
             handleApiError(error as RestApiError, {
                 showToast: m => alert(m),
@@ -109,19 +223,41 @@ function TypeEventTypesTab({ objectType }: Props): ReactNode {
     }
 
     async function handleSubmitAdd(): Promise<void> {
-        const name = pendingName.trim()
-        if (!name) {
-            alert('Введите название типа события')
-            return
-        }
-
         setIsSubmitting(true)
         try {
-            const existing = await services.eventsTypesService.list({ name })
+            const normalizedName = pendingName.trim()
+            const availableEventTypesForRelation = (allEventTypes ?? []).filter(
+                eventType => !(linkedEventTypeIds ?? []).includes(eventType.id),
+            )
+            const selectedExistingEventType =
+                availableEventTypesForRelation.find(
+                    eventType =>
+                        String(eventType.id) === selectedExistingEventTypeId,
+                ) ??
+                availableEventTypesForRelation.find(
+                    eventType =>
+                        eventType.name.toLowerCase() ===
+                        normalizedName.toLowerCase(),
+                )
+
+            if (!selectedExistingEventType && !normalizedName) {
+                alert(
+                    'Выберите существующий тип события или введите имя нового',
+                )
+                return
+            }
+
+            if (!selectedExistingEventType && createWhenMissing[0] < 50) {
+                alert(
+                    'Новый тип события создавать нельзя. Выберите существующий.',
+                )
+                return
+            }
+
             const matchedEventType =
-                existing[0] ??
+                selectedExistingEventType ??
                 (await services.eventsTypesService.create({
-                    name,
+                    name: normalizedName,
                 }))
 
             await services.eventTypeRelationsService.create({
@@ -130,9 +266,11 @@ function TypeEventTypesTab({ objectType }: Props): ReactNode {
             })
 
             setPendingName('')
+            setSelectedExistingEventTypeId('')
             setCreateWhenMissing([100])
             setIsAddDialogOpen(false)
             await loadEventTypes()
+            setAllEventTypes(await services.eventsTypesService.list())
         } catch (error) {
             handleApiError(error as RestApiError, {
                 showToast: m => alert(m),
@@ -163,40 +301,27 @@ function TypeEventTypesTab({ objectType }: Props): ReactNode {
         [],
     )
 
-    const isItemContextMenuEnabled = hasContextMenuActions(
-        itemContextMenuOptions,
-    )
-    const isEmptyContextMenuEnabled = hasContextMenuActions(
-        emptyContextMenuOptions,
-    )
+    const availableEventTypesForRelation = useMemo(() => {
+        const linkedIds = new Set(linkedEventTypeIds ?? [])
+        return (allEventTypes ?? []).filter(type => !linkedIds.has(type.id))
+    }, [allEventTypes, linkedEventTypeIds])
 
-    function handleItemContextMenu(
-        e: MouseEvent<HTMLElement>,
-        eventType: EventType,
+    function openContextMenu<T>(
+        event: MouseEvent<HTMLElement>,
+        element: T,
+        options: ReturnType<typeof buildContextMenuOptions<T>>,
     ): void {
-        if (!isItemContextMenuEnabled) {
+        if (!hasContextMenuActions(options)) {
             return
         }
 
-        e.stopPropagation()
+        event.preventDefault()
+        event.stopPropagation()
         onContextMenuCall(
-            e,
-            { x: e.clientX, y: e.clientY },
-            eventType,
-            itemContextMenuOptions,
-        )
-    }
-
-    function handleContainerContextMenu(e: MouseEvent<HTMLElement>): void {
-        if (!isEmptyContextMenuEnabled) {
-            return
-        }
-
-        onContextMenuCall(
-            e,
-            { x: e.clientX, y: e.clientY },
-            {} as EventType,
-            emptyContextMenuOptions,
+            event,
+            { x: event.clientX, y: event.clientY },
+            element,
+            options,
         )
     }
 
@@ -209,46 +334,50 @@ function TypeEventTypesTab({ objectType }: Props): ReactNode {
                         Которые можно применять к данному типу
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className='space-y-4'>
+                    <CompactDataTableToolbar
+                        state={tableState}
+                        columns={columns}
+                        actions={
+                            <ToolbarActionButton
+                                type='button'
+                                variant='default'
+                                icon={<Plus />}
+                                label='Добавить'
+                                aria-label='Добавить связь с типом события'
+                                onClick={() => setIsAddDialogOpen(true)}
+                            />
+                        }
+                    />
+
                     <LoadEffect
                         data={eventTypes}
                         contentSize={{ height: '24px', width: '100%' }}
                     >
-                        <div
-                            className='overflow-hidden rounded-md border'
-                            onContextMenu={handleContainerContextMenu}
-                        >
-                            {eventTypes && eventTypes.length > 0 ? (
-                                eventTypes.map((eventType, index) => (
-                                    <div
-                                        key={eventType.id}
-                                        className={`hover:bg-accent/40 flex min-h-12 cursor-pointer items-center justify-between px-3 py-2 ${
-                                            index < eventTypes.length - 1
-                                                ? 'border-b'
-                                                : ''
-                                        }`}
-                                        onClick={() => setEditTarget(eventType)}
-                                        onContextMenu={e =>
-                                            handleItemContextMenu(e, eventType)
-                                        }
-                                    >
-                                        <div className='min-w-0'>
-                                            <div className='font-medium'>
-                                                {eventType.name}
-                                            </div>
-                                            <div className='text-muted-foreground text-sm'>
-                                                ID #{eventType.id}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className='text-muted-foreground py-8 text-center text-sm'>
-                                    Нет привязанных типов событий. Правый клик
-                                    для добавления.
-                                </div>
-                            )}
-                        </div>
+                        <DataTable
+                            state={tableState}
+                            columns={columns}
+                            rows={eventTypes ?? []}
+                            processingMode='manual'
+                            getRowId={eventType => eventType.id}
+                            emptyMessage='Нет привязанных типов событий'
+                            tableClassName='table-fixed'
+                            onRowClick={eventType => setEditTarget(eventType)}
+                            onRowContextMenu={(event, eventType) =>
+                                openContextMenu(
+                                    event,
+                                    eventType,
+                                    itemContextMenuOptions,
+                                )
+                            }
+                            onEmptyContextMenu={event =>
+                                openContextMenu(
+                                    event,
+                                    {} as EventType,
+                                    emptyContextMenuOptions,
+                                )
+                            }
+                        />
                     </LoadEffect>
                 </CardContent>
             </Card>
@@ -270,13 +399,35 @@ function TypeEventTypesTab({ objectType }: Props): ReactNode {
 
                     <div className='space-y-5'>
                         <div className='space-y-2'>
+                            <Label>Существующий тип события</Label>
+                            <SearchableSelect
+                                value={selectedExistingEventTypeId}
+                                onValueChange={setSelectedExistingEventTypeId}
+                                placeholder='Найдите и выберите существующий тип'
+                                searchPlaceholder='Поиск типа события...'
+                                options={availableEventTypesForRelation.map(
+                                    eventType => ({
+                                        label: `${eventType.name} (#${eventType.id})`,
+                                        value: String(eventType.id),
+                                    }),
+                                )}
+                            />
+                            <p className='text-muted-foreground text-sm'>
+                                Если существующий тип выбран, будет привязан
+                                именно он.
+                            </p>
+                        </div>
+
+                        <div className='space-y-2'>
                             <Label htmlFor='event-type-name'>
-                                Название типа события
+                                Название нового типа события
                             </Label>
                             <Input
                                 id='event-type-name'
                                 value={pendingName}
-                                onChange={e => setPendingName(e.target.value)}
+                                onChange={event =>
+                                    setPendingName(event.target.value)
+                                }
                                 placeholder='Например: Плановое обслуживание'
                             />
                         </div>
@@ -288,10 +439,11 @@ function TypeEventTypesTab({ objectType }: Props): ReactNode {
                                         Создавать новый тип, если имя не найдено
                                     </Label>
                                     <p className='text-muted-foreground text-sm'>
-                                        Слайдер пока mock-only. Под капотом
-                                        всегда сначала ищем существующий тип по
-                                        имени, а затем создаём новый только если
-                                        совпадение не найдено.
+                                        Если существующий тип не выбран, форма
+                                        попробует найти точное совпадение по
+                                        имени. При его отсутствии новый тип
+                                        будет создан только если слайдер
+                                        включён.
                                     </p>
                                 </div>
                                 <div className='flex w-full max-w-40 shrink-0 items-center gap-3'>

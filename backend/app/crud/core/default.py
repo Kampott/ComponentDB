@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import Base
 
 
-PydanticModel = TypeVar("PydanticModel", bound=BaseModel)
 ORMModel = TypeVar("ORMModel", bound=Base)
 
 
@@ -17,19 +16,20 @@ class DefaultQueries:
         session: AsyncSession,
         orm: type[ORMModel],
         id: int,
-        data: PydanticModel
+        data: BaseModel
     ) -> ORMModel | None:
         update_data: dict[str, Any] = data.model_dump(exclude_unset=True)
+        orm_id = getattr(orm, "id")
 
         if update_data:
             query = (
                 update(orm)
-                .where(orm.id == id)
+                .where(orm_id == id)
                 .values(**update_data)
                 .returning(orm)
             )
         else:
-            query = select(orm).where(orm.id == id)
+            query = select(orm).where(orm_id == id)
 
         try:
             result = await session.execute(query)
@@ -44,7 +44,7 @@ class DefaultQueries:
     async def update_by_filters(
         session: AsyncSession,
         orm: type[ORMModel],
-        data: PydanticModel,
+        data: BaseModel,
         filters: dict[str, Any],
     ) -> ORMModel | None:
         update_data = data.model_dump(exclude_unset=True)

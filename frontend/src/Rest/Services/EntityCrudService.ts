@@ -1,70 +1,62 @@
 import type { ICrudService } from '@/Interfaces/Services/CrudInterfaces.ts'
 import type RestApiClient from '@Rest/RestApiClient.ts'
 import type {
-    EntityFields,
-    EntitySchema,
+    AnyEntitySchema,
     InferCreate,
     InferEntity,
+    InferListQuery,
     InferUpdate,
 } from '@Schemas'
 
-type QueryParams = Record<string, number | string>
-
 export default class EntityCrudService<
-    Schema extends object,
-    Context,
-    Fields extends EntityFields<Schema, Context>,
+    SchemaDefinition extends AnyEntitySchema,
 > implements ICrudService<
-    InferEntity<EntitySchema<Schema, Context, Fields>>,
-    InferCreate<EntitySchema<Schema, Context, Fields>>,
-    InferUpdate<EntitySchema<Schema, Context, Fields>>,
-    QueryParams
+    InferEntity<SchemaDefinition>,
+    InferCreate<SchemaDefinition>,
+    InferUpdate<SchemaDefinition>,
+    InferListQuery<SchemaDefinition>
 > {
     protected readonly client: RestApiClient
-    protected readonly schema: EntitySchema<Schema, Context, Fields>
+    protected readonly schema: SchemaDefinition
     protected readonly basePath: string
 
-    public constructor(
-        client: RestApiClient,
-        schema: EntitySchema<Schema, Context, Fields>,
-    ) {
+    public constructor(client: RestApiClient, schema: SchemaDefinition) {
         this.client = client
         this.schema = schema
         this.basePath = `/${schema.resource}/`
     }
 
     public async list(
-        query?: QueryParams,
-    ): Promise<InferEntity<EntitySchema<Schema, Context, Fields>>[]> {
-        return await this.client.get<
-            InferEntity<EntitySchema<Schema, Context, Fields>>[]
-        >(this.basePath, query)
+        query?: InferListQuery<SchemaDefinition>,
+    ): Promise<InferEntity<SchemaDefinition>[]> {
+        return await this.client.get<InferEntity<SchemaDefinition>[]>(
+            this.basePath,
+            query,
+        )
     }
 
-    public async read(
-        id: number,
-    ): Promise<InferEntity<EntitySchema<Schema, Context, Fields>>> {
-        return await this.client.get<
-            InferEntity<EntitySchema<Schema, Context, Fields>>
-        >(`${this.basePath}${id}`)
+    public async read(id: number): Promise<InferEntity<SchemaDefinition>> {
+        return await this.client.get<InferEntity<SchemaDefinition>>(
+            `${this.basePath}${id}`,
+        )
     }
 
     public async create(
-        data: InferCreate<EntitySchema<Schema, Context, Fields>>,
-    ): Promise<InferEntity<EntitySchema<Schema, Context, Fields>>> {
+        data: InferCreate<SchemaDefinition>,
+    ): Promise<InferEntity<SchemaDefinition>> {
         return await this.client.post<
-            InferCreate<EntitySchema<Schema, Context, Fields>>,
-            InferEntity<EntitySchema<Schema, Context, Fields>>
+            InferCreate<SchemaDefinition>,
+            InferEntity<SchemaDefinition>
         >(this.basePath, data)
     }
 
     public async update(
         id: number,
-        data: InferUpdate<EntitySchema<Schema, Context, Fields>>,
-    ): Promise<InferEntity<EntitySchema<Schema, Context, Fields>>> {
+        data: InferUpdate<SchemaDefinition>,
+    ): Promise<InferEntity<SchemaDefinition>> {
         return await this.client.patch<
-            InferUpdate<EntitySchema<Schema, Context, Fields>>,
-            InferEntity<EntitySchema<Schema, Context, Fields>>
+            InferUpdate<SchemaDefinition>,
+            InferEntity<SchemaDefinition>
         >(`${this.basePath}${id}`, data)
     }
 

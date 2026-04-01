@@ -14,12 +14,26 @@ export interface InstancePropertyCreateContext {
     instanceId: number
 }
 
+export interface InstancePropertyQuery {
+    id: number
+    value: string
+    instance_id: number
+    property_type_id: number
+}
+
 export const instancePropertySchema = defineEntitySchema<
     InstanceProperty,
-    InstancePropertyCreateContext
+    InstancePropertyCreateContext,
+    InstancePropertyQuery
 >()({
     entity: 'InstanceProperty',
     resource: 'instanceproperties',
+    query: {
+        instance_id: ['exact', 'in'],
+        property_type_id: ['exact', 'in'],
+        value: ['exact', 'like'],
+        id: ['exact', 'in', 'sort'],
+    },
     fields: {
         id: {
             create: { policy: 'forbidden' },

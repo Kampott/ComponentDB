@@ -40,7 +40,7 @@ export const eventUiSchema = defineEntityUiSchema<typeof eventSchema>()({
                 },
             },
             form: {
-                input: 'select',
+                input: 'search-select',
                 options: async () => {
                     const types = await useServicesStore
                         .getState()

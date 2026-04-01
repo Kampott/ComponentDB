@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
@@ -11,9 +12,7 @@ from app.logging.deps import LoggerInterface, LogCallable
 
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
-
-from typing import List
-from datetime import datetime
+from app.models.core import InstanceProperties
 from app.core.query_builder import QueryBuilder
 from app.core.search_config import SEARCH_CONFIG
 
@@ -71,7 +70,7 @@ async def read_instance_properties(
     return instance_properties
 
 @router.get("/{instance_property_id}", response_model=InstancePropertiesRead)
-async def read_instance_properties(instance_property_id: int,
+async def read_instance_property(instance_property_id: int,
         current_user: User = Depends(require_permissions("read_instance_properties")),
         session: AsyncSession = Depends(get_async_session),
         log: LogCallable = Depends(LoggerInterface("instance_properties"))):
@@ -131,8 +130,8 @@ async def update_property_type(instance_property_id: int,
                     data: InstancePropertiesUpdate,
                     current_user: User = Depends(require_permissions("update_instance_properties")),
                     session: AsyncSession = Depends(get_async_session),
-        log: LogCallable = Depends(LoggerInterface("instance_properties"))) -> InstancePropertiesRead:
-    updated_instance_property: InstancePropertiesRead | None = await db.update_instance_property(
+        log: LogCallable = Depends(LoggerInterface("instance_properties"))):
+    updated_instance_property = await db.update_instance_property(
         session, instance_property_id, data
     )
     if not updated_instance_property:
@@ -145,8 +144,7 @@ async def update_property_type(instance_property_id: int,
             action="read_instance_properties",
             details={
                 "value": data.value,
-                "instance_id": data.instance_id,
-                "property_type_id": data.property_type_id
+                "instance_property_id": instance_property_id
             }
         )
     except Exception:

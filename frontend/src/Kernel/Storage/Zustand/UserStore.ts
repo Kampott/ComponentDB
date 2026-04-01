@@ -5,9 +5,23 @@ import type { LoginRequest, User } from '@Schemas'
 import type { IUserStore } from '@Storage'
 import { useServicesStore } from '@StorageImpl'
 
+const ACTION_DISPLAY_MODE_STORAGE_KEY = 'actionDisplayMode'
+
+function getInitialActionDisplayMode() {
+    if (typeof window === 'undefined') {
+        return 'text' as const
+    }
+
+    const savedMode = window.localStorage.getItem(
+        ACTION_DISPLAY_MODE_STORAGE_KEY,
+    )
+    return savedMode === 'material' ? 'material' : 'text'
+}
+
 export const useUserStore = create<IUserStore>((set, get) => ({
     user: {} as User,
     isAuthenticated: false,
+    actionDisplayMode: getInitialActionDisplayMode(),
 
     setUser(user: User) {
         set({ user: user })
@@ -15,6 +29,19 @@ export const useUserStore = create<IUserStore>((set, get) => ({
 
     setAuth(isAuthenticated: boolean) {
         set({ isAuthenticated: isAuthenticated })
+    },
+
+    setActionDisplayMode(mode) {
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(ACTION_DISPLAY_MODE_STORAGE_KEY, mode)
+        }
+        set({ actionDisplayMode: mode })
+    },
+
+    toggleActionDisplayMode() {
+        const nextMode =
+            get().actionDisplayMode === 'material' ? 'text' : 'material'
+        get().setActionDisplayMode(nextMode)
     },
 
     async login(userData: LoginRequest) {

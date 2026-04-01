@@ -4,15 +4,11 @@ import EntityCrudService from '@Rest/Services/EntityCrudService.ts'
 import {
     eventTypeSchema,
     type EventType,
-    type EventTypeCreateContext,
+    type EventTypeTypeLink,
 } from '@Schemas'
 
 export default class EventsTypesService
-    extends EntityCrudService<
-        EventType,
-        EventTypeCreateContext,
-        typeof eventTypeSchema.fields
-    >
+    extends EntityCrudService<typeof eventTypeSchema>
     implements IEventsTypesService
 {
     public constructor(client: RestApiClient) {
@@ -20,8 +16,20 @@ export default class EventsTypesService
     }
 
     public async getEventTypesByTypeId(typeId: number): Promise<EventType[]> {
-        return await this.client.get<EventType[]>('/event_types/', {
-            type_id: typeId,
+        const relations = await this.client.get<EventTypeTypeLink[]>(
+            '/event_types_types/',
+            {
+                type_id: typeId,
+            },
+        )
+
+        const eventTypeIds = relations.map(relation => relation.event_type_id)
+        if (eventTypeIds.length === 0) {
+            return []
+        }
+
+        return await this.list({
+            id__in: eventTypeIds,
         })
     }
 }

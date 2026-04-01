@@ -15,7 +15,7 @@ from app.core.security import (
 
 from app.models.auth import UserTypeAccess, User
 from app.models.core import Types
-from app.schemas.auth import RolePermissionCreate, PermissionUpdate, RoleUpdate, UserTypeAccessCreate, UserTypeAccessOut, UserTypeAccessUpdate
+from app.schemas.auth import UserTypeAccessCreate, UserTypeAccessUpdate
 from app.db.database import get_async_session
 
 from fastapi import Depends, HTTPException, status
@@ -23,11 +23,11 @@ from fastapi import Depends, HTTPException, status
 
 async def get_user_type_access(
     session: AsyncSession,
-    user_id: Optional[User] = None,
+    user_id: Optional[uuid.UUID] = None,
     root_id: Optional[int] = None,
     can_read: Optional[bool] = None,
     can_write: Optional[bool] = None
-) -> List[UserTypeAccessOut]:
+) -> List[UserTypeAccess]:
     query = select(UserTypeAccess)
 
     filters = []
@@ -50,7 +50,7 @@ async def get_user_type_access(
 async def create_user_type_access(
     session: AsyncSession,
     data: UserTypeAccessCreate,
-) -> UserTypeAccessCreate:
+) -> UserTypeAccess:
     user_obj = await session.get(User, data.user_id)
     if not user_obj:
         raise HTTPException(status_code=400, detail="User not found")

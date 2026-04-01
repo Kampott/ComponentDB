@@ -33,7 +33,7 @@ async def get_instanceproperties(db: AsyncSession,
         query = query.where(and_(*filters))
 
     result = await db.execute(query)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 #Get one type using the properties id
 async def get_instanceproperty(db: AsyncSession, instanceproperty_id: int) -> Optional[InstanceProperties]:
@@ -75,5 +75,5 @@ async def delete_instanceproperty(db: AsyncSession, instance_property_id: int) -
 
 
 async def update_instance_property(session: AsyncSession, instance_property_id: int,
-                          data: InstanceProperties) -> InstanceProperties | None:
+                          data: InstancePropertiesUpdate) -> InstanceProperties | None:
     return await DefaultQueries.update(session, InstanceProperties, instance_property_id, data)

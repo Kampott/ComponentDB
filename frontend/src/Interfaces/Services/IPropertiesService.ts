@@ -1,10 +1,17 @@
 import type { ICrudService } from '@/Interfaces/Services/CrudInterfaces.ts'
-import type { Property, PropertyAdd, PropertyUpdate } from '@Schemas'
+import type {
+    InferListQuery,
+    Property,
+    PropertyAdd,
+    PropertyUpdate,
+    propertySchema,
+} from '@Schemas'
 
 export default interface IPropertiesService extends ICrudService<
     Property,
     PropertyAdd,
-    PropertyUpdate
+    PropertyUpdate,
+    InferListQuery<typeof propertySchema>
 > {
     getPropertiesByObjectId(objectId: number): Promise<Property[]>
 

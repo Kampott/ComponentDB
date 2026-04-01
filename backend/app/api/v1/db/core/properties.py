@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
@@ -10,11 +11,9 @@ from app.db.database import get_async_session
 
 from app.crud.auth.auth import require_permission as require_permissions
 from app.models.auth import User
+from app.models.core import Properties
 
 from app.logging.deps import LoggerInterface, LogCallable 
-
-from typing import List
-from datetime import datetime
 from app.core.query_builder import QueryBuilder
 from app.core.search_config import SEARCH_CONFIG
 
@@ -114,14 +113,14 @@ async def delete_properties(property_id: int,
 async def update_property(property_id: int, data: PropertiesUpdate,
                         current_user: User = Depends(require_permissions("edit_properties")),
                                session: AsyncSession = Depends(get_async_session),
-    log: LogCallable = Depends(LoggerInterface("properties"))) -> PropertiesRead:
-    updated_property: PropertiesRead | None = await db.update_property(session, property_id, data)
+    log: LogCallable = Depends(LoggerInterface("properties"))):
+    updated_property = await db.update_property(session, property_id, data)
     if not updated_property:
         raise HTTPException(
             status_code=404,
             detail="Значение свойства не найдено"
         )
-    details = {"property_id": property_id}
+    details: dict[str, object] = {"property_id": property_id}
     if data.value is not None:
         details["value"] = data.value
     

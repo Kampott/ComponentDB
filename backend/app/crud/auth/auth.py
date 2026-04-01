@@ -114,10 +114,10 @@ async def user_has_role(db: AsyncSession, user: User, role_name: str) -> bool:
         .where(User.id == user.id)
         .options(selectinload(User.roles))
     )
-    user = result.scalar_one_or_none()
-    if not user:
+    loaded_user = result.scalar_one_or_none()
+    if not loaded_user:
         return False
-    return any(role.name == role_name or role.name == "SUPER_USER" for role in user.roles)
+    return any(role.name == role_name or role.name == "SUPER_USER" for role in loaded_user.roles)
 
 
 async def user_has_permission(db: AsyncSession, user: User, permission_name: str) -> bool:
@@ -128,10 +128,10 @@ async def user_has_permission(db: AsyncSession, user: User, permission_name: str
             selectinload(User.roles).selectinload(Role.permissions)
         )
     )
-    user = result.scalar_one_or_none()
-    if not user:
+    loaded_user = result.scalar_one_or_none()
+    if not loaded_user:
         return False
-    for role in user.roles:
+    for role in loaded_user.roles:
         for perm in role.permissions:
             if perm.name == permission_name or perm.name == "SUPER_PERMISSION":
                 return True
@@ -378,6 +378,7 @@ async def _check_instance_permission(
         allowed = await user_can_read_instance(db, current_user, instance_obj.root_id)
 
     # If not allowed, check parent object access
+    object_obj = None
     if not allowed:
 
         if not hasattr(instance_obj, 'object_id') or instance_obj.object_id is None:
@@ -393,6 +394,8 @@ async def _check_instance_permission(
     # If still not allowed, check grandparent type access
     if not allowed:
         # From the object, get type
+        if object_obj is None:
+            raise HTTPException(status_code=500, detail="Parent object not loaded")
         if not hasattr(object_obj, 'type_id') or object_obj.type_id is None:
             raise HTTPException(status_code=500, detail="Object missing type_id")
         type_obj = await get_type(db, object_obj.type_id)

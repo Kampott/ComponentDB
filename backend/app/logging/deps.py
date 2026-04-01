@@ -1,13 +1,18 @@
-import typing
-from typing import Optional, Callable, Awaitable
+from typing import Any, Optional, Protocol, Callable
 from fastapi import Request, Depends
 from app.core.security import get_current_user
 from app.models.auth import User
 
-LogCallable = Callable[[Optional[str], Optional[dict]], Awaitable[None]]
+
+class LogCallable(Protocol):
+    async def __call__(
+        self,
+        action: Optional[str] = None,
+        details: Optional[dict[str, Any]] = None,
+    ) -> None: ...
 
 
-def LoggerInterface(resource: Optional[str] = None) -> Callable[..., Awaitable[LogCallable]]:
+def LoggerInterface(resource: Optional[str] = None) -> Callable[..., object]:
     """
     Factory dependency. Use like: log: LogCallable = Depends(LoggerInterface("types"))
     - resource: optional logical resource name (e.g. "types", "instances")
@@ -15,7 +20,7 @@ def LoggerInterface(resource: Optional[str] = None) -> Callable[..., Awaitable[L
     
     if resource == "auth":
         # For auth endpoints, don't require current_user
-        async def _dep(request: Request) -> LogCallable:
+        async def auth_dep(request: Request) -> LogCallable:
             ctx = getattr(request.state, "log_context", None)
             if ctx is None:
                 request.state.log_context = {}
@@ -36,10 +41,10 @@ def LoggerInterface(resource: Optional[str] = None) -> Callable[..., Awaitable[L
 
             return _log
         
-        return _dep
+        return auth_dep
     else:
         # For normal endpoints, require current_user
-        async def _dep(request: Request, current_user: User = Depends(get_current_user)) -> LogCallable:
+        async def user_dep(request: Request, current_user: User = Depends(get_current_user)) -> LogCallable:
             ctx = getattr(request.state, "log_context", None)
             if ctx is None:
                 request.state.log_context = {}
@@ -61,4 +66,4 @@ def LoggerInterface(resource: Optional[str] = None) -> Callable[..., Awaitable[L
 
             return _log
         
-        return _dep
+        return user_dep

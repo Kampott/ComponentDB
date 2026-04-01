@@ -15,7 +15,7 @@ from app.core.security import (
 
 from app.models.auth import UserObjectAccess, User
 from app.models.core import Objects
-from app.schemas.auth import RolePermissionCreate, PermissionUpdate, RoleUpdate, UserObjectAccessCreate, UserObjectAccessOut, UserObjectAccessUpdate
+from app.schemas.auth import UserObjectAccessCreate, UserObjectAccessUpdate
 from app.db.database import get_async_session
 
 from fastapi import Depends, HTTPException, status
@@ -23,11 +23,11 @@ from fastapi import Depends, HTTPException, status
 
 async def get_user_object_access(
     session: AsyncSession,
-    user_id: Optional[User] = None,
+    user_id: Optional[uuid.UUID] = None,
     root_id: Optional[int] = None,
     can_read: Optional[bool] = None,
     can_write: Optional[bool] = None
-) -> List[UserObjectAccessOut]:
+) -> List[UserObjectAccess]:
     query = select(UserObjectAccess)
 
     filters = []
@@ -50,7 +50,7 @@ async def get_user_object_access(
 async def create_user_object_access(
     session: AsyncSession,
     data: UserObjectAccessCreate,
-) -> UserObjectAccessCreate:
+) -> UserObjectAccess:
     user_obj = await session.get(User, data.user_id)
     if not user_obj:
         raise HTTPException(status_code=400, detail="User not found")

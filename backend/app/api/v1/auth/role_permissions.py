@@ -1,17 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie, Query
 from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.auth import RolePermissionCreate, RolePermissionOut
-from app.crud.auth.role_permissions import create_role_permission, get_role_permission, delete_role_permission
-from app.db.database import get_async_session
-from app.crud.auth.auth import require_permission as require_permissions
-from app.models.auth import User
-from app.logging.deps import LoggerInterface, LogCallable
-from typing import List
-from datetime import datetime
+
 from app.core.query_builder import QueryBuilder
 from app.core.search_config import SEARCH_CONFIG
+from app.crud.auth.role_permissions import create_role_permission, get_role_permission, delete_role_permission
+from app.crud.auth.auth import require_permission as require_permissions
+from app.db.database import get_async_session
+from app.logging.deps import LoggerInterface, LogCallable
+from app.models.auth import RolePermission, User
+from app.schemas.auth import RolePermissionCreate, RolePermissionOut
+from app.logging.deps import LoggerInterface, LogCallable
+from typing import List
 
 router = APIRouter(prefix="/role_permissions", tags=["DB: Auth: Role Permissions"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")

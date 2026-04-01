@@ -52,7 +52,7 @@ function TypePage() {
     }, [navigate, services.objectsTypesService, id, typeId])
 
     return (
-        <div className='mx-auto mt-4 w-full max-w-6xl px-4'>
+        <div className='mx-auto mt-4 w-full max-w-7xl px-4'>
             <div className='mb-3'>
                 <Breadcrumb>
                     <BreadcrumbList>

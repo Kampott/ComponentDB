@@ -4,6 +4,7 @@ import { ChevronDownIcon } from 'lucide-react'
 import { type Dispatch, type SetStateAction, useEffect, useState } from 'react'
 
 import KeyValueObjectEditor from '@Components/Common/Forms/KeyValueObjectEditor.tsx'
+import SearchableSelect from '@Components/Common/Forms/SearchableSelect.tsx'
 import { Button } from '@Components/ui/button'
 import { Calendar } from '@Components/ui/calendar'
 import { Checkbox } from '@Components/ui/checkbox'
@@ -94,9 +95,12 @@ function DefaultFormBase<T>({
     useEffect(() => {
         for (const field of fields) {
             if (
-                field.type == 'select' &&
+                (field.type === 'select' || field.type === 'search-select') &&
                 field.options &&
-                field.options.length > 0
+                field.options.length > 0 &&
+                (getField(field.bindData) === undefined ||
+                    getField(field.bindData) === null ||
+                    getField(field.bindData) === '')
             ) {
                 // Инициализируем select-поля первым значением,
                 // чтобы не отправлять undefined, если пользователь не трогал контрол
@@ -161,6 +165,21 @@ function DefaultFormBase<T>({
                                     ))}
                                 </SelectContent>
                             </Select>
+                        ) : field.type === 'search-select' && field.options ? (
+                            <SearchableSelect
+                                value={String(getField(field.bindData) ?? '')}
+                                options={field.options.map(option => ({
+                                    label: option.label,
+                                    value: String(option.value),
+                                }))}
+                                placeholder={
+                                    field.placeholder ?? 'Выберите значение'
+                                }
+                                searchPlaceholder='Поиск по имени...'
+                                onValueChange={value =>
+                                    handleChange(field, value)
+                                }
+                            />
                         ) : field.type === 'boolean' ? (
                             <div className='flex items-center gap-2 pt-1'>
                                 <Checkbox

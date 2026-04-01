@@ -1,4 +1,6 @@
-export type CrudQuery = Record<string, number | string>
+import type { EntityQueryParams } from '@EntityDsl/Core'
+
+export type CrudQuery = EntityQueryParams
 
 export interface IListService<Entity, Query extends CrudQuery = CrudQuery> {
     list(query?: Query): Promise<Entity[]>

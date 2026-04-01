@@ -114,7 +114,12 @@ async function resolveFormFields<
         formFields.push({
             bindData: field,
             label: fieldMeta.common.label,
-            type: options ? 'select' : fieldMeta.form.input,
+            type:
+                options &&
+                (fieldMeta.form.input === 'select' ||
+                    fieldMeta.form.input === 'search-select')
+                    ? fieldMeta.form.input
+                    : fieldMeta.form.input,
             placeholder: fieldMeta.common.description,
             options: options,
             validator: fieldMeta.form.validator as FormField<

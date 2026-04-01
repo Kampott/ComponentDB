@@ -1,4 +1,4 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 class LoggingSettings(BaseSettings):
     LOG_BATCH_SIZE: int = 50

@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 from app.crud.log.logs import create_logs_bulk
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
 
 BATCH_SIZE = 50
 BATCH_TIMEOUT = 2.0  # seconds

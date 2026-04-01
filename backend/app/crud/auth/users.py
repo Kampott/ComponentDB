@@ -10,7 +10,7 @@ from app.core.security import (
     verify_password, get_password_hash,
     create_access_token, create_refresh_token
 )
-from app.schemas.auth import UserCreate, UserOut
+from app.schemas.auth import UserCreate
 
 
 
@@ -34,6 +34,6 @@ async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
     return result.scalars().first()
 
 
-async def get_user_by_email_crud(session: AsyncSession, email:str) -> UserOut | None:
+async def get_user_by_email_crud(session: AsyncSession, email:str) -> User | None:
     result = await session.execute(select(User).where(User.email == email))
     return result.scalar_one_or_none()

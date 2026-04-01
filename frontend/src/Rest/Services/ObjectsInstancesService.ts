@@ -1,18 +1,10 @@
 import type IObjectsInstancesService from '@/Interfaces/Services/IObjectsInstancesService.ts'
 import type RestApiClient from '@Rest/RestApiClient.ts'
 import EntityCrudService from '@Rest/Services/EntityCrudService.ts'
-import {
-    objectInstanceSchema,
-    type ObjectInstance,
-    type ObjectInstanceCreateContext,
-} from '@Schemas'
+import { objectInstanceSchema, type ObjectInstance } from '@Schemas'
 
 export default class ObjectsInstancesService
-    extends EntityCrudService<
-        ObjectInstance,
-        ObjectInstanceCreateContext,
-        typeof objectInstanceSchema.fields
-    >
+    extends EntityCrudService<typeof objectInstanceSchema>
     implements IObjectsInstancesService
 {
     public constructor(client: RestApiClient) {

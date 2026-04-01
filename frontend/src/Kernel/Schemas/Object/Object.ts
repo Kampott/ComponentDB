@@ -27,6 +27,13 @@ export interface ObjectCreateContext {
 export const objectSchema = defineEntitySchema<Object, ObjectCreateContext>()({
     entity: 'Object',
     resource: 'objects',
+    query: {
+        name: ['exact', 'like', 'in', 'sort'],
+        type_id: ['exact', 'in', 'gte', 'lte'],
+        parent_id: ['exact', 'in'],
+        root_id: ['exact', 'in'],
+        id: ['exact', 'in', 'gte', 'lte', 'sort'],
+    },
     fields: {
         id: {
             create: { policy: 'forbidden' },

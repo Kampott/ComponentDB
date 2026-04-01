@@ -1,18 +1,10 @@
 import type IPropertiesService from '@/Interfaces/Services/IPropertiesService.ts'
 import type RestApiClient from '@Rest/RestApiClient.ts'
 import EntityCrudService from '@Rest/Services/EntityCrudService.ts'
-import {
-    propertySchema,
-    type Property,
-    type PropertyCreateContext,
-} from '@Schemas'
+import { propertySchema, type Property } from '@Schemas'
 
 export default class PropertiesService
-    extends EntityCrudService<
-        Property,
-        PropertyCreateContext,
-        typeof propertySchema.fields
-    >
+    extends EntityCrudService<typeof propertySchema>
     implements IPropertiesService
 {
     public constructor(client: RestApiClient) {

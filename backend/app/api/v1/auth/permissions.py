@@ -1,17 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie, Query
 from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.auth import PermissionCreate, PermissionOut, RolePermissionCreate, UserRoleCreate, PermissionUpdate
-from app.crud.auth.permissions import create_permission, get_permissions, get_permission, delete_permission, update_permission
-from app.db.database import get_async_session
+
+from app.crud.auth.permissions import create_permission, delete_permission, get_permission, update_permission
 from app.crud.auth.auth import require_permission as require_permissions
-from app.models.auth import User
-from app.logging.deps import LoggerInterface, LogCallable
-from typing import List
-from datetime import datetime
 from app.core.query_builder import QueryBuilder
 from app.core.search_config import SEARCH_CONFIG
+from app.db.database import get_async_session
+from app.logging.deps import LoggerInterface, LogCallable
+from app.models.auth import Permission, User
+from app.schemas.auth import PermissionCreate, PermissionOut, PermissionUpdate
+from app.logging.deps import LoggerInterface, LogCallable
+from typing import List
 
 router = APIRouter(prefix="/permissions", tags=["DB: Auth: Permissions"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -99,12 +102,12 @@ async def update_permission_endpoint(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(require_permissions("edit_permission")),
     log: LogCallable = Depends(LoggerInterface("permissions"))
-) -> PermissionOut | None:
-    updated_permission: PermissionOut | None = await update_permission(session, permission_id, data)
+):
+    updated_permission = await update_permission(session, permission_id, data)
     if not updated_permission:
         raise HTTPException(status_code=404, detail="Permission not found")
     
-    details = {"permission_id": permission_id}
+    details: dict[str, object] = {"permission_id": permission_id}
     if data.name is not None:
         details["name"] = data.name
     

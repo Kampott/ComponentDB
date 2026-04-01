@@ -1,12 +1,12 @@
+import { useDataTableState } from '@/lib/useDataTableState.ts'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
 import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
 import EventsTable, {
+    useEventTableColumns,
     type EventTableRow,
 } from '@Components/Pages/EventsPage/EventsTable.tsx'
-import { Button } from '@Components/ui/button'
-import { Input } from '@Components/ui/input'
 import { eventUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
@@ -45,27 +45,50 @@ function EventsSection({
 }: Props) {
     const navigate = useNavigate()
     const services = useServicesStore(state => state.services)
+    const handleOpenInstance = useCallback(
+        (id: number) => navigate(`/instances/${id}`),
+        [navigate],
+    )
+    const eventTableColumns = useEventTableColumns({
+        onOpenInstance: handleOpenInstance,
+    })
 
     const [events, setEvents] = useState<Event[] | null>(null)
     const [eventTypes, setEventTypes] = useState<EventType[] | null>(null)
     const [showAddEventForm, setShowAddEventForm] = useState(false)
     const [editTargetEvent, setEditTargetEvent] = useState<Event | null>(null)
     const [viewTargetEvent, setViewTargetEvent] = useState<Event | null>(null)
-    const [search, setSearch] = useState('')
 
-    const loadData = useCallback(async () => {
-        setEvents(null)
+    const eventTableState = useDataTableState({
+        schema: eventSchema,
+        columns: eventTableColumns,
+        defaultPageSize: pageSize,
+        pageSizeOptions: Array.from(new Set([pageSize, 20, 50, 'all'])) as (
+            | number
+            | 'all'
+        )[],
+        defaultSorting: {
+            field: 'timestamp',
+            direction: 'desc',
+        },
+    })
+
+    const eventsQuery = useMemo(
+        () =>
+            instanceId === undefined
+                ? eventTableState.query
+                : {
+                      ...eventTableState.query,
+                      instance_id: instanceId,
+                  },
+        [eventTableState.query, instanceId],
+    )
+
+    const loadEventTypes = useCallback(async () => {
         setEventTypes(null)
 
         try {
-            const [eventsResponse, eventTypesResponse] = await Promise.all([
-                instanceId === undefined
-                    ? services.eventsService.list()
-                    : services.eventsService.getEventsByInstanceId(instanceId),
-                services.eventsTypesService.list(),
-            ])
-
-            setEvents(eventsResponse.map(normalizeEvent))
+            const eventTypesResponse = await services.eventsTypesService.list()
             setEventTypes(eventTypesResponse)
         } catch (error) {
             handleApiError(error as RestApiError, {
@@ -73,16 +96,30 @@ function EventsSection({
                 showToast: m => alert(m),
             })
         }
-    }, [
-        instanceId,
-        navigate,
-        services.eventsService,
-        services.eventsTypesService,
-    ])
+    }, [navigate, services.eventsTypesService])
+
+    const loadEvents = useCallback(async () => {
+        setEvents(null)
+
+        try {
+            const eventsResponse =
+                await services.eventsService.list(eventsQuery)
+            setEvents(eventsResponse.map(normalizeEvent))
+        } catch (error) {
+            handleApiError(error as RestApiError, {
+                navigate,
+                showToast: m => alert(m),
+            })
+        }
+    }, [eventsQuery, navigate, services.eventsService])
 
     useEffect(() => {
-        loadData()
-    }, [loadData])
+        loadEventTypes()
+    }, [loadEventTypes])
+
+    useEffect(() => {
+        loadEvents()
+    }, [loadEvents])
 
     const eventTypeNameById = useMemo(() => {
         const map = new Map<number, string>()
@@ -111,7 +148,7 @@ function EventsSection({
 
         try {
             await services.eventsService.create(data)
-            await loadData()
+            await loadEvents()
         } catch (error) {
             handleApiError(error as RestApiError, {
                 showToast: m => alert(m),
@@ -129,7 +166,7 @@ function EventsSection({
         try {
             await services.eventsService.update(editTargetEvent.id, data)
             setEditTargetEvent(null)
-            await loadData()
+            await loadEvents()
         } catch (error) {
             handleApiError(error as RestApiError, {
                 showToast: m => alert(m),
@@ -141,7 +178,7 @@ function EventsSection({
     async function handleDeleteEvent(event: Event): Promise<void> {
         try {
             await services.eventsService.delete(event.id)
-            await loadData()
+            await loadEvents()
         } catch (error) {
             handleApiError(error as RestApiError, {
                 showToast: m => alert(m),
@@ -160,34 +197,15 @@ function EventsSection({
 
     return (
         <>
-            {showToolbar && (
-                <div className='mb-4 grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3'>
-                    <Input
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder='Фильтр поиска (будет реализован позже)'
-                        className='max-w-md'
-                        disabled
-                    />
-                    <Button
-                        size='icon'
-                        className='justify-self-end'
-                        aria-label='Добавить событие'
-                        onClick={() => setShowAddEventForm(true)}
-                    >
-                        +
-                    </Button>
-                </div>
-            )}
-
             <LoadEffect
                 data={events && eventTypes ? rows : null}
                 contentSize={{ height: '20px', width: '100%' }}
             >
                 <EventsTable
                     rows={rows}
-                    pageSize={pageSize}
-                    onOpenInstance={id => navigate(`/instances/${id}`)}
+                    state={eventTableState}
+                    columns={eventTableColumns}
+                    showToolbar={showToolbar}
                     onViewRequest={event => setViewTargetEvent(event)}
                     onAddRequest={() => setShowAddEventForm(true)}
                     onChangeRequest={event => setEditTargetEvent(event)}

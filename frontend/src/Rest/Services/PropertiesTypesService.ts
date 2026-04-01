@@ -1,18 +1,10 @@
 import type IPropertiesTypesService from '@/Interfaces/Services/IPropertiesTypesService.ts'
 import type RestApiClient from '@Rest/RestApiClient.ts'
 import EntityCrudService from '@Rest/Services/EntityCrudService.ts'
-import {
-    propertyTypeSchema,
-    type PropertyType,
-    type PropertyTypeCreateContext,
-} from '@Schemas'
+import { propertyTypeSchema, type PropertyType } from '@Schemas'
 
 export default class PropertiesTypesService
-    extends EntityCrudService<
-        PropertyType,
-        PropertyTypeCreateContext,
-        typeof propertyTypeSchema.fields
-    >
+    extends EntityCrudService<typeof propertyTypeSchema>
     implements IPropertiesTypesService
 {
     public constructor(client: RestApiClient) {
@@ -25,7 +17,7 @@ export default class PropertiesTypesService
     ): Promise<PropertyType[]> {
         return await this.list({
             type_id: typeId,
-            is_static: `${isStatic}`,
+            is_static: isStatic,
         })
     }
 }

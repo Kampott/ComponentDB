@@ -22,6 +22,12 @@ export interface EventCreateContext {
 export const eventSchema = defineEntitySchema<Event, EventCreateContext>()({
     entity: 'Event',
     resource: 'events',
+    query: {
+        event_type_id: ['exact', 'in'],
+        instance_id: ['exact', 'in'],
+        timestamp: ['exact', 'gte', 'lte', 'gt', 'lt', 'sort'],
+        id: ['exact', 'in', 'gte', 'lte', 'sort'],
+    },
     fields: {
         id: {
             create: { policy: 'forbidden' },
@@ -65,6 +71,10 @@ export const eventTypeSchema = defineEntitySchema<
 >()({
     entity: 'EventType',
     resource: 'event_types',
+    query: {
+        name: ['exact', 'like', 'sort'],
+        id: ['exact', 'in', 'sort'],
+    },
     fields: {
         id: {
             create: { policy: 'forbidden' },
@@ -93,6 +103,10 @@ export const replacementEventSchema = defineEntitySchema<
 >()({
     entity: 'ReplacementEvent',
     resource: 'replacements',
+    query: {
+        event_id: ['exact', 'in'],
+        new_instance_id: ['exact', 'in'],
+    },
     fields: {
         event_id: {
             create: { policy: 'required' },

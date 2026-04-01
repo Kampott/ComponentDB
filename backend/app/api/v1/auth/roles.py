@@ -1,17 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie, Query
 from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.auth import RoleCreate, RoleOut, RoleUpdate
-from app.crud.auth.roles import create_role, get_roles, get_role, delete_role, update_role
-from app.db.database import get_async_session
+
 from app.crud.auth.auth import require_permission as require_permissions
-from app.models.auth import User
-from app.logging.deps import LoggerInterface, LogCallable
-from typing import List
-from datetime import datetime
+from app.crud.auth.roles import create_role, delete_role, get_role, update_role
 from app.core.query_builder import QueryBuilder
 from app.core.search_config import SEARCH_CONFIG
+from app.db.database import get_async_session
+from app.logging.deps import LoggerInterface, LogCallable
+from app.models.auth import Role, User
+from app.schemas.auth import RoleCreate, RoleOut, RoleUpdate
+from app.logging.deps import LoggerInterface, LogCallable
+from typing import List
 
 router = APIRouter(prefix="/roles", tags=["DB: Auth: Roles"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -102,12 +105,12 @@ async def update_role_endpoint(
     current_user: User = Depends(require_permissions("edit_role")),
     session: AsyncSession = Depends(get_async_session),
     log: LogCallable = Depends(LoggerInterface("roles"))
-) -> RoleOut | None:
-    updated_role: RoleOut | None = await update_role(session, role_id, data)
+):
+    updated_role = await update_role(session, role_id, data)
     if not updated_role:
         raise HTTPException(status_code=404, detail="Role not found")
     
-    details = {"role_id": role_id}
+    details: dict[str, object] = {"role_id": role_id}
     if data.name is not None:
         details["name"] = data.name
     

@@ -5,6 +5,7 @@ export type FieldType =
     | 'number'
     | 'boolean'
     | 'select'
+    | 'search-select'
     | 'datetime'
     | 'password'
     | 'kv-object'
