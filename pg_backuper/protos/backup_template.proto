@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package pgbackup.v1;
+
+import "backup_common.proto";
+import "google/protobuf/timestamp.proto";
+
+option cc_enable_arenas = true;
+
+message BackupTemplate {
+  int64 template_id = 1;
+  string name = 2;
+  string description = 3;
+  BackupType type = 4;
+  bool include_wal = 5;
+  int32 checkpoint_timeout = 6;        // секунды; 0 = PG default
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message CreateBackupTemplateRequest {
+  string name = 1;
+  string description = 2;
+  BackupType type = 3;
+  bool include_wal = 4;
+  int32 checkpoint_timeout = 5;
+}
+
+message UpdateBackupTemplateRequest {
+  int64 template_id = 1;
+  string name = 2;
+  string description = 3;
+  BackupType type = 4;
+  bool include_wal = 5;
+  int32 checkpoint_timeout = 6;
+}
+
+message GetBackupTemplateRequest {
+  int64 template_id = 1;
+}
+
+message ListBackupTemplatesRequest {
+  optional int64 offset = 1;
+  optional int64 limit = 2;
+}
+
+message DeleteBackupTemplateRequest {
+  int64 template_id = 1;
+}
+
+message ListBackupTemplatesResponse {
+  repeated BackupTemplate templates = 1;
+}

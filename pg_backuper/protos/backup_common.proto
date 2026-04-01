@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package pgbackup.v1;
+
+option cc_enable_arenas = true;
+
+// Тип бэкапа, определяет способ его выполнения и восстановления
+enum BackupType {
+  BACKUP_TYPE_FULL_PHYSICAL = 0;
+//  BACKUP_TYPE_INCREMENTAL = 1;
+//  BACKUP_TYPE_DIFFERENTIAL = 2;
+//  BACKUP_TYPE_WAL_STREAM = 3;
+//  BACKUP_TYPE_LOGICAL_DUMP = 4;
+//  BACKUP_TYPE_LOGICAL_SQL = 5;
+//  BACKUP_TYPE_LOGICAL_DIR = 6;
+//  BACKUP_TYPE_LOGICAL_COPY = 7;
+}
+
+// Статус бэкапа. Это именно статусы по всему пайплайну, 
+// что позволяет иметь информацию об истории бэкапов списком
+enum BackupStatus {
+  BACKUP_STATUS_QUEUED = 0;
+  BACKUP_STATUS_RUNNING = 1;
+  BACKUP_STATUS_COMPLETED = 2;
+  BACKUP_STATUS_FAILED = 3;
+  BACKUP_STATUS_CANCELLED = 4;
+  BACKUP_STATUS_DELETING = 5;
+  BACKUP_STATUS_VERIFYING = 6;
+}
+
+enum ScheduleState {
+  SCHEDULE_STATE_ACTIVE = 0;
+  SCHEDULE_STATE_PAUSED = 1;
+}
+
+// WAL (отложено до MVP)
+// enum WalStreamState { ... }

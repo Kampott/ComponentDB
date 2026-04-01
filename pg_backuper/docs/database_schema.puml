@@ -1,0 +1,96 @@
+@startuml
+hide circle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+class backup_templates <<table>> {
+  +template_id : INTEGER PK
+  --
+  name : TEXT
+  description : TEXT
+  type : INTEGER
+  include_wal : INTEGER
+  checkpoint_timeout : INTEGER
+  created_at : INTEGER
+  updated_at : INTEGER
+}
+
+class backups <<table>> {
+  +backup_id : INTEGER PK
+  --
+  database_name : TEXT
+  template_id : INTEGER FK
+  type : INTEGER
+  include_wal : INTEGER
+  status : INTEGER
+  started_at : INTEGER
+  finished_at : INTEGER?
+  pg_version_num : INTEGER
+  parent_backup_id : INTEGER? FK
+}
+
+class backup_successes <<table>> {
+  +backup_id : INTEGER PK, FK
+  --
+  size_bytes : INTEGER
+  original_size_bytes : INTEGER
+  storage_path : TEXT
+}
+
+class backup_failures <<table>> {
+  +backup_id : INTEGER PK, FK
+  --
+  error_message : TEXT?
+}
+
+class backup_verifications <<table>> {
+  +backup_id : INTEGER PK, FK
+  --
+  verify_hash : INTEGER
+  verified_at : INTEGER?
+  checksum_sha256 : TEXT?
+}
+
+class schedules <<table>> {
+  +schedule_id : INTEGER PK
+  --
+  database_name : TEXT
+  display_name : TEXT
+  cron_expression : TEXT
+  timezone : TEXT
+  state : INTEGER
+  template_id : INTEGER FK
+  created_at : INTEGER
+  updated_at : INTEGER
+  next_run_at : INTEGER?
+  last_run_at : INTEGER?
+  last_backup_id : INTEGER? FK
+  last_run_status : INTEGER?
+}
+
+backup_templates "1" <-- "0..*" backups : template_id
+backups "1" <-- "0..1" backup_successes : backup_id
+backups "1" <-- "0..1" backup_failures : backup_id
+backups "1" <-- "0..1" backup_verifications : backup_id
+backups "1" <-- "0..*" backups : parent_backup_id
+backup_templates "1" <-- "0..*" schedules : template_id
+backups "1" <-- "0..*" schedules : last_backup_id
+
+note right of backups
+  В таблице backups хранятся
+  только терминальные состояния.
+  Активные бэкапы живут в памяти
+  внутри ActiveBackupManager.
+end note
+
+note bottom of backup_successes
+  Наличие записи означает
+  успешный backup.
+end note
+
+note bottom of backup_failures
+  Наличие записи означает
+  failed/cancelled backup.
+end note
+
+@enduml

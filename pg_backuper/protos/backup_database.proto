@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package pgbackup.v1;
+
+import "google/protobuf/duration.proto";
+
+option cc_enable_arenas = true;
+
+message DatabaseConfig {
+  string schema = 1;
+  string user = 2;
+  string password = 3;
+  string host = 4;
+  uint32 port = 5;
+}
+
+message DatabaseConnectionInfo {
+  uint32 pg_version_num = 1;
+  string pg_version_string = 2;
+  string wal_lsn = 3;
+  int64 db_size_bytes = 4;
+  google.protobuf.Duration latency = 5;
+}
+
+message DatabaseInfo {
+  string name = 1;
+  DatabaseConfig config = 2;
+  optional DatabaseConnectionInfo connection = 3;
+}
+
+message PingDatabaseResponse {
+  repeated DatabaseInfo databases = 1;
+}

@@ -1,0 +1,8 @@
+{
+  "dependencies": [
+    "grpc",
+    "sqlite3",
+    "yaml-cpp",
+    "gtest"
+  ]
+}

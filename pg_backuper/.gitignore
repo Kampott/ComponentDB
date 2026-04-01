@@ -1,0 +1,5 @@
+build/
+vcpkg_installed/
+data/
+CMakeUserPresets.json
+config.yaml
