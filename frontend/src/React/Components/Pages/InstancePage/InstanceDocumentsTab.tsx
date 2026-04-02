@@ -1,7 +1,10 @@
+import { Plus } from 'lucide-react'
 import { type ReactNode } from 'react'
 
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import PublicIcon from '@Components/Common/PublicIcon.tsx'
+import ToolbarActionButton from '@Components/Common/ToolbarActionButton.tsx'
 import { Button } from '@Components/ui/button'
 import type { ObjectInstance } from '@Schemas'
 
@@ -33,11 +36,10 @@ function InstanceDocumentsTab({ instance }: Props): ReactNode {
                     onClick={() => console.log(`Скачать ${doc}`)}
                     aria-label={`Скачать ${doc}`}
                 >
-                    <img
+                    <PublicIcon
                         src='/download_icon.svg'
-                        alt='Скачать'
-                        width={20}
-                        height={20}
+                        alt=''
+                        className='size-5'
                     />
                 </button>
             </div>
@@ -46,7 +48,14 @@ function InstanceDocumentsTab({ instance }: Props): ReactNode {
 
     return (
         <>
-            <Button className='mt-4'>Добавить документ</Button>
+            <ToolbarActionButton
+                type='button'
+                className='mt-4'
+                variant='default'
+                icon={<Plus />}
+                label='Добавить документ'
+                aria-label='Добавить документ'
+            />
             <LoadEffect
                 data={documents}
                 contentSize={{ height: '20px', width: '100%' }}

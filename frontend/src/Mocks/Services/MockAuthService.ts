@@ -10,7 +10,7 @@ import type {
 
 export default class MockAuthService implements IAuthService {
     private readonly store: MockDataStore
-    private currentUserId: number | null
+    private currentUserId: string | number | null
 
     public constructor(store: MockDataStore) {
         this.store = store
@@ -39,14 +39,18 @@ export default class MockAuthService implements IAuthService {
         const id = this.store.nextId('users')
         const newUser: User = {
             id: id,
-            email: userData.username,
-            level: userData.level,
+            email: userData.email,
+            level: 1,
         }
 
         this.store.users.push(newUser)
         this.currentUserId = id
 
-        return { user_id: id }
+        return {
+            id,
+            email: userData.email,
+            is_active: true,
+        }
     }
 
     public async logout(): Promise<void> {

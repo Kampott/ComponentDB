@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { toString } from '@/Utility/to_string.ts'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import ModeAwareIconLabel from '@Components/Common/ModeAwareIconLabel.tsx'
+import PublicIcon from '@Components/Common/PublicIcon.tsx'
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -88,10 +90,50 @@ function InstancePage() {
 
             <Tabs defaultValue='instances' className='mb-4'>
                 <TabsList className='grid h-auto w-full grid-cols-4'>
-                    <TabsTrigger value='instances'>События</TabsTrigger>
-                    <TabsTrigger value='properties'>Свойства</TabsTrigger>
-                    <TabsTrigger value='documents'>Документы</TabsTrigger>
-                    <TabsTrigger value='structure'>Структура</TabsTrigger>
+                    <TabsTrigger value='instances'>
+                        <ModeAwareIconLabel
+                            icon={
+                                <PublicIcon
+                                    src='/events.svg'
+                                    className='size-4'
+                                />
+                            }
+                            label='События'
+                        />
+                    </TabsTrigger>
+                    <TabsTrigger value='properties'>
+                        <ModeAwareIconLabel
+                            icon={
+                                <PublicIcon
+                                    src='/properties.svg'
+                                    className='size-4'
+                                />
+                            }
+                            label='Свойства'
+                        />
+                    </TabsTrigger>
+                    <TabsTrigger value='documents'>
+                        <ModeAwareIconLabel
+                            icon={
+                                <PublicIcon
+                                    src='/documents.svg'
+                                    className='size-4'
+                                />
+                            }
+                            label='Документы'
+                        />
+                    </TabsTrigger>
+                    <TabsTrigger value='structure'>
+                        <ModeAwareIconLabel
+                            icon={
+                                <PublicIcon
+                                    src='/structure.svg'
+                                    className='size-4'
+                                />
+                            }
+                            label='Структура'
+                        />
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value='instances'>

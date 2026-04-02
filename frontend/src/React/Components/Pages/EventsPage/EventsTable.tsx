@@ -3,6 +3,7 @@ import { useMemo, type MouseEvent, type ReactNode } from 'react'
 
 import type { DataTableColumnSchema } from '@/lib/dataTableSchema.ts'
 import type { DataTableStateResult } from '@/lib/useDataTableState.ts'
+import CompactDataTableToolbar from '@Components/Common/CompactDataTableToolbar.tsx'
 import DataTable from '@Components/Common/DataTable.tsx'
 import DataTableFilters from '@Components/Common/DataTableFilters.tsx'
 import DataTableToolbar from '@Components/Common/DataTableToolbar.tsx'
@@ -139,6 +140,7 @@ interface Props {
         EventTableColumnId
     >[]
     showToolbar?: boolean
+    compactToolbar?: boolean
     emptyMessage?: ReactNode
     onViewRequest?: (event: Event) => void
     onAddRequest?: (event: Event) => void
@@ -151,6 +153,7 @@ function EventsTable({
     state,
     columns,
     showToolbar = true,
+    compactToolbar = false,
     emptyMessage = 'Событий пока нет',
     onViewRequest,
     onAddRequest,
@@ -203,24 +206,49 @@ function EventsTable({
         <div className='space-y-4'>
             {showToolbar && (
                 <>
-                    <DataTableToolbar
-                        state={state}
-                        queryLabels={EVENT_TABLE_QUERY_LABELS}
-                        searchPlaceholder='Поиск по событиям'
-                        actions={
-                            onAddRequest ? (
-                                <ToolbarActionButton
-                                    type='button'
-                                    variant='default'
-                                    icon={<Plus />}
-                                    label='Добавить'
-                                    aria-label='Добавить событие'
-                                    onClick={() => onAddRequest({} as Event)}
-                                />
-                            ) : null
-                        }
-                    />
-                    <DataTableFilters state={state} columns={columns} />
+                    {compactToolbar ? (
+                        <CompactDataTableToolbar
+                            state={state}
+                            columns={columns}
+                            actions={
+                                onAddRequest ? (
+                                    <ToolbarActionButton
+                                        type='button'
+                                        variant='default'
+                                        icon={<Plus />}
+                                        label='Добавить'
+                                        aria-label='Добавить событие'
+                                        onClick={() =>
+                                            onAddRequest({} as Event)
+                                        }
+                                    />
+                                ) : null
+                            }
+                        />
+                    ) : (
+                        <>
+                            <DataTableToolbar
+                                state={state}
+                                queryLabels={EVENT_TABLE_QUERY_LABELS}
+                                searchPlaceholder='Поиск по событиям'
+                                actions={
+                                    onAddRequest ? (
+                                        <ToolbarActionButton
+                                            type='button'
+                                            variant='default'
+                                            icon={<Plus />}
+                                            label='Добавить'
+                                            aria-label='Добавить событие'
+                                            onClick={() =>
+                                                onAddRequest({} as Event)
+                                            }
+                                        />
+                                    ) : null
+                                }
+                            />
+                            <DataTableFilters state={state} columns={columns} />
+                        </>
+                    )}
                 </>
             )}
 

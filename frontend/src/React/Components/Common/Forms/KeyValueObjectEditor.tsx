@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import ToolbarActionButton from '@Components/Common/ToolbarActionButton.tsx'
 import { Button } from '@Components/ui/button'
 import { Input } from '@Components/ui/input'
 
@@ -165,10 +166,14 @@ function KeyValueObjectEditor({
                     Словарь пуст.
                 </div>
             )}
-            <Button type='button' variant='outline' onClick={addRow}>
-                <Plus className='mr-2 h-4 w-4' />
-                Добавить поле
-            </Button>
+            <ToolbarActionButton
+                type='button'
+                variant='outline'
+                icon={<Plus className='size-4' />}
+                label='Добавить поле'
+                aria-label='Добавить поле'
+                onClick={addRow}
+            />
         </div>
     )
 }

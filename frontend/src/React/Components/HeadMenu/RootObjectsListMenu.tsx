@@ -1,11 +1,12 @@
+import { Plus } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import ToolbarActionButton from '@Components/Common/ToolbarActionButton.tsx'
 import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
-import { Button } from '@Components/ui/button'
 import {
     Sheet,
     SheetContent,
@@ -132,9 +133,14 @@ function RootObjectsListMenu({ showObjectsMenu, handleClose }: Props) {
                             />
                         </LoadEffect>
 
-                        <Button onClick={() => setFormShow(true)}>
-                            Добавить тип
-                        </Button>
+                        <ToolbarActionButton
+                            type='button'
+                            variant='default'
+                            icon={<Plus />}
+                            label='Добавить тип'
+                            aria-label='Добавить тип'
+                            onClick={() => setFormShow(true)}
+                        />
                     </div>
                 </SheetContent>
             </Sheet>

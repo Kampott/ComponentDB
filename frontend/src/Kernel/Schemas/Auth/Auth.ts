@@ -5,21 +5,45 @@ export interface LoginRequest {
 
 export interface LoginResponse {
     access_token: string
-    refresh_token: string
+    refresh_token?: string
 }
 
 export interface RegisterRequest {
-    username: string
+    email: string
     password: string
-    level: number
 }
 
 export interface RegisterResponse {
-    user_id: number
+    id: string | number
+    email: string
+    is_active?: boolean
+    created_at?: string
+}
+
+export interface UserAdminCapabilities {
+    canReadRoles: boolean
+    canManageRoles: boolean
+    canReadPermissions: boolean
+    canManagePermissions: boolean
+    canManageUsers: boolean
+    canAccessAdmin: boolean
 }
 
 export interface User {
-    id: number
+    id: string | number
     email: string
-    level: number
+    level?: number | null
+    roles?: UserRoleInfo[]
+    adminCapabilities?: UserAdminCapabilities
+}
+
+export interface UserRoleInfo {
+    id: number
+    name: string
+    permissions: UserPermissionInfo[]
+}
+
+export interface UserPermissionInfo {
+    id: number
+    name: string
 }

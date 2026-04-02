@@ -1,8 +1,9 @@
-import { Bookmark, Boxes } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
-import { Button } from '@Components/ui/button'
+import PublicIcon from '@Components/Common/PublicIcon.tsx'
+import ToolbarActionButton from '@Components/Common/ToolbarActionButton.tsx'
 import { Card, CardContent } from '@Components/ui/card'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
@@ -72,7 +73,11 @@ function ObjectMainInfo({ object }: Props): ReactNode {
                 <CardContent className='space-y-3'>
                     <div className='grid gap-3 md:grid-cols-2'>
                         <div className='flex items-center gap-3 rounded-lg border p-3'>
-                            <Bookmark className='text-primary size-5' />
+                            <PublicIcon
+                                src='/objects.svg'
+                                alt=''
+                                className='size-5'
+                            />
                             <div>
                                 <div className='text-muted-foreground text-sm'>
                                     Корневой объект
@@ -95,7 +100,11 @@ function ObjectMainInfo({ object }: Props): ReactNode {
                         </div>
 
                         <div className='flex items-center gap-3 rounded-lg border p-3'>
-                            <Boxes className='text-primary size-5' />
+                            <PublicIcon
+                                src='/types.svg'
+                                alt=''
+                                className='size-5'
+                            />
                             <div>
                                 <div className='text-muted-foreground text-sm'>
                                     Тип
@@ -120,9 +129,14 @@ function ObjectMainInfo({ object }: Props): ReactNode {
 
                     {object.parent_id == null && (
                         <div>
-                            <Button onClick={() => createObjectInstance()}>
-                                Добавить экземпляр
-                            </Button>
+                            <ToolbarActionButton
+                                type='button'
+                                variant='default'
+                                icon={<Plus />}
+                                label='Добавить экземпляр'
+                                aria-label='Добавить экземпляр'
+                                onClick={() => createObjectInstance()}
+                            />
                         </div>
                     )}
                 </CardContent>

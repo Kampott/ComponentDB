@@ -6,13 +6,7 @@ interface Props {
 }
 
 function InstanceEventsTab({ instance }: Props) {
-    return (
-        <EventsSection
-            instanceId={instance.id}
-            pageSize={5}
-            showToolbar={false}
-        />
-    )
+    return <EventsSection instanceId={instance.id} pageSize={5} showToolbar />
 }
 
 export default InstanceEventsTab
