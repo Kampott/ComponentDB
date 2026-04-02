@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -5,10 +6,10 @@ import FileSystemTreeView, {
     type DataNode,
 } from '@Components/Common/FileSystemTreeView.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import ToolbarActionButton from '@Components/Common/ToolbarActionButton.tsx'
 import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
-import { Button } from '@Components/ui/button'
 import { objectTypeUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
@@ -162,9 +163,15 @@ function TypeTreeView({ objectType }: Props) {
 
     return (
         <>
-            <Button className='mt-4' onClick={() => setFormShow(true)}>
-                Добавить тип
-            </Button>
+            <ToolbarActionButton
+                type='button'
+                className='mt-4'
+                variant='default'
+                icon={<Plus />}
+                label='Добавить тип'
+                aria-label='Добавить тип'
+                onClick={() => setFormShow(true)}
+            />
             <LoadEffect
                 data={typeTree}
                 contentSize={{ height: '20px', width: '100%' }}

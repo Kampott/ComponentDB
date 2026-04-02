@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils.ts'
 import { Button } from '@Components/ui/button'
 import { useUserStore } from '@StorageImpl'
+import ModeAwareIconLabel from './ModeAwareIconLabel.tsx'
 
 interface Props extends React.ComponentProps<typeof Button> {
     icon: ReactNode
@@ -29,8 +30,7 @@ function ToolbarActionButton({
             )}
             {...props}
         >
-            {icon}
-            {actionDisplayMode === 'text' ? <span>{label}</span> : null}
+            <ModeAwareIconLabel icon={icon} label={label} />
             {children}
         </Button>
     )

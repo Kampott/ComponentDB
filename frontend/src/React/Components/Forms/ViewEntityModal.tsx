@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import ViewEntityInfo from '@Components/Forms/ViewEntityInfo.tsx'
 import { Button } from '@Components/ui/button'
 import {
@@ -20,6 +22,7 @@ interface Props<S extends EntityCoreSchema<any, any, any>> {
     source: InferEntity<S>
     title: string
     onClose: () => void
+    children?: ReactNode
 }
 
 function ViewEntityModal<S extends EntityCoreSchema<any, any, any>>({
@@ -28,6 +31,7 @@ function ViewEntityModal<S extends EntityCoreSchema<any, any, any>>({
     source,
     title,
     onClose,
+    children,
 }: Props<S>) {
     return (
         <Dialog open={true} onOpenChange={open => !open && onClose()}>
@@ -40,6 +44,7 @@ function ViewEntityModal<S extends EntityCoreSchema<any, any, any>>({
                     context={context}
                     source={source}
                 />
+                {children}
                 <DialogFooter>
                     <Button variant='outline' onClick={onClose}>
                         Закрыть

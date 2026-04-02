@@ -206,6 +206,7 @@ function EventsSection({
                     state={eventTableState}
                     columns={eventTableColumns}
                     showToolbar={showToolbar}
+                    compactToolbar={instanceId !== undefined}
                     onViewRequest={event => setViewTargetEvent(event)}
                     onAddRequest={() => setShowAddEventForm(true)}
                     onChangeRequest={event => setEditTargetEvent(event)}

@@ -1,7 +1,7 @@
-import { Bookmark, Boxes } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import PublicIcon from '@Components/Common/PublicIcon.tsx'
 import { Card, CardContent } from '@Components/ui/card'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
@@ -84,7 +84,11 @@ function InstanceMainInfo({ instance }: Props): ReactNode {
                 <CardContent className='space-y-3'>
                     <div className='grid gap-3 md:grid-cols-2'>
                         <div className='flex items-center gap-3 rounded-lg border p-3'>
-                            <Bookmark className='text-primary size-5' />
+                            <PublicIcon
+                                src='/instance.svg'
+                                alt=''
+                                className='size-5'
+                            />
                             <div>
                                 <div className='text-muted-foreground text-sm'>
                                     Родитель
@@ -107,7 +111,11 @@ function InstanceMainInfo({ instance }: Props): ReactNode {
                         </div>
 
                         <div className='flex items-center gap-3 rounded-lg border p-3'>
-                            <Bookmark className='text-primary size-5' />
+                            <PublicIcon
+                                src='/instance.svg'
+                                alt=''
+                                className='size-5'
+                            />
                             <div>
                                 <div className='text-muted-foreground text-sm'>
                                     Корневой экземпляр
@@ -130,7 +138,11 @@ function InstanceMainInfo({ instance }: Props): ReactNode {
                         </div>
 
                         <div className='flex items-center gap-3 rounded-lg border p-3'>
-                            <Boxes className='text-primary size-5' />
+                            <PublicIcon
+                                src='/objects.svg'
+                                alt=''
+                                className='size-5'
+                            />
                             <div>
                                 <div className='text-muted-foreground text-sm'>
                                     Объект

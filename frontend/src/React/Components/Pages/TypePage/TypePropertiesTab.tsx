@@ -1,11 +1,12 @@
+import { Plus } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 
 import DefaultList from '@Components/Common/DefaultList.tsx'
 import LoadEffect from '@Components/Common/LoadEffect.tsx'
+import ToolbarActionButton from '@Components/Common/ToolbarActionButton.tsx'
 import AddEntityForm from '@Components/Forms/AddEntityForm.tsx'
 import EditEntityForm from '@Components/Forms/EditEntityForm.tsx'
 import ViewEntityModal from '@Components/Forms/ViewEntityModal.tsx'
-import { Button } from '@Components/ui/button'
 import { propertyTypeUiSchema } from '@EntityUi'
 import { handleApiError } from '@Rest/handle_api_error.ts'
 import { RestApiError } from '@Rest/RestApiClient.ts'
@@ -116,9 +117,15 @@ function TypePropertiesTab({ objectType }: Props): ReactNode {
 
     return (
         <>
-            <Button className='mt-4' onClick={() => setFormShow(true)}>
-                Добавить свойство
-            </Button>
+            <ToolbarActionButton
+                type='button'
+                className='mt-4'
+                variant='default'
+                icon={<Plus />}
+                label='Добавить свойство'
+                aria-label='Добавить свойство'
+                onClick={() => setFormShow(true)}
+            />
 
             <h4 className='mt-6 mb-3 border-b pb-1 text-xl font-semibold'>
                 Свойства объекта
