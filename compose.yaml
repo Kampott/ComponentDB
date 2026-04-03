@@ -83,8 +83,6 @@ services:
     depends_on:
       db-init:
         condition: service_completed_successfully
-      pg_backuper:
-        condition: service_healthy
 
   db-init:
     <<: *python_user
