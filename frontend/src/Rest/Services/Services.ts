@@ -1,5 +1,6 @@
 import type IAdminUsersService from '@/Interfaces/Services/IAdminUsersService.ts'
 import type IAuthService from '@/Interfaces/Services/IAuthService.ts'
+import type IBackupService from '@/Interfaces/Services/IBackupService.ts'
 import type IEventTypeRelationsService from '@/Interfaces/Services/IEventTypeRelationsService.ts'
 import type IEventsService from '@/Interfaces/Services/IEventsService.ts'
 import type IEventsTypesService from '@/Interfaces/Services/IEventsTypesService.ts'
@@ -14,6 +15,7 @@ import type IReplacementEventsService from '@/Interfaces/Services/IReplacementEv
 import type IRolesService from '@/Interfaces/Services/IRolesService.ts'
 import MockAdminUsersService from '@/Mocks/Services/MockAdminUsersService.ts'
 import MockAuthService from '@/Mocks/Services/MockAuthService.ts'
+import MockBackupService from '@/Mocks/Services/MockBackupService.ts'
 import MockDataStore from '@/Mocks/Services/MockDataStore.ts'
 import MockEventTypeRelationsService from '@/Mocks/Services/MockEventTypeRelationsService.ts'
 import MockEventsService from '@/Mocks/Services/MockEventsService.ts'
@@ -31,6 +33,7 @@ import AxiosClient from '@Rest/AxiosClient.ts'
 import type RestApiClient from '@Rest/RestApiClient.ts'
 import AdminUsersService from './AdminUsersService.ts'
 import AuthService from './AuthService.ts'
+import BackupService from './BackupService.ts'
 import EventTypeRelationsService from './EventTypeRelationsService.ts'
 import EventsService from './EventsService.ts'
 import EventsTypesService from './EventsTypesService.ts'
@@ -53,6 +56,7 @@ export default class Services {
 
     public readonly adminUsersService: IAdminUsersService
     public readonly authService: IAuthService
+    public readonly backupService: IBackupService
     public readonly eventsService: IEventsService
     public readonly eventTypeRelationsService: IEventTypeRelationsService
     public readonly eventsTypesService: IEventsTypesService
@@ -81,6 +85,7 @@ export default class Services {
             this.restApiClient = null
             this.adminUsersService = new MockAdminUsersService(store)
             this.authService = new MockAuthService(store)
+            this.backupService = new MockBackupService()
             this.eventsService = new MockEventsService(store)
             this.eventTypeRelationsService = new MockEventTypeRelationsService(
                 store,
@@ -115,6 +120,7 @@ export default class Services {
 
         this.adminUsersService = new AdminUsersService(this.restApiClient)
         this.authService = new AuthService(this.restApiClient)
+        this.backupService = new BackupService(this.restApiClient)
         this.eventsService = new EventsService(this.restApiClient)
         this.eventTypeRelationsService = new EventTypeRelationsService(
             this.restApiClient,

@@ -6,6 +6,8 @@ export * from './Validator/Types.ts'
 export * from './Auth/Auth.ts'
 export * from './Auth/AuthValidator.ts'
 
+export * from './Backup/index.ts'
+
 export * from './Event/Event.ts'
 
 export * from './InstanceProperty/InstanceProperty.ts'

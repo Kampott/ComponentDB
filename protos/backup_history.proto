@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package pgbackup.v1;
+
+import "backup_common.proto";
+import "backup_template.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+option cc_enable_arenas = true;
+
+// Информация о верификации целостностности бэкапа
+message BackupVerification {
+  int64 backup_id = 1;
+  bool verify_hash = 2;
+  optional google.protobuf.Timestamp verified_at = 3;  // не задан = ещё не проверен
+  optional string checksum_sha256 = 4;
+}
+
+message BackupStoreInfo {
+  uint64 size_bytes = 9;
+  uint64 original_size_bytes = 10;
+  optional BackupVerification verification = 14;
+  string storage_path = 12;
+}
+
+message ActiveBackupInfo {
+  uint64 bytes_processed = 5;
+  uint64 bytes_total_estimate = 6;
+  uint64 files_processed = 7;
+  uint64 files_total_estimate = 8;
+}
+
+message ErrorBackupInfo {
+  string error_message = 1;
+}
+
+message BackupAdditionalInfo {
+  oneof data_type {
+    BackupStoreInfo store_info = 1;
+    ActiveBackupInfo active_info = 2;
+    ErrorBackupInfo error_info = 3;
+  }
+}
+
+// Полная информация о любом бэкапе
+message Backup {
+  int64 backup_id = 1;
+  string database_name = 2;
+  BackupTemplate backup_template = 3;
+  BackupStatus status = 4;
+  BackupAdditionalInfo info = 5;
+
+  google.protobuf.Timestamp started_at = 6;
+  google.protobuf.Timestamp finished_at = 7;
+  google.protobuf.Duration duration = 8;
+  uint32 pg_version_num = 9;
+  optional int64 parent_backup_id = 10;
+}
+
+message ListBackupsRequest {
+  optional string database_name = 1;
+  repeated BackupType type = 2;
+  repeated BackupStatus status = 3;
+  optional google.protobuf.Timestamp only_after = 4;
+}
+
+message ListBackupsResponse {
+  repeated Backup backups = 1;
+}
+
+message GetBackupRequest {
+  int64 backup_id = 1;
+}
+
+message DeleteBackupRequest {
+  int64 backup_id = 1;
+  bool force = 2;  // удалить даже если ломает цепочку parent_backup_id
+}
+
+message VerifyBackupRequest {
+  int64 backup_id = 1;
+  bool verify_hash = 2;
+}

@@ -5,6 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
+    cmake \
     curl \
     git \
     ninja-build \
@@ -22,15 +23,23 @@ ENV VCPKG_ROOT=/opt/vcpkg
 
 WORKDIR /src
 
-COPY vcpkg.json vcpkg-configuration.json CMakeLists.txt CMakePresets.json ./
+COPY vcpkg.json vcpkg-configuration.json ./
+
+RUN /opt/vcpkg/vcpkg install \
+    --triplet x64-linux \
+    --x-manifest-root=/src \
+    --x-install-root=/src/vcpkg_installed \
+    --clean-after-build
+
+COPY CMakeLists.txt CMakePresets.json ./
 COPY Source ./Source
+COPY Tests ./Tests
 COPY protos ./protos
 COPY config.example.yaml ./config.example.yaml
 COPY generate_proto_files.sh ./generate_proto_files.sh
 
 RUN cmake --preset release \
     && cmake --build --preset build-release
-
 
 FROM ubuntu:24.04 AS runtime
 

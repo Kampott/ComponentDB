@@ -1,13 +1,15 @@
-import { type ReactElement, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { type ReactElement, useEffect, useMemo } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@Components/ui/tabs'
 import {
+    userCanAccessAdmin,
     userCanManageUsers,
     userCanReadPermissions,
     userCanReadRoles,
 } from '@Schemas'
 import { useUserStore } from '@StorageImpl'
+import BackupsSection from './BackupsSection.tsx'
 import PermissionsSection from './PermissionsSection.tsx'
 import RolesSection from './RolesSection.tsx'
 import UsersSection from './UsersSection.tsx'
@@ -20,6 +22,7 @@ interface AdminTab {
 
 function AdminPage() {
     const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
     const user = useUserStore(state => state.user)
     const isAuthenticated = useUserStore(state => state.isAuthenticated)
     const authResolved = useUserStore(state => state.authResolved)
@@ -27,6 +30,7 @@ function AdminPage() {
     const canShowUsersSection = userCanManageUsers(user)
     const canShowRolesSection = userCanReadRoles(user)
     const canShowPermissionsSection = userCanReadPermissions(user)
+    const canShowBackupsSection = userCanAccessAdmin(user)
     const visibleTabs = [
         canShowUsersSection && {
             value: 'users',
@@ -43,7 +47,23 @@ function AdminPage() {
             label: 'Права доступа',
             content: <PermissionsSection />,
         },
+        canShowBackupsSection && {
+            value: 'backups',
+            label: 'Бэкапы',
+            content: <BackupsSection />,
+        },
     ].filter((tab): tab is AdminTab => Boolean(tab))
+    const currentTab = useMemo(() => {
+        const requestedTab = searchParams.get('tab')
+        if (
+            requestedTab &&
+            visibleTabs.some(tab => tab.value === requestedTab)
+        ) {
+            return requestedTab
+        }
+
+        return visibleTabs[0]?.value
+    }, [searchParams, visibleTabs])
 
     useEffect(() => {
         if (!authResolved) {
@@ -69,7 +89,14 @@ function AdminPage() {
                 Админ-панель
             </h1>
             <Tabs
-                defaultValue={visibleTabs[0]?.value}
+                value={currentTab}
+                onValueChange={value => {
+                    setSearchParams(current => {
+                        const next = new URLSearchParams(current)
+                        next.set('tab', value)
+                        return next
+                    })
+                }}
                 className='mb-4 space-y-4'
             >
                 <TabsList

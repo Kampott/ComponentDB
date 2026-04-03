@@ -3,3 +3,5 @@ vcpkg_installed/
 data/
 CMakeUserPresets.json
 config.yaml
+config.compose.yaml
+

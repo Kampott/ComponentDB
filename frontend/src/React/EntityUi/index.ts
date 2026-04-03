@@ -1,4 +1,5 @@
 export * from './AdminUserUi.ts'
+export * from './BackupUi.ts'
 export * from './EventUi.ts'
 export * from './InstancePropertyUi.ts'
 export * from './ObjectInstanceUi.ts'

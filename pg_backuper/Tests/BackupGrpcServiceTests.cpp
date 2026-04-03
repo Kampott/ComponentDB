@@ -141,6 +141,82 @@ TEST_F(BackupGrpcServiceFixture, TemplateCrudMethodsWork) {
     ASSERT_TRUE(service.DeleteBackupTemplate(&context, &deleteRequest, &empty).ok());
 }
 
+TEST_F(BackupGrpcServiceFixture, DeleteTemplateFailsWhenReferencedByPersistedBackup) {
+    auto service = makeService();
+    grpc::ServerContext context;
+
+    const auto templateId = dataStore->createTemplate(backup::BackupTemplateRecord{
+        .name = "daily",
+        .description = "daily",
+        .type = backup::BackupType::FullPhysical,
+        .includeWal = true,
+        .checkpointTimeout = 15,
+    });
+    ASSERT_TRUE(templateId.has_value()) << templateId.error();
+
+    ASSERT_TRUE(dataStore
+                    ->createBackup(backup::BackupRecord{
+                        .backupId = 101,
+                        .databaseName = "main",
+                        .templateId = *templateId,
+                        .type = backup::BackupType::FullPhysical,
+                        .includeWal = true,
+                        .status = backup::BackupStatus::Failed,
+                        .startedAt = atSecond(10),
+                        .finishedAt = atSecond(20),
+                        .sizeBytes = 0,
+                        .originalSizeBytes = 0,
+                        .pgVersionNum = 160000,
+                        .storagePath = std::nullopt,
+                        .parentBackupId = std::nullopt,
+                        .errorMessage = std::string{"failed"},
+                    })
+                    .has_value());
+
+    pgbackup::v1::DeleteBackupTemplateRequest deleteRequest;
+    deleteRequest.set_template_id(*templateId);
+    google::protobuf::Empty empty;
+
+    const auto status = service.DeleteBackupTemplate(&context, &deleteRequest, &empty);
+
+    EXPECT_EQ(status.error_code(), grpc::StatusCode::FAILED_PRECONDITION);
+    EXPECT_NE(status.error_message().find("backup history 101"), std::string::npos);
+}
+
+TEST_F(BackupGrpcServiceFixture, DeleteTemplateFailsWhenReferencedBySchedule) {
+    auto service = makeService();
+    grpc::ServerContext context;
+
+    const auto templateId = dataStore->createTemplate(backup::BackupTemplateRecord{
+        .name = "daily",
+        .description = "daily",
+        .type = backup::BackupType::FullPhysical,
+        .includeWal = false,
+        .checkpointTimeout = 0,
+    });
+    ASSERT_TRUE(templateId.has_value()) << templateId.error();
+
+    ASSERT_TRUE(dataStore
+                    ->createSchedule(backup::ScheduleRecord{
+                        .databaseName = "main",
+                        .displayName = "scheduled",
+                        .cronExpression = "0 2 * * *",
+                        .timezone = "UTC",
+                        .state = backup::ScheduleState::Active,
+                        .templateId = *templateId,
+                    })
+                    .has_value());
+
+    pgbackup::v1::DeleteBackupTemplateRequest deleteRequest;
+    deleteRequest.set_template_id(*templateId);
+    google::protobuf::Empty empty;
+
+    const auto status = service.DeleteBackupTemplate(&context, &deleteRequest, &empty);
+
+    EXPECT_EQ(status.error_code(), grpc::StatusCode::FAILED_PRECONDITION);
+    EXPECT_NE(status.error_message().find("schedule"), std::string::npos);
+}
+
 TEST_F(BackupGrpcServiceFixture, CompletedBackupMethodsWork) {
     auto service = makeService();
     grpc::ServerContext context;
@@ -389,6 +465,71 @@ done
     }
 
     FAIL() << "Cancelled backup was not persisted";
+}
+
+TEST_F(BackupGrpcServiceFixture, DeleteTemplateFailsWhenReferencedByActiveBackup) {
+    const auto scriptPath = writeExecutableScript(
+        "fake_pg_basebackup_delete_template_guard.sh",
+        R"(#!/usr/bin/env bash
+set -euo pipefail
+trap 'exit 143' TERM INT
+pgdata=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --pgdata) pgdata="$2"; shift 2 ;;
+    --host|--port|--username|--wal-method) shift 2 ;;
+    --progress|--verbose|--no-password) shift ;;
+    *) shift ;;
+  esac
+done
+mkdir -p "$pgdata"
+printf '1/10 kB (10%%), 0/1 tablespace\n' >&2
+while true; do
+  sleep 0.2
+done
+)");
+
+    auto service = makeService(backup::FullPhysicalBackupOptions{.executablePath = scriptPath});
+    grpc::ServerContext context;
+
+    const auto templateId = dataStore->createTemplate(backup::BackupTemplateRecord{
+        .name = "daily",
+        .description = "daily",
+        .type = backup::BackupType::FullPhysical,
+        .includeWal = true,
+        .checkpointTimeout = 0,
+    });
+    ASSERT_TRUE(templateId.has_value()) << templateId.error();
+
+    pgbackup::v1::StartBackupRequest startRequest;
+    startRequest.set_database_name("main");
+    startRequest.set_template_id(*templateId);
+    pgbackup::v1::StartBackupResponse startResponse;
+    ASSERT_TRUE(service.StartBackup(&context, &startRequest, &startResponse).ok());
+
+    for (int attempt = 0; attempt < 20; ++attempt) {
+        pgbackup::v1::ListBackupsRequest activeRequest;
+        activeRequest.add_status(pgbackup::v1::BACKUP_STATUS_RUNNING);
+        pgbackup::v1::ListBackupsResponse activeResponse;
+        ASSERT_TRUE(service.GetBackups(&context, &activeRequest, &activeResponse).ok());
+        if (activeResponse.backups_size() == 1) {
+            break;
+        }
+        std::this_thread::sleep_for(50ms);
+    }
+
+    pgbackup::v1::DeleteBackupTemplateRequest deleteRequest;
+    deleteRequest.set_template_id(*templateId);
+    google::protobuf::Empty empty;
+    const auto deleteStatus = service.DeleteBackupTemplate(&context, &deleteRequest, &empty);
+
+    EXPECT_EQ(deleteStatus.error_code(), grpc::StatusCode::FAILED_PRECONDITION);
+    EXPECT_NE(deleteStatus.error_message().find("active backup"), std::string::npos);
+
+    pgbackup::v1::CancelBackupRequest cancelRequest;
+    cancelRequest.set_backup_id(startResponse.backup_id());
+    pgbackup::v1::CancelBackupResponse cancelResponse;
+    ASSERT_TRUE(service.CancelBackup(&context, &cancelRequest, &cancelResponse).ok());
 }
 
 TEST_F(BackupGrpcServiceFixture, StartBackupPersistsCompletedBackup) {

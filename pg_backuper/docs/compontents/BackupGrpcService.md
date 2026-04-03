@@ -34,6 +34,10 @@
   - терминальные бэкапы из БД
 - `GetBackup()` сначала ищет active backup, потом fallback в БД.
 - `DeleteBackup()` запрещает удаление active backup.
+- `DeleteBackupTemplate()` запрещает удаление шаблона, если на него ссылается:
+  - active backup
+  - history backup
+  - schedule
 - `VerifyBackup()` запрещает верификацию active backup и требует `storage_path`.
 
 ## Mapping

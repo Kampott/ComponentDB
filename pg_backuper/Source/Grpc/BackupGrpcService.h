@@ -71,6 +71,7 @@ public:
 private:
     grpc::Status makeStatus(grpc::StatusCode code, std::string message) const;
     grpc::Status makeDataStoreStatus(std::string message) const;
+    std::expected<void, grpc::Status> validateTemplateDeletion(int64_t templateId) const;
 
     pgbackup::v1::BackupTemplate toProto(const backup::BackupTemplateRecord& record) const;
     pgbackup::v1::Backup toProto(const backup::BackupRecord& record) const;

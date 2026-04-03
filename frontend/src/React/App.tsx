@@ -5,6 +5,7 @@ import DefaultLayout from '@Components/DefaultLayout/DefaultLayout.tsx'
 import AccountPage from '@Components/Pages/AccountPage/AccountPage.tsx'
 import AdminPage from '@Components/Pages/AdminPage/AdminPage.tsx'
 import AuthPage from '@Components/Pages/AuthPage/AuthPage.tsx'
+import BackupPage from '@Components/Pages/BackupPage/BackupPage.tsx'
 import EventsPage from '@Components/Pages/EventsPage/EventsPage.tsx'
 import HomePage from '@Components/Pages/HomePage/HomePage.tsx'
 import InstancePage from '@Components/Pages/InstancePage/InstancePage.tsx'
@@ -58,6 +59,10 @@ function App() {
                     <Route path='events' element={<EventsPage />} />
                     <Route path='account' element={<AccountPage />} />
                     <Route path='admin' element={<AdminPage />} />
+                    <Route
+                        path='admin/backups/:backupId'
+                        element={<BackupPage />}
+                    />
                     <Route path='login' element={<AuthPage />} />
                 </Route>
                 <Route path='/404' element={<NoPage />} />

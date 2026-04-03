@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.test import router as test_router
 from app.api.v1.db.core import objects, types, property_types, properties, instances, instanceproperties, data_manip
 from app.api.v1.auth import auth, permissions, roles, role_permissions, user_roles, users, user_instance_access, user_object_access, user_type_access
+from app.api.v1.backup import backups
 from app.api.v1.events import event_types, event_types_types, events, replacements
 
 # рабочий логер (функция/корутина)
@@ -114,6 +115,7 @@ app.middleware("http")(logging_middleware)
 
 # include routers
 app.include_router(test_router)
+app.include_router(backups.router)
 app.include_router(objects.router)
 app.include_router(types.router)
 app.include_router(property_types.router)

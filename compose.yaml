@@ -9,6 +9,7 @@ services:
       - .env
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./postgres/init_scripts:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -35,6 +36,7 @@ services:
       POSTGRES_DB: ${LOG_POSTGRES_DB}
     volumes:
       - log_pgdata:/var/lib/postgresql/data
+      - ./postgres/init_scripts:/docker-entrypoint-initdb.d:ro
     ports:
       - "5433:5432"
     healthcheck:
@@ -63,9 +65,6 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     restart: always
-    depends_on:
-      db-init:
-        condition: service_completed_successfully
     tty: true
     ports:
       - "${BACKEND_PORT}:8000"
@@ -75,10 +74,17 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       LOG_DATABASE_URL: postgresql+asyncpg://${LOG_POSTGRES_USER}:${LOG_POSTGRES_PASSWORD}@log_db:5432/${LOG_POSTGRES_DB}
+      PG_BACKUPER_GRPC_HOST: pg_backuper
+      PG_BACKUPER_GRPC_PORT: 4040
     # command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app/backend
       - ./postgres:/app/postgres
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      pg_backuper:
+        condition: service_healthy
 
   db-init:
     <<: *python_user
@@ -170,6 +176,27 @@ services:
     ports:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
 
+  pg_backuper:
+    build:
+      context: ./pg_backuper
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      log_db:
+        condition: service_healthy
+    ports:
+      - "${PG_BACKUPER_PORT}:4040"
+    volumes:
+      - ./pg_backuper/config.compose.yaml:/app/config.yaml:ro
+      - pg_backuper_data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/4040'"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
 volumes:
   pgdata:
   log_pgdata:
+  pg_backuper_data:
