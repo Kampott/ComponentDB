@@ -5,17 +5,19 @@ from datetime import datetime
 
 # EventTypes
 class EventTypesBase(BaseModel):
-    name: str  
+    name: str
+    counts_as_failure: bool = False
 
 class EventTypesCreate(EventTypesBase):
     pass
 
 class EventTypesUpdate(BaseModel):
-    name: str | None = None
+    name: Optional[str] = None
+    counts_as_failure: Optional[bool] = None 
 
 class EventTypesRead(EventTypesBase):
     id: int
-
+    
     class Config:
         from_attributes = True
 

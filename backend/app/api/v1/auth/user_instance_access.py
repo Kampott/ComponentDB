@@ -43,9 +43,15 @@ async def read_user_instance_access(
     
     root_id: Optional[int] = Query(None),
     root_id__in: Optional[List[int]] = Query(None),
+    root_id__gt: Optional[int] = Query(None),
+    root_id__lt: Optional[int] = Query(None),
+    root_id__gte: Optional[int] = Query(None),
+    root_id__lte: Optional[int] = Query(None),
     
     can_read: Optional[bool] = Query(None),
     can_write: Optional[bool] = Query(None),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(require_permissions("read_user_instance_access")),
     log: LogCallable = Depends(LoggerInterface("user_access"))
@@ -55,6 +61,10 @@ async def read_user_instance_access(
         "user_id__in": user_id__in,
         "root_id": root_id,
         "root_id__in": root_id__in,
+        "root_id__gt": root_id__gt,
+        "root_id__lt": root_id__lt,
+        "root_id__gte": root_id__gte,
+        "root_id__lte": root_id__lte,
         "can_read": can_read,
         "can_write": can_write,
     }
@@ -65,6 +75,7 @@ async def read_user_instance_access(
     query = select(UserInstanceAccess)
     query = QueryBuilder.apply_filters(query, UserInstanceAccess, filters)
     query = QueryBuilder.apply_sorting(query, UserInstanceAccess, filters)
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     access_list = result.scalars().all()

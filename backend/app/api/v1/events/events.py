@@ -31,9 +31,17 @@ async def read_events(
     # Фильтры
     event_type_id: Optional[int] = Query(None),
     event_type_id__in: Optional[List[int]] = Query(None),
+    event_type_id__gt: Optional[int] = Query(None),
+    event_type_id__lt: Optional[int] = Query(None),
+    event_type_id__gte: Optional[int] = Query(None),
+    event_type_id__lte: Optional[int] = Query(None),
     
     instance_id: Optional[int] = Query(None),
     instance_id__in: Optional[List[int]] = Query(None),
+    instance_id__gt: Optional[int] = Query(None),
+    instance_id__lt: Optional[int] = Query(None),
+    instance_id__gte: Optional[int] = Query(None),
+    instance_id__lte: Optional[int] = Query(None),
     
     timestamp: Optional[datetime] = Query(None),
     timestamp__gte: Optional[datetime] = Query(None),
@@ -44,9 +52,13 @@ async def read_events(
     
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
+    id__gt: Optional[int] = Query(None),
+    id__lt: Optional[int] = Query(None),
     id__gte: Optional[int] = Query(None),
     id__lte: Optional[int] = Query(None),
     id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(get_current_user),
     _: None = Depends(require_permissions("read_events")),
@@ -55,8 +67,16 @@ async def read_events(
     params = {
         "event_type_id": event_type_id,
         "event_type_id__in": event_type_id__in,
+        "event_type_id__gt": event_type_id__gt,
+        "event_type_id__lt": event_type_id__lt,
+        "event_type_id__gte": event_type_id__gte,
+        "event_type_id__lte": event_type_id__lte,
         "instance_id": instance_id,
         "instance_id__in": instance_id__in,
+        "instance_id__gt": instance_id__gt,
+        "instance_id__lt": instance_id__lt,
+        "instance_id__gte": instance_id__gte,
+        "instance_id__lte": instance_id__lte,
         "timestamp": timestamp,
         "timestamp__gte": timestamp__gte,
         "timestamp__lte": timestamp__lte,
@@ -65,6 +85,8 @@ async def read_events(
         "timestamp__sort": timestamp__sort,
         "id": id,
         "id__in": id__in,
+        "id__gt": id__gt,
+        "id__lt": id__lt,
         "id__gte": id__gte,
         "id__lte": id__lte,
         "id__sort": id__sort,
@@ -139,6 +161,8 @@ async def read_events(
         query = query.order_by(Events.timestamp.desc())
     else:
         query = QueryBuilder.apply_sorting(query, Events, filters)
+    
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     events = result.scalars().all()

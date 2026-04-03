@@ -40,22 +40,36 @@ async def read_instances(
     
     object_id: Optional[int] = Query(None),
     object_id__in: Optional[List[int]] = Query(None),
+    object_id__gt: Optional[int] = Query(None),
+    object_id__lt: Optional[int] = Query(None),
     object_id__gte: Optional[int] = Query(None),
     object_id__lte: Optional[int] = Query(None),
     
     root_id: Optional[int] = Query(None),
     root_id__in: Optional[List[int]] = Query(None),
+    root_id__gt: Optional[int] = Query(None),
+    root_id__lt: Optional[int] = Query(None),
+    root_id__gte: Optional[int] = Query(None),
+    root_id__lte: Optional[int] = Query(None),
     
     parent_id: Optional[int] = Query(None),
     parent_id__in: Optional[List[int]] = Query(None),
+    parent_id__gt: Optional[int] = Query(None),
+    parent_id__lt: Optional[int] = Query(None),
+    parent_id__gte: Optional[int] = Query(None),
+    parent_id__lte: Optional[int] = Query(None),
     
     is_active: Optional[bool] = Query(None),
     
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
+    id__gt: Optional[int] = Query(None),
+    id__lt: Optional[int] = Query(None),
     id__gte: Optional[int] = Query(None),
     id__lte: Optional[int] = Query(None),
     id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(get_current_user),
     log: LogCallable = Depends(LoggerInterface("instances"))
@@ -66,15 +80,27 @@ async def read_instances(
         "name__sort": name__sort,
         "object_id": object_id,
         "object_id__in": object_id__in,
+        "object_id__gt": object_id__gt,
+        "object_id__lt": object_id__lt,
         "object_id__gte": object_id__gte,
         "object_id__lte": object_id__lte,
         "root_id": root_id,
         "root_id__in": root_id__in,
+        "root_id__gt": root_id__gt,
+        "root_id__lt": root_id__lt,
+        "root_id__gte": root_id__gte,
+        "root_id__lte": root_id__lte,
         "parent_id": parent_id,
         "parent_id__in": parent_id__in,
+        "parent_id__gt": parent_id__gt,
+        "parent_id__lt": parent_id__lt,
+        "parent_id__gte": parent_id__gte,
+        "parent_id__lte": parent_id__lte,
         "is_active": is_active,
         "id": id,
         "id__in": id__in,
+        "id__gt": id__gt,
+        "id__lt": id__lt,
         "id__gte": id__gte,
         "id__lte": id__lte,
         "id__sort": id__sort,
@@ -140,6 +166,8 @@ async def read_instances(
                 Types.root_id.in_(allowed_type_roots) if allowed_type_roots else false()
             )
         )
+
+    query = QueryBuilder.apply_limit(query, limit)
 
     result = await session.execute(query)
     instances = result.scalars().all()

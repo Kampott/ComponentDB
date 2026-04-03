@@ -26,6 +26,10 @@ async def list_property_types(
     # Фильтры
     type_id: Optional[int] = Query(None),
     type_id__in: Optional[List[int]] = Query(None),
+    type_id__gt: Optional[int] = Query(None),
+    type_id__lt: Optional[int] = Query(None),
+    type_id__gte: Optional[int] = Query(None),
+    type_id__lte: Optional[int] = Query(None),
     
     name: Optional[str] = Query(None),
     name__like: Optional[str] = Query(None),
@@ -35,7 +39,13 @@ async def list_property_types(
     
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
+    id__gt: Optional[int] = Query(None),
+    id__lt: Optional[int] = Query(None),
+    id__gte: Optional[int] = Query(None),
+    id__lte: Optional[int] = Query(None),
     id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(require_permissions("read_property_types")),
     log: LogCallable = Depends(LoggerInterface("property_types"))
@@ -43,12 +53,20 @@ async def list_property_types(
     params = {
         "type_id": type_id,
         "type_id__in": type_id__in,
+        "type_id__gt": type_id__gt,
+        "type_id__lt": type_id__lt,
+        "type_id__gte": type_id__gte,
+        "type_id__lte": type_id__lte,
         "name": name,
         "name__like": name__like,
         "name__sort": name__sort,
         "is_static": is_static,
         "id": id,
         "id__in": id__in,
+        "id__gt": id__gt,
+        "id__lt": id__lt,
+        "id__gte": id__gte,
+        "id__lte": id__lte,
         "id__sort": id__sort,
     }
     
@@ -58,6 +76,7 @@ async def list_property_types(
     query = select(PropertyTypes)
     query = QueryBuilder.apply_filters(query, PropertyTypes, filters)
     query = QueryBuilder.apply_sorting(query, PropertyTypes, filters)
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     property_types = result.scalars().all()

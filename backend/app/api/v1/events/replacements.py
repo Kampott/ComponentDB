@@ -112,9 +112,19 @@ async def read_replacements(
     # Фильтры
     event_id: Optional[int] = Query(None),
     event_id__in: Optional[List[int]] = Query(None),
+    event_id__gt: Optional[int] = Query(None),
+    event_id__lt: Optional[int] = Query(None),
+    event_id__gte: Optional[int] = Query(None),
+    event_id__lte: Optional[int] = Query(None),
     
     new_instance_id: Optional[int] = Query(None),
     new_instance_id__in: Optional[List[int]] = Query(None),
+    new_instance_id__gt: Optional[int] = Query(None),
+    new_instance_id__lt: Optional[int] = Query(None),
+    new_instance_id__gte: Optional[int] = Query(None),
+    new_instance_id__lte: Optional[int] = Query(None),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(get_current_user),
     _: None = Depends(require_permissions("read_replacements")),
@@ -123,8 +133,16 @@ async def read_replacements(
     params = {
         "event_id": event_id,
         "event_id__in": event_id__in,
+        "event_id__gt": event_id__gt,
+        "event_id__lt": event_id__lt,
+        "event_id__gte": event_id__gte,
+        "event_id__lte": event_id__lte,
         "new_instance_id": new_instance_id,
         "new_instance_id__in": new_instance_id__in,
+        "new_instance_id__gt": new_instance_id__gt,
+        "new_instance_id__lt": new_instance_id__lt,
+        "new_instance_id__gte": new_instance_id__gte,
+        "new_instance_id__lte": new_instance_id__lte,
     }
     
     QueryBuilder.validate_params(Replacements, params, SEARCH_CONFIG[Replacements])
@@ -133,6 +151,7 @@ async def read_replacements(
     query = select(Replacements)
     query = QueryBuilder.apply_filters(query, Replacements, filters)
     query = QueryBuilder.apply_sorting(query, Replacements, filters)
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     replacements = result.scalars().all()

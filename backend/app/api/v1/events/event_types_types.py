@@ -37,9 +37,19 @@ async def read_event_types_types(
     # Фильтры
     event_type_id: Optional[int] = Query(None),
     event_type_id__in: Optional[List[int]] = Query(None),
+    event_type_id__gt: Optional[int] = Query(None),
+    event_type_id__lt: Optional[int] = Query(None),
+    event_type_id__gte: Optional[int] = Query(None),
+    event_type_id__lte: Optional[int] = Query(None),
     
     type_id: Optional[int] = Query(None),
     type_id__in: Optional[List[int]] = Query(None),
+    type_id__gt: Optional[int] = Query(None),
+    type_id__lt: Optional[int] = Query(None),
+    type_id__gte: Optional[int] = Query(None),
+    type_id__lte: Optional[int] = Query(None),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(get_current_user),
     _: None = Depends(require_permissions("read_event_types_types")),
@@ -48,8 +58,16 @@ async def read_event_types_types(
     params = {
         "event_type_id": event_type_id,
         "event_type_id__in": event_type_id__in,
+        "event_type_id__gt": event_type_id__gt,
+        "event_type_id__lt": event_type_id__lt,
+        "event_type_id__gte": event_type_id__gte,
+        "event_type_id__lte": event_type_id__lte,
         "type_id": type_id,
         "type_id__in": type_id__in,
+        "type_id__gt": type_id__gt,
+        "type_id__lt": type_id__lt,
+        "type_id__gte": type_id__gte,
+        "type_id__lte": type_id__lte,
     }
     
     QueryBuilder.validate_params(EventTypesTypes, params, SEARCH_CONFIG[EventTypesTypes])
@@ -90,6 +108,8 @@ async def read_event_types_types(
         query = query.where(
             Types.root_id.in_(allowed_type_roots) if allowed_type_roots else false()
         )
+
+    query = QueryBuilder.apply_limit(query, limit)
 
     result = await session.execute(query)
     event_types_types = result.scalars().all()

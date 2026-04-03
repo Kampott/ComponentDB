@@ -43,6 +43,12 @@ async def read_user_roles(
     
     role_id: Optional[int] = Query(None),
     role_id__in: Optional[List[int]] = Query(None),
+    role_id__gt: Optional[int] = Query(None),
+    role_id__lt: Optional[int] = Query(None),
+    role_id__gte: Optional[int] = Query(None),
+    role_id__lte: Optional[int] = Query(None),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(require_permissions("read_role")),
     log: LogCallable = Depends(LoggerInterface("user_roles"))
@@ -52,6 +58,10 @@ async def read_user_roles(
         "user_id__in": user_id__in,
         "role_id": role_id,
         "role_id__in": role_id__in,
+        "role_id__gt": role_id__gt,
+        "role_id__lt": role_id__lt,
+        "role_id__gte": role_id__gte,
+        "role_id__lte": role_id__lte,
     }
     
     QueryBuilder.validate_params(UserRole, params, SEARCH_CONFIG[UserRole])
@@ -60,6 +70,7 @@ async def read_user_roles(
     query = select(UserRole)
     query = QueryBuilder.apply_filters(query, UserRole, filters)
     query = QueryBuilder.apply_sorting(query, UserRole, filters)
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     user_roles = result.scalars().all()

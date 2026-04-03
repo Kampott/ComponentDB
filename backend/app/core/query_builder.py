@@ -158,3 +158,10 @@ class QueryBuilder:
                 query = query.order_by(field.desc())
         
         return query
+    
+    @staticmethod
+    def apply_limit(query, limit: Optional[int]):
+        """Применяет LIMIT к query для пагинации"""
+        if limit is not None and limit > 0:
+            query = query.limit(limit)
+        return query

@@ -39,9 +39,19 @@ async def read_role_permissions(
     # Фильтры
     role_id: Optional[int] = Query(None),
     role_id__in: Optional[List[int]] = Query(None),
+    role_id__gt: Optional[int] = Query(None),
+    role_id__lt: Optional[int] = Query(None),
+    role_id__gte: Optional[int] = Query(None),
+    role_id__lte: Optional[int] = Query(None),
     
     permission_id: Optional[int] = Query(None),
     permission_id__in: Optional[List[int]] = Query(None),
+    permission_id__gt: Optional[int] = Query(None),
+    permission_id__lt: Optional[int] = Query(None),
+    permission_id__gte: Optional[int] = Query(None),
+    permission_id__lte: Optional[int] = Query(None),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(require_permissions("read_role_permission")),
     log: LogCallable = Depends(LoggerInterface("role_permissions"))
@@ -49,8 +59,16 @@ async def read_role_permissions(
     params = {
         "role_id": role_id,
         "role_id__in": role_id__in,
+        "role_id__gt": role_id__gt,
+        "role_id__lt": role_id__lt,
+        "role_id__gte": role_id__gte,
+        "role_id__lte": role_id__lte,
         "permission_id": permission_id,
         "permission_id__in": permission_id__in,
+        "permission_id__gt": permission_id__gt,
+        "permission_id__lt": permission_id__lt,
+        "permission_id__gte": permission_id__gte,
+        "permission_id__lte": permission_id__lte,
     }
     
     QueryBuilder.validate_params(RolePermission, params, SEARCH_CONFIG[RolePermission])
@@ -59,6 +77,7 @@ async def read_role_permissions(
     query = select(RolePermission)
     query = QueryBuilder.apply_filters(query, RolePermission, filters)
     query = QueryBuilder.apply_sorting(query, RolePermission, filters)
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     role_permissions = result.scalars().all()

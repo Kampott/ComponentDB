@@ -12,6 +12,7 @@ class EventTypes(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String)
+    counts_as_failure: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     child_instance_events: Mapped[List["Events"]] = relationship(
         back_populates="event_type",

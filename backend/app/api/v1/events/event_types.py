@@ -37,9 +37,17 @@ async def read_event_types(
     name__like: Optional[str] = Query(None),
     name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
     
+    counts_as_failure: Optional[bool] = Query(None),
+    
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
+    id__gt: Optional[int] = Query(None),
+    id__lt: Optional[int] = Query(None),
+    id__gte: Optional[int] = Query(None),
+    id__lte: Optional[int] = Query(None),
     id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(require_permissions("read_event_types")),
     log: LogCallable = Depends(LoggerInterface("event_types"))
@@ -48,8 +56,13 @@ async def read_event_types(
         "name": name,
         "name__like": name__like,
         "name__sort": name__sort,
+        "counts_as_failure": counts_as_failure,
         "id": id,
         "id__in": id__in,
+        "id__gt": id__gt,
+        "id__lt": id__lt,
+        "id__gte": id__gte,
+        "id__lte": id__lte,
         "id__sort": id__sort,
     }
     
@@ -59,6 +72,7 @@ async def read_event_types(
     query = select(EventTypes)
     query = QueryBuilder.apply_filters(query, EventTypes, filters)
     query = QueryBuilder.apply_sorting(query, EventTypes, filters)
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     event_types = result.scalars().all()

@@ -26,16 +26,30 @@ async def read_instance_properties(
     # Фильтры
     instance_id: Optional[int] = Query(None),
     instance_id__in: Optional[List[int]] = Query(None),
+    instance_id__gt: Optional[int] = Query(None),
+    instance_id__lt: Optional[int] = Query(None),
+    instance_id__gte: Optional[int] = Query(None),
+    instance_id__lte: Optional[int] = Query(None),
     
     property_type_id: Optional[int] = Query(None),
     property_type_id__in: Optional[List[int]] = Query(None),
+    property_type_id__gt: Optional[int] = Query(None),
+    property_type_id__lt: Optional[int] = Query(None),
+    property_type_id__gte: Optional[int] = Query(None),
+    property_type_id__lte: Optional[int] = Query(None),
     
     value: Optional[str] = Query(None),
     value__like: Optional[str] = Query(None),
     
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
+    id__gt: Optional[int] = Query(None),
+    id__lt: Optional[int] = Query(None),
+    id__gte: Optional[int] = Query(None),
+    id__lte: Optional[int] = Query(None),
     id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(require_permissions("read_instance_properties")),
     log: LogCallable = Depends(LoggerInterface("instance_properties"))
@@ -43,12 +57,24 @@ async def read_instance_properties(
     params = {
         "instance_id": instance_id,
         "instance_id__in": instance_id__in,
+        "instance_id__gt": instance_id__gt,
+        "instance_id__lt": instance_id__lt,
+        "instance_id__gte": instance_id__gte,
+        "instance_id__lte": instance_id__lte,
         "property_type_id": property_type_id,
         "property_type_id__in": property_type_id__in,
+        "property_type_id__gt": property_type_id__gt,
+        "property_type_id__lt": property_type_id__lt,
+        "property_type_id__gte": property_type_id__gte,
+        "property_type_id__lte": property_type_id__lte,
         "value": value,
         "value__like": value__like,
         "id": id,
         "id__in": id__in,
+        "id__gt": id__gt,
+        "id__lt": id__lt,
+        "id__gte": id__gte,
+        "id__lte": id__lte,
         "id__sort": id__sort,
     }
     
@@ -58,6 +84,7 @@ async def read_instance_properties(
     query = select(InstanceProperties)
     query = QueryBuilder.apply_filters(query, InstanceProperties, filters)
     query = QueryBuilder.apply_sorting(query, InstanceProperties, filters)
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     instance_properties = result.scalars().all()

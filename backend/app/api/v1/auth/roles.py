@@ -43,7 +43,13 @@ async def read_roles(
     
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
+    id__gt: Optional[int] = Query(None),
+    id__lt: Optional[int] = Query(None),
+    id__gte: Optional[int] = Query(None),
+    id__lte: Optional[int] = Query(None),
     id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(require_permissions("read_role")),
     log: LogCallable = Depends(LoggerInterface("roles"))
@@ -54,6 +60,10 @@ async def read_roles(
         "name__sort": name__sort,
         "id": id,
         "id__in": id__in,
+        "id__gt": id__gt,
+        "id__lt": id__lt,
+        "id__gte": id__gte,
+        "id__lte": id__lte,
         "id__sort": id__sort,
     }
     
@@ -63,6 +73,7 @@ async def read_roles(
     query = select(Role)
     query = QueryBuilder.apply_filters(query, Role, filters)
     query = QueryBuilder.apply_sorting(query, Role, filters)
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     roles = result.scalars().all()

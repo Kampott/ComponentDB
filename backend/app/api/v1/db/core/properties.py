@@ -26,16 +26,30 @@ async def read_properties(
     # Фильтры
     object_id: Optional[int] = Query(None),
     object_id__in: Optional[List[int]] = Query(None),
+    object_id__gt: Optional[int] = Query(None),
+    object_id__lt: Optional[int] = Query(None),
+    object_id__gte: Optional[int] = Query(None),
+    object_id__lte: Optional[int] = Query(None),
     
     property_id: Optional[int] = Query(None),
     property_id__in: Optional[List[int]] = Query(None),
+    property_id__gt: Optional[int] = Query(None),
+    property_id__lt: Optional[int] = Query(None),
+    property_id__gte: Optional[int] = Query(None),
+    property_id__lte: Optional[int] = Query(None),
     
     value: Optional[str] = Query(None),
     value__like: Optional[str] = Query(None),
     
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
+    id__gt: Optional[int] = Query(None),
+    id__lt: Optional[int] = Query(None),
+    id__gte: Optional[int] = Query(None),
+    id__lte: Optional[int] = Query(None),
     id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(require_permissions("read_properties")),
     log: LogCallable = Depends(LoggerInterface("properties"))
@@ -43,12 +57,24 @@ async def read_properties(
     params = {
         "object_id": object_id,
         "object_id__in": object_id__in,
+        "object_id__gt": object_id__gt,
+        "object_id__lt": object_id__lt,
+        "object_id__gte": object_id__gte,
+        "object_id__lte": object_id__lte,
         "property_id": property_id,
         "property_id__in": property_id__in,
+        "property_id__gt": property_id__gt,
+        "property_id__lt": property_id__lt,
+        "property_id__gte": property_id__gte,
+        "property_id__lte": property_id__lte,
         "value": value,
         "value__like": value__like,
         "id": id,
         "id__in": id__in,
+        "id__gt": id__gt,
+        "id__lt": id__lt,
+        "id__gte": id__gte,
+        "id__lte": id__lte,
         "id__sort": id__sort,
     }
     
@@ -58,6 +84,7 @@ async def read_properties(
     query = select(Properties)
     query = QueryBuilder.apply_filters(query, Properties, filters)
     query = QueryBuilder.apply_sorting(query, Properties, filters)
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     properties = result.scalars().all()

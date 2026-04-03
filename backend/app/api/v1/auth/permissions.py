@@ -43,7 +43,13 @@ async def read_permissions(
     
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
+    id__gt: Optional[int] = Query(None),
+    id__lt: Optional[int] = Query(None),
+    id__gte: Optional[int] = Query(None),
+    id__lte: Optional[int] = Query(None),
     id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    
+    limit: Optional[int] = Query(None, ge=1, le=1000),
     
     current_user: User = Depends(require_permissions("read_permission")),
     log: LogCallable = Depends(LoggerInterface("permissions"))
@@ -54,6 +60,10 @@ async def read_permissions(
         "name__sort": name__sort,
         "id": id,
         "id__in": id__in,
+        "id__gt": id__gt,
+        "id__lt": id__lt,
+        "id__gte": id__gte,
+        "id__lte": id__lte,
         "id__sort": id__sort,
     }
     
@@ -63,6 +73,7 @@ async def read_permissions(
     query = select(Permission)
     query = QueryBuilder.apply_filters(query, Permission, filters)
     query = QueryBuilder.apply_sorting(query, Permission, filters)
+    query = QueryBuilder.apply_limit(query, limit)
     
     result = await session.execute(query)
     permissions = result.scalars().all()
