@@ -16,3 +16,6 @@ pandas
 markdown2
 pydantic-settings
 pydantic[email]
+grpcio
+grpcio-tools
+protobuf

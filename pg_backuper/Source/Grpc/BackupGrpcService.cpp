@@ -270,6 +270,11 @@ grpc::Status BackupGrpcService::ListBackupTemplates(grpc::ServerContext*,
 grpc::Status BackupGrpcService::DeleteBackupTemplate(grpc::ServerContext*,
                                                      const pgbackup::v1::DeleteBackupTemplateRequest* request,
                                                      google::protobuf::Empty*) {
+    const auto validation = validateTemplateDeletion(request->template_id());
+    if (!validation) {
+        return validation.error();
+    }
+
     const auto result = m_dataStore->deleteTemplate(request->template_id());
     if (!result) {
         return makeDataStoreStatus(result.error());
@@ -513,6 +518,45 @@ grpc::Status BackupGrpcService::makeDataStoreStatus(std::string message) const {
         return makeStatus(grpc::StatusCode::NOT_FOUND, std::move(message));
     }
     return makeStatus(grpc::StatusCode::INTERNAL, std::move(message));
+}
+
+std::expected<void, grpc::Status> BackupGrpcService::validateTemplateDeletion(int64_t templateId) const {
+    for (const auto& activeBackup : m_activeManager->getAll()) {
+        const auto snapshot = activeBackup->snapshot();
+        if (snapshot.templateId && *snapshot.templateId == templateId) {
+            return std::unexpected(makeStatus(
+                grpc::StatusCode::FAILED_PRECONDITION,
+                std::format("Cannot delete template {}: it is used by an active backup {}", templateId,
+                            snapshot.backupId)));
+        }
+    }
+
+    const auto persistedBackups = m_dataStore->listBackups({});
+    if (!persistedBackups) {
+        return std::unexpected(makeDataStoreStatus(persistedBackups.error()));
+    }
+    for (const auto& backup : *persistedBackups) {
+        if (backup.templateId && *backup.templateId == templateId) {
+            return std::unexpected(makeStatus(
+                grpc::StatusCode::FAILED_PRECONDITION,
+                std::format("Cannot delete template {}: it is referenced by backup history {}", templateId,
+                            backup.backupId)));
+        }
+    }
+
+    const auto schedules = m_scheduleManager->list("");
+    if (!schedules) {
+        return std::unexpected(makeDataStoreStatus(schedules.error()));
+    }
+    for (const auto& schedule : *schedules) {
+        if (schedule.templateId == templateId) {
+            return std::unexpected(makeStatus(
+                grpc::StatusCode::FAILED_PRECONDITION,
+                std::format("Cannot delete template {}: it is used by schedule {}", templateId, schedule.scheduleId)));
+        }
+    }
+
+    return {};
 }
 
 pgbackup::v1::BackupTemplate BackupGrpcService::toProto(const backup::BackupTemplateRecord& record) const {

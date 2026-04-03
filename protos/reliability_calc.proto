@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package reliability_calc;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+service ReliabilityCalc {
+  rpc CalculateReliabilityInstant(CalculateReliabilityInstantRequest) returns (CalculateReliabilityInstantResponse);
+  rpc ScheduleReliabilityCalculation(ScheduleReliabilityCalculationRequest) returns (ScheduleReliabilityCalculationResponse);
+  rpc SchedulePeriodicReliabilityCalculation(SchedulePeriodicReliabilityCalculationRequest) returns (SchedulePeriodicReliabilityCalculationResponse);
+  rpc GetActiveReliabilityCalculations(GetActiveReliabilityCalculationsRequest) returns (GetActiveReliabilityCalculationsResponse);
+  rpc StopReliabilityCalculation(StopReliabilityCalculationRequest) returns (StopReliabilityCalculationResponse);
+  rpc GetScheduledReliabilityCalculations(GetScheduledReliabilityCalculationsRequest) returns (GetScheduledReliabilityCalculationsResponse);
+  rpc DeleteScheduledReliabilityCalculation(DeleteScheduledReliabilityCalculationRequest) returns (DeleteScheduledReliabilityCalculationResponse);
+  rpc GetLatestReliabilityResult(GetLatestReliabilityResultRequest) returns (GetLatestReliabilityResultResponse);
+}
+
+message ReliabilityResult {
+  // TBA полноценный ответ - пока что пусть будет MTTF корня
+  double mttf = 1;
+  google.protobuf.Timestamp calculated_at = 2;
+}
+
+message ActiveReliabilityCalculation {
+  int64 id = 1;
+  int64 type_id = 2;
+  google.protobuf.Timestamp started_at = 3;
+}
+
+message ScheduledReliabilityCalculation {
+  int64 id = 1;
+  int64 type_id = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Duration period = 4;
+  bool is_periodic = 5;
+}
+
+message CalculateReliabilityInstantRequest {
+  string type_id = 1;
+}
+
+message CalculateReliabilityInstantResponse {
+  ReliabilityResult result = 1;
+}
+
+message ScheduleReliabilityCalculationRequest {
+  string type_id = 1;
+  google.protobuf.Timestamp start_time = 2;
+}
+
+message ScheduleReliabilityCalculationResponse {
+  string calculation_id = 1;
+  string status_message = 2;
+}
+
+message SchedulePeriodicReliabilityCalculationRequest {
+  string type_id = 1;
+  google.protobuf.Timestamp start_time = 2;
+  google.protobuf.Duration period = 3;
+}
+
+message SchedulePeriodicReliabilityCalculationResponse {
+  string calculation_id = 1;
+  string status_message = 2;
+}
+
+message GetActiveReliabilityCalculationsRequest {}
+
+message GetActiveReliabilityCalculationsResponse {
+  repeated ActiveReliabilityCalculation calculations = 1;
+}
+
+message StopReliabilityCalculationRequest {
+  optional int64 id = 1;
+}
+
+message StopReliabilityCalculationResponse {
+  repeated int64 id = 1;
+  string status_message = 2;
+}
+
+message GetScheduledReliabilityCalculationsRequest {}
+
+message GetScheduledReliabilityCalculationsResponse {
+  repeated ScheduledReliabilityCalculation calculations = 1;
+}
+
+message DeleteScheduledReliabilityCalculationRequest {
+  int64 id = 1;
+}
+
+message DeleteScheduledReliabilityCalculationResponse {
+  bool deleted = 1;
+}
+
+message GetLatestReliabilityResultRequest {
+  int64 type_id = 1;
+  int32 count = 2;
+}
+
+message GetLatestReliabilityResultResponse {
+  repeated ReliabilityResult result = 1;
+}

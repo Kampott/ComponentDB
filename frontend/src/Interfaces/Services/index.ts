@@ -2,6 +2,7 @@ export * from './CrudInterfaces.ts'
 
 export type * from './IAdminUsersService.ts'
 export type * from './IAuthService.ts'
+export type * from './IBackupService.ts'
 export type * from './IEventsService.ts'
 export type * from './IEventsTypesService.ts'
 export type * from './IEventTypeRelationsService.ts'

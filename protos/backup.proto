@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package pgbackup.v1;
+
+import "google/protobuf/empty.proto";
+
+import "backup_active.proto";
+import "backup_database.proto";
+import "backup_history.proto";
+import "backup_schedule.proto";
+import "backup_template.proto";
+
+option cc_enable_arenas = true;
+
+service BackupService {
+  rpc PingDatabase(google.protobuf.Empty) returns (PingDatabaseResponse);
+
+  // Шаблоны бэкапов
+  rpc CreateBackupTemplate(CreateBackupTemplateRequest) returns (BackupTemplate);
+  rpc GetBackupTemplate(GetBackupTemplateRequest) returns (BackupTemplate);
+  rpc ListBackupTemplates(ListBackupTemplatesRequest) returns (ListBackupTemplatesResponse);
+  rpc UpdateBackupTemplate(UpdateBackupTemplateRequest) returns (BackupTemplate);
+  rpc DeleteBackupTemplate(DeleteBackupTemplateRequest) returns (google.protobuf.Empty);
+
+  // Запуск и управление активными бэкапами
+  rpc StartBackup(StartBackupRequest) returns (StartBackupResponse);
+  rpc CancelBackup(CancelBackupRequest) returns (CancelBackupResponse);
+
+  // Управление бэкапами
+  rpc GetBackups(ListBackupsRequest) returns (ListBackupsResponse);
+  rpc GetBackup(GetBackupRequest) returns (Backup);
+  rpc DeleteBackup(DeleteBackupRequest) returns (google.protobuf.Empty);
+  rpc VerifyBackup(VerifyBackupRequest) returns (BackupVerification);
+
+  // Расписания
+  rpc CreateSchedule(CreateScheduleRequest) returns (Schedule);
+  rpc UpdateSchedule(UpdateScheduleRequest) returns (Schedule);
+  rpc ListSchedules(ListSchedulesRequest) returns (ListSchedulesResponse);
+  rpc GetSchedule(GetScheduleRequest) returns (Schedule);
+  rpc DeleteSchedule(DeleteScheduleRequest) returns (google.protobuf.Empty);
+  rpc PauseSchedule(PauseScheduleRequest) returns (Schedule);
+  rpc ResumeSchedule(ResumeScheduleRequest) returns (Schedule);
+
+  // WAL (отложено до MVP)
+//  rpc StartWalStreaming(StartWalStreamingRequest) returns (stream WalStreamStatus);
+//  rpc StopWalStreaming(StopWalStreamingRequest) returns (StopWalStreamingResponse);
+//  rpc GetWalStreamingState(GetWalStreamingStateRequest) returns (WalStreamingState);
+}

@@ -122,3 +122,17 @@ databases:
 - Неверный тип скаляра: будет ошибка вида `Scalar parse error: ...`.
 - Не найден файл YAML: будет ошибка `Could not open '...': ...`.
 - Некорректный YAML: будет ошибка `YAML syntax error in '...': ...`.
+
+## Требования к PostgreSQL для physical backup
+
+Поля `databases.*` задают не просто обычный SQL-доступ.
+
+Для physical backup через `pg_basebackup` PostgreSQL должен:
+
+- принимать replication connection
+- иметь роль с правом `REPLICATION`
+- разрешать источник подключения в `pg_hba.conf`
+
+Подробный пошаговый документ:
+
+- [`postgres_backup_prerequisites.md`](./postgres_backup_prerequisites.md)

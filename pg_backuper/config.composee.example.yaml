@@ -1,0 +1,23 @@
+grpc:
+  host: 0.0.0.0
+  port: 4040
+
+backup:
+  sqlitePath: data/backups.sqlite
+  storageRoot: data/storage
+  pgBasebackupPath: pg_basebackup
+
+databases:
+  main:
+    schema: main
+    user: replicator
+    password: replicator
+    host: db
+    port: 5432
+
+  logging:
+    schema: logging
+    user: replicator
+    password: replicator
+    host: log_db
+    port: 5432

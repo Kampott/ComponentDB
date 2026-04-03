@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package pgbackup.v1;
+
+import "backup_common.proto";
+import "google/protobuf/timestamp.proto";
+
+option cc_enable_arenas = true;
+
+message Schedule {
+  int64 schedule_id = 1;
+  string database_name = 2;
+  string display_name = 3;
+  string cron_expression = 4;
+  string timezone = 5;          // IANA timezone, "UTC" по умолчанию
+  ScheduleState state = 6;
+  int64 template_id = 7;
+
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+  google.protobuf.Timestamp next_run_at = 10;
+  google.protobuf.Timestamp last_run_at = 11;
+  int64 last_backup_id = 12;
+  BackupStatus last_run_status = 13;
+}
+
+message GetScheduleRequest {
+  int64 schedule_id = 1;
+}
+
+message CreateScheduleRequest {
+  string database_name = 1;
+  string display_name = 2;
+  string cron_expression = 3;
+  string timezone = 4;
+  int64 template_id = 5;
+}
+
+message UpdateScheduleRequest {
+  int64 schedule_id = 1;
+  string display_name = 2;
+  string cron_expression = 3;
+  string timezone = 4;
+  int64 template_id = 5;
+}
+
+message ListSchedulesRequest {
+  string database_name = 1;
+}
+
+message ListSchedulesResponse {
+  repeated Schedule schedules = 1;
+}
+
+message DeleteScheduleRequest {
+  int64 schedule_id = 1;
+}
+
+message PauseScheduleRequest {
+  int64 schedule_id = 1;
+}
+
+message ResumeScheduleRequest {
+  int64 schedule_id = 1;
+}
+
+// WAL (отложено до MVP)
+// message StartWalStreamingRequest { ... }
+// message WalStreamStatus { ... }
+// message WalStreamingState { ... }

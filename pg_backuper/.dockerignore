@@ -4,6 +4,5 @@
 .vscode
 build
 cmake-build-*
-Tests
 *.swp
 *.swo

@@ -8,6 +8,10 @@
 
 Подробные описания классов лежат в подпапке [`compontents`](./compontents/)
 
+## Эксплуатация
+
+- [Подготовка PostgreSQL для physical backup](./postgres_backup_prerequisites.md)
+
 ### Backup layer
 
 - [ActiveBackup](./compontents/ActiveBackup.md)

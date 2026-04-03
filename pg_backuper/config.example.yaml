@@ -1,5 +1,5 @@
 grpc:
-  host: 0.0.0.0
+  host: 127.0.0.1
   port: 4040
 
 backup:
@@ -10,14 +10,14 @@ backup:
 databases:
   main:
     schema: main
-    user: postgres
-    password: postgres
+    user: replicator
+    password: replicator
     host: localhost
     port: 5432
 
   logging:
     schema: logging
-    user: postgres
-    password: postgres
+    user: replicator
+    password: replicator
     host: localhost
     port: 5431
