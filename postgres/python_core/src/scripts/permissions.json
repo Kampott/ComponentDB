@@ -57,6 +57,7 @@
     {"name": "edit_events", "description": "Ability to edit events"},
     {"name": "read_replacements", "description": "Ability to read replacements"},
     {"name": "create_replacements", "description": "Ability to create replacements and undo them"},
-    {"name": "delete_replacements", "description": "Ability to delete replacements"}
+    {"name": "delete_replacements", "description": "Ability to delete replacements"},
+    {"name": "edit_other_users_settings", "description": "Ability to edit other users' settings"}
   ]
 }

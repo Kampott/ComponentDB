@@ -10,6 +10,7 @@ import uuid
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+    settings: Optional[dict] = None
 
 
 class UserOut(BaseModel):
@@ -17,9 +18,14 @@ class UserOut(BaseModel):
     email: EmailStr
     is_active: bool
     created_at: datetime
+    settings: Optional[dict] = None
 
     class Config:
         from_attributes = True
+
+
+class UserUpdate(BaseModel):
+    settings: Optional[dict] = None
 
 
 class Token(BaseModel):
