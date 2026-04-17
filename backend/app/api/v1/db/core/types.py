@@ -172,6 +172,53 @@ async def read_type(
     })
     return type_obj
 
+@router.get("/{type_id}/subtree", response_model=list[TypesRead])
+async def read_type_subtree(
+    type_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_type_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("types"))
+):
+    type_obj = await db.get_type(session, type_id)
+    if not type_obj:
+        raise HTTPException(status_code=404, detail="Type not found")
+
+    subtree = await db.get_type_subtree(session, type_obj.id)
+    await log(action="read_type_subtree", details={"type_id": type_id})
+    return subtree
+
+
+@router.get("/{type_id}/ancestors", response_model=list[TypesRead])
+async def read_type_ancestors(
+    type_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_type_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("types"))
+):
+    type_obj = await db.get_type(session, type_id)
+    if not type_obj:
+        raise HTTPException(status_code=404, detail="Type not found")
+
+    ancestors = await db.get_type_ancestors(session, type_id)
+    await log(action="read_type_ancestors", details={"type_id": type_id})
+    return ancestors
+
+
+@router.patch("/{type_id}/move", response_model=TypesRead)
+async def move_type(
+    type_id: int,
+    new_parent_id: int = Query(...),
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_type_permission(write=True)),
+    log: LogCallable = Depends(LoggerInterface("types"))
+):
+    moved = await db.move_type(session, type_id, new_parent_id)
+    await log(action="move_type", details={
+        "type_id": type_id,
+        "new_parent_id": new_parent_id
+    })
+    return moved
+
 @router.post("/", response_model=TypesCreate)
 async def add_type(
     data: TypesCreate,

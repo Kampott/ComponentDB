@@ -21,6 +21,10 @@ class ObjectsUpdate(BaseModel):
 class ObjectsRead(ObjectsBase):
     id: int
     root_id: int
+    type_id: int
+    tin: int
+    tout: int
+    tree_size: int
 
     class Config:
         from_attributes = True
@@ -43,6 +47,9 @@ class TypesUpdate(BaseModel):
 class TypesRead(TypesBase):
     id: int
     root_id: int
+    tin: int
+    tout: int
+    tree_size: int
 
     class Config:
         from_attributes = True
@@ -124,6 +131,9 @@ class InstancesRead(BaseModel):
     parent_id: int | None = None
     object_id: int
     is_active: bool
+    tin: int
+    tout: int
+    tree_size: int
 
     class Config:
         from_attributes = True

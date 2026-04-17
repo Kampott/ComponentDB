@@ -6,6 +6,7 @@ from sqlalchemy.future import select
 from sqlalchemy.sql import and_
 
 from app.crud.core.default import DefaultQueries
+from app.crud.core.dfs import recalculate_tree
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
@@ -61,31 +62,52 @@ async def get_instance(db: AsyncSession,
     result = await db.execute(select(Instances).where(Instances.id == instance_id))
     return result.scalar_one_or_none()
 
+async def get_instance_subtree(db: AsyncSession, instance_id: int) -> List[Instances]:
+    inst = await db.get(Instances, instance_id)
+    if inst is None:
+        return []
+    result = await db.execute(
+        select(Instances)
+        .where(
+            (Instances.root_id == inst.root_id) &
+            (Instances.tin >= inst.tin) &
+            (Instances.tout <= inst.tout)
+        )
+        .order_by(Instances.tin)
+    )
+    return list(result.scalars().all())
 
-async def create_instance(
-    db: AsyncSession,
-    data: InstancesCreate
-    ):
-    # creating both id
-    root_id = None
+async def get_instance_ancestors(db: AsyncSession, instance_id: int) -> List[Instances]:
+    inst = await db.get(Instances, instance_id)
+    if inst is None:
+        return []
+    result = await db.execute(
+        select(Instances)
+        .where(
+            (Instances.root_id == inst.root_id) &
+            (Instances.tin <= inst.tin) &
+            (Instances.tout >= inst.tout) &
+            (Instances.id != instance_id)
+        )
+        .order_by(Instances.tin)
+    )
+    return list(result.scalars().all())
 
+
+
+async def create_instance(db: AsyncSession, data: InstancesCreate) -> Instances:
     obj = await db.get(Objects, data.object_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Object not found")
 
-    # if parent_id present - getting the index of layer and adding 1, root = parent.root
+    root_id = None
     if data.parent_id:
         parent_instance = await db.get(Instances, data.parent_id)
         if not parent_instance:
             raise HTTPException(status_code=404, detail="Parent Instance not found")
         root_id = parent_instance.root_id
 
-    # Creating the instance
-    instance = Instances(
-        **data.model_dump(),
-        root_id=root_id
-    )
-
+    instance = Instances(**data.model_dump(), root_id=root_id)
     db.add(instance)
     await db.flush()
 
@@ -93,61 +115,86 @@ async def create_instance(
         instance.root_id = instance.id
         await db.flush()
 
+    await recalculate_tree(db, Instances, instance.root_id)
     await db.commit()
     await db.refresh(instance)
-
     return instance
 
 
-async def delete_instance(db: AsyncSession, 
-    instance_id: int
-    ) -> None:
+async def delete_instance(db: AsyncSession, instance_id: int) -> None:
     instance = await db.get(Instances, instance_id)
     if instance is None:
         raise HTTPException(status_code=404, detail="Instance not found")
 
+    root_id = instance.root_id
+    is_root = (instance.id == root_id)
+
     await db.delete(instance)
+    await db.flush()
+
+    if not is_root:
+        await recalculate_tree(db, Instances, root_id)
+
     await db.commit()
 
+async def move_instance(db: AsyncSession, instance_id: int, new_parent_id: int) -> Instances:
+    instance = await db.get(Instances, instance_id)
+    if instance is None:
+        raise HTTPException(status_code=404, detail="Instance not found")
 
-async def update_instance(
-    session: AsyncSession, 
-    instance_id: int, 
-    data: InstancesUpdate
-    ) -> Instances | None:
+    new_parent = await db.get(Instances, new_parent_id)
+    if new_parent is None:
+        raise HTTPException(status_code=404, detail="New parent not found")
+
+    if new_parent.root_id == instance_id:
+        raise HTTPException(status_code=400, detail="Cannot move instance into its own subtree")
+
+    old_root_id = instance.root_id
+    new_root_id = new_parent.root_id
+
+    subtree_result = await db.execute(
+        select(Instances).where(
+            (Instances.root_id == old_root_id) &
+            (Instances.tin >= instance.tin) &
+            (Instances.tout <= instance.tout)
+        )
+    )
+    for node in subtree_result.scalars().all():
+        node.root_id = new_root_id
+
+    instance.parent_id = new_parent_id
+    await db.flush()
+
+    await recalculate_tree(db, Instances, new_root_id)
+    if old_root_id != new_root_id:
+        await recalculate_tree(db, Instances, old_root_id)
+
+    await db.commit()
+    await db.refresh(instance)
+    return instance
+
+
+
+async def update_instance(session: AsyncSession, instance_id: int, data: InstancesUpdate) -> Instances | None:
     return await DefaultQueries.update(session, Instances, instance_id, data)
 
-
 async def create_instance_for_sub_tree(
-    session: AsyncSession, 
-    object_parent_id: int,
-    instance_parent_id: int, 
-    instance_root_id: int) -> str | None:
-    query = (
-        select(Objects)
-        .where(Objects.parent_id == object_parent_id)
-    )
+        session: AsyncSession,
+        object_parent_id: int,
+        instance_parent_id: int,
+        instance_root_id: int) -> str | None:
+    query = select(Objects).where(Objects.parent_id == object_parent_id)
     objects = (await session.execute(query)).scalars().all()
-
-    if len(objects) == 0:
+    if not objects:
         return None
 
-    instances_add: list[dict] = []
-    for obj in objects:
-        instances_add.append({
-            'name': obj.name,
-            'root_id': instance_root_id,
-            'object_id': obj.id,
-            'parent_id': instance_parent_id,
-            'is_active': True,
-        })
-
-    query = (
-        insert(Instances)
-        .values(instances_add)
-        .returning(Instances.id)
-    )
-
+    instances_add = [
+        {'name': obj.name, 'root_id': instance_root_id,
+         'object_id': obj.id, 'parent_id': instance_parent_id, 'is_active': True}
+        for obj in objects
+    ]
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+    query = insert(Instances).values(instances_add).returning(Instances.id)
     instances_id = (await session.execute(query)).scalars().all()
     if len(instances_id) != len(objects):
         return "Something went wrong"
@@ -156,7 +203,6 @@ async def create_instance_for_sub_tree(
         err = await create_instance_for_sub_tree(session, obj.id, instance_id, instance_root_id)
         if err:
             return err
-
 
 async def create_instance_from_object_tree(session: AsyncSession, object_root_id: int) -> Instances | None:
     query = (
@@ -189,3 +235,32 @@ async def create_instance_from_object_tree(session: AsyncSession, object_root_id
 
     await session.commit()
     return root_instance_add
+
+
+async def create_instance_from_object_tree(session: AsyncSession, object_root_id: int) -> Instances | None:
+    root_object = (await session.execute(
+        select(Objects).where(Objects.id == object_root_id)
+    )).scalar_one_or_none()
+
+    if root_object is None or root_object.parent_id is not None:
+        return None
+
+    root_instance = Instances(
+        name=root_object.name,
+        object_id=root_object.id,
+        parent_id=None,
+        is_active=True,
+    )
+    session.add(root_instance)
+    await session.flush()
+    root_instance.root_id = root_instance.id
+    await session.flush()
+
+    err = await create_instance_for_sub_tree(session, object_root_id, root_instance.id, root_instance.id)
+    if err:
+        raise HTTPException(status_code=500, detail=err)
+
+    # Пересчитываем дерево один раз после полного построения
+    await recalculate_tree(session, Instances, root_instance.id)
+    await session.commit()
+    return root_instance

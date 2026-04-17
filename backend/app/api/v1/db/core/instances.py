@@ -194,6 +194,53 @@ async def read_instance(
     await log(action="read_instance", details={"instance_id": instance_id})
     return instance
 
+@router.get("/{instance_id}/subtree", response_model=list[InstancesRead])
+async def read_instance_subtree(
+    instance_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_instance_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("instances"))
+):
+    instance = await db.get_instance(session, instance_id)
+    if not instance:
+        raise HTTPException(status_code=404, detail="Instance not found")
+
+    subtree = await db.get_instance_subtree(session, instance.id)
+    await log(action="read_instance_subtree", details={"instance_id": instance_id})
+    return subtree
+
+
+@router.get("/{instance_id}/ancestors", response_model=list[InstancesRead])
+async def read_instance_ancestors(
+    instance_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_instance_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("instances"))
+):
+    instance = await db.get_instance(session, instance_id)
+    if not instance:
+        raise HTTPException(status_code=404, detail="Instance not found")
+
+    ancestors = await db.get_instance_ancestors(session, instance_id)
+    await log(action="read_instance_ancestors", details={"instance_id": instance_id})
+    return ancestors
+
+
+@router.patch("/{instance_id}/move", response_model=InstancesRead)
+async def move_instance(
+    instance_id: int,
+    new_parent_id: int = Query(...),
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_instance_permission(write=True)),
+    log: LogCallable = Depends(LoggerInterface("instances"))
+):
+    moved = await db.move_instance(session, instance_id, new_parent_id)
+    await log(action="move_instance", details={
+        "instance_id": instance_id,
+        "new_parent_id": new_parent_id
+    })
+    return moved
+
 
 @router.post("/", response_model=InstanceCreated)
 async def add_instance(

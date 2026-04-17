@@ -1,18 +1,18 @@
-"""create_db
+"""init
 
-Revision ID: 773332bfb99d
+Revision ID: bc9bfa17a1c5
 Revises: 
-Create Date: 2026-03-19 21:38:52.856069
+Create Date: 2026-04-17 05:08:44.579937
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '773332bfb99d'
+revision: str = 'bc9bfa17a1c5'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,6 +24,7 @@ def upgrade() -> None:
     op.create_table('event_types',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
+    sa.Column('counts_as_failure', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_event_types_id'), 'event_types', ['id'], unique=False)
@@ -46,11 +47,18 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('parent_id', sa.Integer(), nullable=True),
     sa.Column('root_id', sa.Integer(), nullable=True),
+    sa.Column('tin', sa.Integer(), nullable=False),
+    sa.Column('tout', sa.Integer(), nullable=False),
+    sa.Column('tree_size', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['parent_id'], ['types.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['root_id'], ['types.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index('idx_instances_root_parent_type', 'types', ['root_id', 'parent_id'], unique=False)
+    op.create_index('idx_rootid_tin_tout_type', 'types', ['root_id', 'tin', 'tout'], unique=False)
     op.create_index(op.f('ix_types_id'), 'types', ['id'], unique=False)
+    op.create_index(op.f('ix_types_tin'), 'types', ['tin'], unique=False)
+    op.create_index(op.f('ix_types_tout'), 'types', ['tout'], unique=False)
     op.create_table('users',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('email', sa.String(length=255), nullable=False),
@@ -58,6 +66,7 @@ def upgrade() -> None:
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('settings', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
@@ -74,12 +83,19 @@ def upgrade() -> None:
     sa.Column('type_id', sa.Integer(), nullable=False),
     sa.Column('parent_id', sa.Integer(), nullable=True),
     sa.Column('root_id', sa.Integer(), nullable=True),
+    sa.Column('tin', sa.Integer(), nullable=False),
+    sa.Column('tout', sa.Integer(), nullable=False),
+    sa.Column('tree_size', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['parent_id'], ['objects.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['root_id'], ['objects.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['type_id'], ['types.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index('idx_instances_root_parent_obj', 'objects', ['root_id', 'parent_id'], unique=False)
+    op.create_index('idx_rootid_tin_tout_obj', 'objects', ['root_id', 'tin', 'tout'], unique=False)
     op.create_index(op.f('ix_objects_id'), 'objects', ['id'], unique=False)
+    op.create_index(op.f('ix_objects_tin'), 'objects', ['tin'], unique=False)
+    op.create_index(op.f('ix_objects_tout'), 'objects', ['tout'], unique=False)
     op.create_table('property_types',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('type_id', sa.Integer(), nullable=False),
@@ -133,14 +149,20 @@ def upgrade() -> None:
     sa.Column('root_id', sa.Integer(), nullable=True),
     sa.Column('object_id', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('tin', sa.Integer(), nullable=False),
+    sa.Column('tout', sa.Integer(), nullable=False),
+    sa.Column('tree_size', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['object_id'], ['objects.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['parent_id'], ['instances.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['root_id'], ['instances.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index('idx_instances_root_parent', 'instances', ['root_id', 'parent_id'], unique=False)
+    op.create_index('idx_instances_root_parent_inst', 'instances', ['root_id', 'parent_id'], unique=False)
+    op.create_index('idx_rootid_tin_tout_inst', 'instances', ['root_id', 'tin', 'tout'], unique=False)
     op.create_index(op.f('ix_instances_id'), 'instances', ['id'], unique=False)
     op.create_index(op.f('ix_instances_parent_id'), 'instances', ['parent_id'], unique=False)
+    op.create_index(op.f('ix_instances_tin'), 'instances', ['tin'], unique=False)
+    op.create_index(op.f('ix_instances_tout'), 'instances', ['tout'], unique=False)
     op.create_table('properties',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('property_id', sa.Integer(), nullable=False),
@@ -213,9 +235,12 @@ def downgrade() -> None:
     op.drop_table('user_object_access')
     op.drop_index(op.f('ix_properties_id'), table_name='properties')
     op.drop_table('properties')
+    op.drop_index(op.f('ix_instances_tout'), table_name='instances')
+    op.drop_index(op.f('ix_instances_tin'), table_name='instances')
     op.drop_index(op.f('ix_instances_parent_id'), table_name='instances')
     op.drop_index(op.f('ix_instances_id'), table_name='instances')
-    op.drop_index('idx_instances_root_parent', table_name='instances')
+    op.drop_index('idx_rootid_tin_tout_inst', table_name='instances')
+    op.drop_index('idx_instances_root_parent_inst', table_name='instances')
     op.drop_table('instances')
     op.drop_table('user_type_access')
     op.drop_table('user_roles')
@@ -224,12 +249,20 @@ def downgrade() -> None:
     op.drop_table('refresh_tokens')
     op.drop_index(op.f('ix_property_types_id'), table_name='property_types')
     op.drop_table('property_types')
+    op.drop_index(op.f('ix_objects_tout'), table_name='objects')
+    op.drop_index(op.f('ix_objects_tin'), table_name='objects')
     op.drop_index(op.f('ix_objects_id'), table_name='objects')
+    op.drop_index('idx_rootid_tin_tout_obj', table_name='objects')
+    op.drop_index('idx_instances_root_parent_obj', table_name='objects')
     op.drop_table('objects')
     op.drop_table('event_types_types')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
+    op.drop_index(op.f('ix_types_tout'), table_name='types')
+    op.drop_index(op.f('ix_types_tin'), table_name='types')
     op.drop_index(op.f('ix_types_id'), table_name='types')
+    op.drop_index('idx_rootid_tin_tout_type', table_name='types')
+    op.drop_index('idx_instances_root_parent_type', table_name='types')
     op.drop_table('types')
     op.drop_table('roles')
     op.drop_table('permissions')

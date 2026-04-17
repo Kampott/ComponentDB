@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from sqlalchemy import ForeignKey, Index, String
+from sqlalchemy import ForeignKey, Index, String, Integer
 from sqlalchemy.orm import Mapped, backref, mapped_column, relationship
 
 from base import Base
@@ -35,6 +35,14 @@ class Types(Base):
     event_types: Mapped[List["EventTypesTypes"]] = relationship(
         back_populates="type",
     )
+    tin: Mapped[int] = mapped_column(index=True, default=0)
+    tout: Mapped[int] = mapped_column(index=True, default=0)
+    tree_size: Mapped[int] = mapped_column(default=1)
+    __table_args__ = (
+        Index("idx_instances_root_parent_type", "root_id", "parent_id"),
+        Index("idx_rootid_tin_tout_type", "root_id", "tin", "tout"),
+    )
+
 
 
 class Objects(Base):
@@ -70,6 +78,15 @@ class Objects(Base):
         "UserObjectAccess",
         back_populates="object",
     )
+    tin: Mapped[int] = mapped_column(index=True, default=0)
+    tout: Mapped[int] = mapped_column(index=True, default=0)
+    tree_size: Mapped[int] = mapped_column(default=1)
+    __table_args__ = (
+        Index("idx_instances_root_parent_obj", "root_id", "parent_id"),
+        Index("idx_rootid_tin_tout_obj", "root_id", "tin", "tout"),
+    )
+
+
 
 
 class Properties(Base):
@@ -134,10 +151,15 @@ class Instances(Base):
         foreign_keys="[Replacements.new_instance_id]",
         back_populates="new_instance",
     )
-
+    tin: Mapped[int] = mapped_column(index=True, default=0)
+    tout: Mapped[int] = mapped_column(index=True, default=0)
+    tree_size: Mapped[int] = mapped_column(default=1)
     __table_args__ = (
-        Index("idx_instances_root_parent", "root_id", "parent_id"),
+        Index("idx_instances_root_parent_inst", "root_id", "parent_id"),
+        Index("idx_rootid_tin_tout_inst", "root_id", "tin", "tout"),
     )
+
+
 
 
 class InstanceProperties(Base):

@@ -179,6 +179,53 @@ async def read_object(
     await log(action="read_object", details={"object_id": object_id})
     return obj
 
+@router.get("/{object_id}/subtree", response_model=list[ObjectsRead])
+async def read_object_subtree(
+    object_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_object_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("objects"))
+):
+    obj = await db_objects.get_object(session, object_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Object not found")
+
+    subtree = await db_objects.get_object_subtree(session, obj.id)
+    await log(action="read_object_subtree", details={"object_id": object_id})
+    return subtree
+
+
+@router.get("/{object_id}/ancestors", response_model=list[ObjectsRead])
+async def read_object_ancestors(
+    object_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_object_permission(write=False)),
+    log: LogCallable = Depends(LoggerInterface("objects"))
+):
+    obj = await db_objects.get_object(session, object_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Object not found")
+
+    ancestors = await db_objects.get_object_ancestors(session, object_id)
+    await log(action="read_object_ancestors", details={"object_id": object_id})
+    return ancestors
+
+
+@router.patch("/{object_id}/move", response_model=ObjectsRead)
+async def move_object(
+    object_id: int,
+    new_parent_id: int = Query(...),
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(require_object_permission(write=True)),
+    log: LogCallable = Depends(LoggerInterface("objects"))
+):
+    moved = await db_objects.move_object(session, object_id, new_parent_id)
+    await log(action="move_object", details={
+        "object_id": object_id,
+        "new_parent_id": new_parent_id
+    })
+    return moved
+
 
 @router.post("/", response_model=ObjectsCreate)
 async def add_object(
