@@ -71,7 +71,7 @@ async def get_object_ancestors(db: AsyncSession, object_id: int) -> List[Objects
     return list(result.scalars().all())
 
 
-async def create_object(db: AsyncSession, data: ObjectsCreate) -> Objects:
+async def create_object(db: AsyncSession, data: ObjectsCreate, changed_by_user_id=None) -> Objects:
     type_obj = await db.get(Types, data.type_id)
     if not type_obj:
         raise HTTPException(status_code=404, detail="Type not found")
@@ -83,13 +83,18 @@ async def create_object(db: AsyncSession, data: ObjectsCreate) -> Objects:
             raise HTTPException(status_code=404, detail="Parent object not found")
         root_id = parent_obj.root_id
 
-    obj = Objects(**data.model_dump(), root_id=root_id)
-    db.add(obj)
-    await db.flush()
-
+        obj = Objects(**data.model_dump(), root_id=root_id)
+        db.add(obj)
+        await db.flush()
+        await update_merkle_snapshot_no_commit(
+            db, "objects", root_id, changed_by_user_id
+        )
     if data.parent_id is None:
         obj.root_id = obj.id
         await db.flush()
+        await update_merkle_snapshot_no_commit(
+            db, "objects", obj.root_id, changed_by_user_id
+        )
 
     await recalculate_tree(db, Objects, obj.root_id)
     await db.commit()
@@ -97,7 +102,7 @@ async def create_object(db: AsyncSession, data: ObjectsCreate) -> Objects:
     return obj
 
 
-async def delete_object(db: AsyncSession, object_id: int) -> None:
+async def delete_object(db: AsyncSession, object_id: int, changed_by_user_id=None) -> None:
     obj = await db.get(Objects, object_id)
     if obj is None:
         raise HTTPException(status_code=404, detail="Object not found")
@@ -111,10 +116,17 @@ async def delete_object(db: AsyncSession, object_id: int) -> None:
     if not is_root:
         await recalculate_tree(db, Objects, root_id)
 
+    await update_merkle_snapshot_no_commit(
+        db,
+        "objects",
+        root_id,
+        changed_by_user_id,
+    )
+
     await db.commit()
 
 
-async def move_object(db: AsyncSession, object_id: int, new_parent_id: int) -> Objects:
+async def move_object(db: AsyncSession, object_id: int, new_parent_id: int, changed_by_user_id=None) -> Objects:
     obj = await db.get(Objects, object_id)
     if obj is None:
         raise HTTPException(status_code=404, detail="Object not found")
@@ -148,10 +160,27 @@ async def move_object(db: AsyncSession, object_id: int, new_parent_id: int) -> O
     if old_root_id != new_root_id:
         await recalculate_tree(db, Objects, old_root_id)
 
+    await update_merkle_snapshot_no_commit(db, "objects", new_root_id, changed_by_user_id)
+    if old_root_id != new_root_id:
+        await update_merkle_snapshot_no_commit(db, "objects", old_root_id, changed_by_user_id)
+
     await db.commit()
     await db.refresh(obj)
     return obj
 
 
-async def update_object(session: AsyncSession, object_id: int, data: ObjectsUpdate) -> Objects | None:
-    return await DefaultQueries.update(session, Objects, object_id, data)
+async def update_object(session: AsyncSession, object_id: int, data: ObjectsUpdate, changed_by_user_id = None) -> Objects | None:
+    updated = await DefaultQueries.update(session, Objects, object_id, data)
+    if not updated:
+        return None
+
+    await recalculate_tree(session, Objects, updated.root_id)
+    await update_merkle_snapshot_no_commit(
+        session=session,
+        scope_type="objects",
+        root_id=updated.root_id,
+        changed_by_user_id=changed_by_user_id,
+    )
+
+    await session.commit()
+    return updated

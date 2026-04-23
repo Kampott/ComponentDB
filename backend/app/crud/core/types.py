@@ -11,6 +11,7 @@ from app.schemas.core import *
 from typing import List, Optional
 from fastapi import HTTPException
 
+from app.services.integrity_hooks import update_merkle_snapshot_no_commit
 
 async def get_types(
         db: AsyncSession,
@@ -74,7 +75,37 @@ async def get_type_ancestors(db: AsyncSession, type_id: int) -> List[Types]:
     return list(result.scalars().all())
 
 
-async def create_type(db: AsyncSession, data: TypesCreate) -> Types:
+async def create_type(db: AsyncSession, data: TypesCreate, changed_by_user_id=None) -> Types:
+    if data.parent_id:
+        parent_type = await db.get(Types, data.parent_id)
+        if not parent_type:
+            raise HTTPException(status_code=404, detail="Parent type not found")
+
+        type_ = Types(**data.model_dump(), root_id=parent_type.root_id)
+        db.add(type_)
+        await db.flush()
+        await recalculate_tree(db, Types, parent_type.root_id)
+        await update_merkle_snapshot_no_commit(
+            db, "types", parent_type.root_id, changed_by_user_id
+        )
+    else:
+        result = await db.execute(text("SELECT nextval('types_id_seq')"))
+        next_id = result.scalar()
+        type_ = Types(id=next_id, **data.model_dump(), root_id=next_id)
+        type_.tin = 0
+        type_.tout = 1
+        type_.tree_size = 1
+        db.add(type_)
+        await db.flush()
+        await update_merkle_snapshot_no_commit(
+            db, "types", type_.root_id, changed_by_user_id
+        )
+    
+    await db.commit()
+    await db.refresh(type_)
+    return type_
+
+async def create_type_no_rehash(db: AsyncSession, data: TypesCreate, changed_by_user_id=None) -> Types:
     if data.parent_id:
         parent_type = await db.get(Types, data.parent_id)
         if not parent_type:
@@ -93,18 +124,12 @@ async def create_type(db: AsyncSession, data: TypesCreate) -> Types:
         type_.tree_size = 1
         db.add(type_)
         await db.flush()
-
-        type_.tin = 0
-        type_.tout = 1
-        type_.tree_size = 1
-        await db.flush()
-
+    
     await db.commit()
     await db.refresh(type_)
     return type_
 
-
-async def delete_type(db: AsyncSession, type_id: int) -> None:
+async def delete_type(db: AsyncSession, type_id: int, changed_by_user_id=None) -> None:
     type_ = await db.get(Types, type_id)
     if type_ is None:
         raise HTTPException(status_code=404, detail="Type not found")
@@ -118,10 +143,17 @@ async def delete_type(db: AsyncSession, type_id: int) -> None:
     if not is_root:
         await recalculate_tree(db, Types, root_id)
 
+    await update_merkle_snapshot_no_commit(
+        db,
+        "types",
+        root_id,
+        changed_by_user_id,
+    )
+
     await db.commit()
 
 
-async def move_type(db: AsyncSession, type_id: int, new_parent_id: int) -> Types:
+async def move_type(db: AsyncSession, type_id: int, new_parent_id: int, changed_by_user_id=None) -> Types:
     type_ = await db.get(Types, type_id)
     if type_ is None:
         raise HTTPException(status_code=404, detail="Type not found")
@@ -153,10 +185,27 @@ async def move_type(db: AsyncSession, type_id: int, new_parent_id: int) -> Types
     if old_root_id != new_root_id:
         await recalculate_tree(db, Types, old_root_id)
 
+    await update_merkle_snapshot_no_commit(db, "types", new_root_id, changed_by_user_id)
+    if old_root_id != new_root_id:
+        await update_merkle_snapshot_no_commit(db, "types", old_root_id, changed_by_user_id)
+
     await db.commit()
     await db.refresh(type_)
     return type_
 
 
-async def update_type(session: AsyncSession, type_id: int, data: TypesUpdate) -> Types | None:
-    return await DefaultQueries.update(session, Types, type_id, data)
+async def update_type(session: AsyncSession, type_id: int, data: TypesUpdate, changed_by_user_id=None) -> Types | None:
+    updated = await DefaultQueries.update(session, Types, type_id, data, commit=False)
+    if not updated:
+        return None
+
+    await recalculate_tree(session, Types, updated.root_id)
+    await update_merkle_snapshot_no_commit(
+        session=session,
+        scope_type="types",
+        root_id=updated.root_id,
+        changed_by_user_id=changed_by_user_id,
+    )
+
+    await session.commit()
+    return updated

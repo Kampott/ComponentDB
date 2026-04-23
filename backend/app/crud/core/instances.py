@@ -12,6 +12,8 @@ from app.schemas.core import *
 from typing import List, Optional
 from fastapi import HTTPException, Depends
 
+from app.services.integrity_hooks import update_merkle_snapshot_no_commit
+
 
 
 async def get_instances(
@@ -95,7 +97,7 @@ async def get_instance_ancestors(db: AsyncSession, instance_id: int) -> List[Ins
 
 
 
-async def create_instance(db: AsyncSession, data: InstancesCreate) -> Instances:
+async def create_instance(db: AsyncSession, data: InstancesCreate, changed_by_user_id=None) -> Instances:
     obj = await db.get(Objects, data.object_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Object not found")
@@ -110,10 +112,15 @@ async def create_instance(db: AsyncSession, data: InstancesCreate) -> Instances:
     instance = Instances(**data.model_dump(), root_id=root_id)
     db.add(instance)
     await db.flush()
-
+    await update_merkle_snapshot_no_commit(
+        db, "instance", root_id, changed_by_user_id
+    )
     if data.parent_id is None:
         instance.root_id = instance.id
         await db.flush()
+        await update_merkle_snapshot_no_commit(
+            db, "instance", instance.root_id, changed_by_user_id
+        )
 
     await recalculate_tree(db, Instances, instance.root_id)
     await db.commit()
@@ -121,7 +128,7 @@ async def create_instance(db: AsyncSession, data: InstancesCreate) -> Instances:
     return instance
 
 
-async def delete_instance(db: AsyncSession, instance_id: int) -> None:
+async def delete_instance(db: AsyncSession, instance_id: int, changed_by_user_id=None) -> None:
     instance = await db.get(Instances, instance_id)
     if instance is None:
         raise HTTPException(status_code=404, detail="Instance not found")
@@ -134,10 +141,15 @@ async def delete_instance(db: AsyncSession, instance_id: int) -> None:
 
     if not is_root:
         await recalculate_tree(db, Instances, root_id)
-
+    await update_merkle_snapshot_no_commit(
+        db,
+        "instances",
+        root_id,
+        changed_by_user_id,
+    )
     await db.commit()
 
-async def move_instance(db: AsyncSession, instance_id: int, new_parent_id: int) -> Instances:
+async def move_instance(db: AsyncSession, instance_id: int, new_parent_id: int, changed_by_user_id=None) -> Instances:
     instance = await db.get(Instances, instance_id)
     if instance is None:
         raise HTTPException(status_code=404, detail="Instance not found")
@@ -169,14 +181,31 @@ async def move_instance(db: AsyncSession, instance_id: int, new_parent_id: int) 
     if old_root_id != new_root_id:
         await recalculate_tree(db, Instances, old_root_id)
 
+    await update_merkle_snapshot_no_commit(db, "instances", new_root_id, changed_by_user_id)
+    if old_root_id != new_root_id:
+        await update_merkle_snapshot_no_commit(db, "instances", old_root_id, changed_by_user_id)
+
     await db.commit()
     await db.refresh(instance)
     return instance
 
 
 
-async def update_instance(session: AsyncSession, instance_id: int, data: InstancesUpdate) -> Instances | None:
-    return await DefaultQueries.update(session, Instances, instance_id, data)
+async def update_instance(session: AsyncSession, instance_id: int, data: InstancesUpdate,changed_by_user_id = None) -> Instances | None:
+    updated = await DefaultQueries.update(session, Instances, instance_id, data, commit=False)
+    if not updated:
+        return None
+
+    await recalculate_tree(session, Instances, updated.root_id)
+    await update_merkle_snapshot_no_commit(
+        session=session,
+        scope_type="instances",
+        root_id=updated.root_id,
+        changed_by_user_id=changed_by_user_id,
+    )
+
+    await session.commit()
+    return updated
 
 async def create_instance_for_sub_tree(
         session: AsyncSession,

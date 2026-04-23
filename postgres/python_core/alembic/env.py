@@ -7,7 +7,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from base import Base
-from models import auth, core, events
+from models import auth, core, events, integrity
 from settings import get_required_env, load_core_env
 
 load_core_env()

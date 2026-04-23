@@ -16,7 +16,8 @@ class DefaultQueries:
         session: AsyncSession,
         orm: type[ORMModel],
         id: int,
-        data: BaseModel
+        data: BaseModel,
+        commit: bool = True,
     ) -> ORMModel | None:
         update_data: dict[str, Any] = data.model_dump(exclude_unset=True)
         orm_id = getattr(orm, "id")
@@ -34,7 +35,10 @@ class DefaultQueries:
         try:
             result = await session.execute(query)
             updated_obj: ORMModel | None = result.scalar_one_or_none()
-            await session.commit()
+
+            if commit:
+                await session.commit()
+
             return updated_obj
         except IntegrityError:
             await session.rollback()
@@ -46,6 +50,7 @@ class DefaultQueries:
         orm: type[ORMModel],
         data: BaseModel,
         filters: dict[str, Any],
+        commit: bool = True,
     ) -> ORMModel | None:
         update_data = data.model_dump(exclude_unset=True)
 
@@ -67,7 +72,10 @@ class DefaultQueries:
         try:
             result = await session.execute(query)
             updated_obj: ORMModel | None = result.scalar_one_or_none()
-            await session.commit()
+
+            if commit:
+                await session.commit()
+
             return updated_obj
         except IntegrityError:
             await session.rollback()

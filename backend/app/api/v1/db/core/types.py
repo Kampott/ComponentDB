@@ -212,7 +212,7 @@ async def move_type(
     current_user: User = Depends(require_type_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("types"))
 ):
-    moved = await db.move_type(session, type_id, new_parent_id)
+    moved = await db.move_type(session, type_id, new_parent_id, current_user.id)
     await log(action="move_type", details={
         "type_id": type_id,
         "new_parent_id": new_parent_id
@@ -231,7 +231,7 @@ async def add_type(
     else:
         await _check_type_permission(session, current_user, data.parent_id, write=True)
 
-    new_type = await db.create_type(session, data)
+    new_type = await db.create_type(session, data, current_user.id)
     
     await log(
         action="add_type",
@@ -241,8 +241,33 @@ async def add_type(
             "parent_id": data.parent_id
         }
     )
+
     return new_type
 
+@router.post("/", response_model=TypesCreate)
+async def add_type_no_rehash(
+    data: TypesCreate,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+    log: LogCallable = Depends(LoggerInterface("types"))
+):
+    if data.parent_id is None:
+        await _check_permission(current_user, session, "SUPER_PERMISSION")
+    else:
+        await _check_type_permission(session, current_user, data.parent_id, write=True)
+
+    new_type = await db.create_type_no_rehash(session, data, current_user.id)
+    
+    await log(
+        action="add_type_no_rehash",
+        details={
+            "id": new_type.id,
+            "name": data.name,
+            "parent_id": data.parent_id
+        }
+    )
+
+    return new_type
 
 @router.delete("/{type_id}", status_code=204)
 async def delete_types(
@@ -251,7 +276,7 @@ async def delete_types(
     current_user: User = Depends(require_type_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("types"))
 ):
-    await db.delete_type(session, type_id)
+    await db.delete_type(session, type_id, current_user.id)
     await log(
         action="delete_types",
         details={
@@ -268,7 +293,7 @@ async def update_type(
     current_user: User = Depends(require_type_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("types"))
 ):
-    updated_type = await db.update_type(session, type_id, data)
+    updated_type = await db.update_type(session, type_id, data, current_user.id)
     if not updated_type:
         raise HTTPException(
             status_code=404,

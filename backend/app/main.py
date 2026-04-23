@@ -11,6 +11,8 @@ from app.api.v1.db.core import objects, types, property_types, properties, insta
 from app.api.v1.auth import auth, permissions, roles, role_permissions, user_roles, users, user_instance_access, user_object_access, user_type_access
 from app.api.v1.backup import backups
 from app.api.v1.events import event_types, event_types_types, events, replacements
+from app.api.v1.integrity import integrity
+from app.services.integrity_auto import periodic_integrity_check
 
 # рабочий логер (функция/корутина)
 from app.logging.logger import worker as log_worker_func
@@ -46,7 +48,9 @@ async def lifespan(app: FastAPI):
                     print(f"[heartbeat] Queue size: {app.state.log_queue.qsize()} (worker alive check)")
                 await asyncio.sleep(5)
         app.state.heartbeat_task = asyncio.create_task(heartbeat())
-
+        app.state.integrity_task = asyncio.create_task(
+            periodic_integrity_check(async_session, app.state.log_stop_event)
+        )
         # Yield briefly to ensure tasks start
         await asyncio.sleep(0)
         print("log queue and worker started")
@@ -57,12 +61,11 @@ async def lifespan(app: FastAPI):
     try:
         yield  # App runs here
     finally:
-        # Shutdown: signal and wait for worker
         print("Initiating shutdown")
-        app.state.log_stop_event.set()  # Signal heartbeat to stop
+        app.state.log_stop_event.set()
         if hasattr(app.state, "log_queue"):
             try:
-                app.state.log_queue.put_nowait(None)  # Sentinel to break worker loop
+                app.state.log_queue.put_nowait(None)
             except Exception:
                 pass
 
@@ -79,21 +82,23 @@ async def lifespan(app: FastAPI):
             except Exception:
                 print("Error while stopping log worker:", traceback.format_exc())
 
-        # Stop heartbeat
-        if hasattr(app.state, "heartbeat_task"):
-            app.state.heartbeat_task.cancel()
-            try:
-                await app.state.heartbeat_task
-            except asyncio.CancelledError:
-                pass
+        # Stop heartbeat + integrity
+        for attr in ("heartbeat_task", "integrity_task"):
+            if hasattr(app.state, attr):
+                getattr(app.state, attr).cancel()
+                try:
+                    await getattr(app.state, attr)
+                except asyncio.CancelledError:
+                    pass
 
         # Cleanup state
-        for attr in ("log_worker_task", "log_queue", "log_stop_event", "heartbeat_task"):
+        for attr in ("log_worker_task", "log_queue", "log_stop_event", "heartbeat_task", "integrity_task"):
             if hasattr(app.state, attr):
                 try:
                     delattr(app.state, attr)
                 except Exception:
                     pass
+
         print("Shutdown complete")
 
 app = FastAPI(title="My App", lifespan=lifespan)
@@ -140,3 +145,7 @@ app.include_router(event_types.router)
 app.include_router(event_types_types.router)
 app.include_router(events.router)
 app.include_router(replacements.router)
+
+
+# integrity router
+app.include_router(integrity.router)

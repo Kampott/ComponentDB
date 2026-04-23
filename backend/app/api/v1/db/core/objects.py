@@ -219,7 +219,7 @@ async def move_object(
     current_user: User = Depends(require_object_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("objects"))
 ):
-    moved = await db_objects.move_object(session, object_id, new_parent_id)
+    moved = await db_objects.move_object(session, object_id, new_parent_id, current_user.id)
     await log(action="move_object", details={
         "object_id": object_id,
         "new_parent_id": new_parent_id
@@ -239,7 +239,7 @@ async def add_object(
     else:
         await _check_object_permission(session, current_user, data.parent_id, write=True)
 
-    new_object = await db_objects.create_object(session, data)
+    new_object = await db_objects.create_object(session, data, current_user.id)
     
     await log(
         action="add_object",
@@ -258,7 +258,7 @@ async def delete_objects(
     current_user: User = Depends(require_object_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("objects")) 
 ):
-    await db_objects.delete_object(session, object_id)
+    await db_objects.delete_object(session, object_id, current_user.id)
     await log(action="delete_object", details={"object_id": object_id}) 
 
 
@@ -269,7 +269,7 @@ async def create_instance_from_root_object(
     current_user: User = Depends(require_object_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("objects")) 
 ):
-    root_instance = await db_instances.create_instance_from_object_tree(session, object_id)
+    root_instance = await db_instances.create_instance_from_object_tree(session, object_id, current_user.id)
     if root_instance is None:
         raise HTTPException(status_code=422, detail="Something went wrong")
     await log(
@@ -290,7 +290,7 @@ async def update_object(
     current_user: User = Depends(require_object_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("objects"))
 ):
-    updated_object = await db_objects.update_object(session, object_id, data)
+    updated_object = await db_objects.update_object(session, object_id, data, current_user.id)
     if not updated_object:
         raise HTTPException(
             status_code=404,

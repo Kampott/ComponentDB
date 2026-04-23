@@ -234,7 +234,7 @@ async def move_instance(
     current_user: User = Depends(require_instance_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("instances"))
 ):
-    moved = await db.move_instance(session, instance_id, new_parent_id)
+    moved = await db.move_instance(session, instance_id, new_parent_id, current_user.id)
     await log(action="move_instance", details={
         "instance_id": instance_id,
         "new_parent_id": new_parent_id
@@ -254,7 +254,7 @@ async def add_instance(
     else:
         await _check_instance_permission(session, current_user, data.parent_id, write=True)
 
-    new_instance = await db.create_instance(session, data)
+    new_instance = await db.create_instance(session, data, current_user.id)
     
     await log(
         action="add_instance",
@@ -276,7 +276,7 @@ async def delete_instances(
     current_user: User = Depends(require_instance_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("instances")) 
 ):
-    await db.delete_instance(session, instance_id)
+    await db.delete_instance(session, instance_id, current_user.id)
     await log(action="delete_instance", details={"instance_id": instance_id})
 
 
@@ -288,7 +288,7 @@ async def update_instance(
     current_user: User = Depends(require_instance_permission(write=True)),
     log: LogCallable = Depends(LoggerInterface("instances")) 
 ):
-    updated_instance = await db.update_instance(session, instance_id, data)
+    updated_instance = await db.update_instance(session, instance_id, data, current_user.id)
     if not updated_instance:
         raise HTTPException(
             status_code=404,
