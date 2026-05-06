@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # роутеры — регистрируем на уровне модуля (не в startup)
 from app.api.v1.test import router as test_router
-from app.api.v1.db.core import objects, types, property_types, properties, instances, instanceproperties, data_manip
+from app.api.v1.db.core import objects, types, property_types, properties, instances, instanceproperties, data_manip, debug
 from app.api.v1.auth import auth, permissions, roles, role_permissions, user_roles, users, user_instance_access, user_object_access, user_type_access
 from app.api.v1.backup import backups
 from app.api.v1.events import event_types, event_types_types, events, replacements
@@ -117,6 +117,9 @@ app.add_middleware(
 
 # Регистрируем middleware
 app.middleware("http")(logging_middleware)
+
+# debug routers
+app.include_router(debug.router)
 
 # include routers
 app.include_router(test_router)

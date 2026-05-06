@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from sqlalchemy import DateTime, ForeignKey, JSON, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, JSON, String, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from base import Base
@@ -44,6 +44,11 @@ class Events(Base):
         cascade="all, delete-orphan",
     )
 
+    __table_args__ = (
+        Index("idx_events_event_type_id", "event_type_id"),
+        Index("idx_events_instance_id", "instance_id"),
+    )
+
 
 class EventTypesTypes(Base):
     __tablename__ = "event_types_types"
@@ -63,7 +68,10 @@ class EventTypesTypes(Base):
 
 class Replacements(Base):
     __tablename__ = "replacements"
-    __table_args__ = (UniqueConstraint("event_id"),)
+    __table_args__ = (
+        UniqueConstraint("event_id"),
+        Index("idx_replacements_new_instance_id", "new_instance_id"),
+    )
 
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"), primary_key=True)
     new_instance_id: Mapped[int] = mapped_column(ForeignKey("instances.id", ondelete="CASCADE"), primary_key=True)

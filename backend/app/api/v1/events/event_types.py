@@ -35,7 +35,7 @@ async def read_event_types(
     # Фильтры
     name: Optional[str] = Query(None),
     name__like: Optional[str] = Query(None),
-    name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    name__sort: Optional[str] = Query(None, pattern="^(asc|desc)$"),
     
     counts_as_failure: Optional[bool] = Query(None),
     
@@ -45,7 +45,7 @@ async def read_event_types(
     id__lt: Optional[int] = Query(None),
     id__gte: Optional[int] = Query(None),
     id__lte: Optional[int] = Query(None),
-    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    id__sort: Optional[str] = Query(None, pattern="^(asc|desc)$"),
     
     limit: Optional[int] = Query(None, ge=1, le=1000),
     

@@ -9,6 +9,9 @@ SEARCH_CONFIG = {
         "name": ["exact", "like", "sort"],
         "parent_id": ["exact", "in", "gt", "lt", "gte", "lte"],
         "root_id": ["exact", "in", "gt", "lt", "gte", "lte"],
+        "tin": ["exact", "in", "gt", "lt", "gte", "lte"],
+        "tout": ["exact", "in", "gt", "lt", "gte", "lte"],
+        "tree_size": ["exact", "in", "gt", "lt", "gte", "lte"],
         "id": ["exact", "in", "gt", "lt", "gte", "lte", "sort"]
     },
     
@@ -17,6 +20,9 @@ SEARCH_CONFIG = {
         "type_id": ["exact", "in", "gt", "lt", "gte", "lte"],
         "parent_id": ["exact", "in", "gt", "lt", "gte", "lte"],
         "root_id": ["exact", "in", "gt", "lt", "gte", "lte"],
+        "tin": ["exact", "in", "gt", "lt", "gte", "lte"],
+        "tout": ["exact", "in", "gt", "lt", "gte", "lte"],
+        "tree_size": ["exact", "in", "gt", "lt", "gte", "lte"],
         "id": ["exact", "in", "gt", "lt", "gte", "lte", "sort"]
     },
     
@@ -25,6 +31,9 @@ SEARCH_CONFIG = {
         "object_id": ["exact", "in", "gt", "lt", "gte", "lte"],
         "parent_id": ["exact", "in", "gt", "lt", "gte", "lte"],
         "root_id": ["exact", "in", "gt", "lt", "gte", "lte"],
+        "tin": ["exact", "in", "gt", "lt", "gte", "lte"],
+        "tout": ["exact", "in", "gt", "lt", "gte", "lte"],
+        "tree_size": ["exact", "in", "gt", "lt", "gte", "lte"],
         "is_active": ["exact"],
         "id": ["exact", "in", "gt", "lt", "gte", "lte", "sort"]
     },
@@ -66,6 +75,7 @@ SEARCH_CONFIG = {
         "event_type_id": ["exact", "in", "gt", "lt", "gte", "lte"],
         "instance_id": ["exact", "in", "gt", "lt", "gte", "lte"],
         "timestamp": ["exact", "gte", "lte", "gt", "lt", "sort"],
+        "info": ["exact", "like"],
         "id": ["exact", "in", "gt", "lt", "gte", "lte", "sort"]
     },
     
@@ -85,11 +95,13 @@ SEARCH_CONFIG = {
     
     Role: {
         "name": ["exact", "like", "sort"],
+        "description": ["exact", "like"],
         "id": ["exact", "in", "gt", "lt", "gte", "lte", "sort"]
     },
     
     Permission: {
         "name": ["exact", "like", "sort"],
+        "description": ["exact", "like"],
         "id": ["exact", "in", "gt", "lt", "gte", "lte", "sort"]
     },
     

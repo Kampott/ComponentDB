@@ -84,6 +84,7 @@ class Objects(Base):
     __table_args__ = (
         Index("idx_instances_root_parent_obj", "root_id", "parent_id"),
         Index("idx_rootid_tin_tout_obj", "root_id", "tin", "tout"),
+        Index("idx_objects_type_id", "type_id"),
     )
 
 
@@ -99,6 +100,10 @@ class Properties(Base):
 
     property: Mapped["PropertyTypes"] = relationship("PropertyTypes", passive_deletes=True)
     object_: Mapped["Objects"] = relationship("Objects", passive_deletes=True)
+
+    __table_args__ = (
+        Index("idx_properties_object_id", "object_id"),
+    )
 
 
 class PropertyTypes(Base):
@@ -172,3 +177,8 @@ class InstanceProperties(Base):
 
     instance: Mapped["Instances"] = relationship("Instances", passive_deletes=True)
     property_type: Mapped["PropertyTypes"] = relationship("PropertyTypes", passive_deletes=True)
+
+    __table_args__ = (
+        Index("idx_instance_properties_instance_id", "instance_id"),
+        Index("idx_instance_properties_property_type_id", "property_type_id"),
+    )

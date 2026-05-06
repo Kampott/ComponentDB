@@ -35,29 +35,50 @@ async def read_types(
     # Базовые фильтры
     name: Optional[str] = Query(None),
     name__like: Optional[str] = Query(None),
-    name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
-    
+    name__sort: Optional[str] = Query(None, pattern="^(asc|desc)$"),
+
     parent_id: Optional[int] = Query(None),
     parent_id__in: Optional[List[int]] = Query(None),
     parent_id__gt: Optional[int] = Query(None),
     parent_id__lt: Optional[int] = Query(None),
     parent_id__gte: Optional[int] = Query(None),
     parent_id__lte: Optional[int] = Query(None),
-    
+
     root_id: Optional[int] = Query(None),
     root_id__in: Optional[List[int]] = Query(None),
     root_id__gt: Optional[int] = Query(None),
     root_id__lt: Optional[int] = Query(None),
     root_id__gte: Optional[int] = Query(None),
     root_id__lte: Optional[int] = Query(None),
-    
+
+    tin: Optional[int] = Query(None),
+    tin__in: Optional[List[int]] = Query(None),
+    tin__gt: Optional[int] = Query(None),
+    tin__lt: Optional[int] = Query(None),
+    tin__gte: Optional[int] = Query(None),
+    tin__lte: Optional[int] = Query(None),
+
+    tout: Optional[int] = Query(None),
+    tout__in: Optional[List[int]] = Query(None),
+    tout__gt: Optional[int] = Query(None),
+    tout__lt: Optional[int] = Query(None),
+    tout__gte: Optional[int] = Query(None),
+    tout__lte: Optional[int] = Query(None),
+
+    tree_size: Optional[int] = Query(None),
+    tree_size__in: Optional[List[int]] = Query(None),
+    tree_size__gt: Optional[int] = Query(None),
+    tree_size__lt: Optional[int] = Query(None),
+    tree_size__gte: Optional[int] = Query(None),
+    tree_size__lte: Optional[int] = Query(None),
+
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
     id__gt: Optional[int] = Query(None),
     id__lt: Optional[int] = Query(None),
     id__gte: Optional[int] = Query(None),
     id__lte: Optional[int] = Query(None),
-    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    id__sort: Optional[str] = Query(None, pattern="^(asc|desc)$"),
     
     # Специальный фильтр для event_type
     event_type_id: Optional[int] = Query(None),
@@ -84,6 +105,24 @@ async def read_types(
         "root_id__lt": root_id__lt,
         "root_id__gte": root_id__gte,
         "root_id__lte": root_id__lte,
+        "tin": tin,
+        "tin__in": tin__in,
+        "tin__gt": tin__gt,
+        "tin__lt": tin__lt,
+        "tin__gte": tin__gte,
+        "tin__lte": tin__lte,
+        "tout": tout,
+        "tout__in": tout__in,
+        "tout__gt": tout__gt,
+        "tout__lt": tout__lt,
+        "tout__gte": tout__gte,
+        "tout__lte": tout__lte,
+        "tree_size": tree_size,
+        "tree_size__in": tree_size__in,
+        "tree_size__gt": tree_size__gt,
+        "tree_size__lt": tree_size__lt,
+        "tree_size__gte": tree_size__gte,
+        "tree_size__lte": tree_size__lte,
         "id": id,
         "id__in": id__in,
         "id__gt": id__gt,
@@ -235,31 +274,6 @@ async def add_type(
     
     await log(
         action="add_type",
-        details={
-            "id": new_type.id,
-            "name": data.name,
-            "parent_id": data.parent_id
-        }
-    )
-
-    return new_type
-
-@router.post("/", response_model=TypesCreate)
-async def add_type_no_rehash(
-    data: TypesCreate,
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user),
-    log: LogCallable = Depends(LoggerInterface("types"))
-):
-    if data.parent_id is None:
-        await _check_permission(current_user, session, "SUPER_PERMISSION")
-    else:
-        await _check_type_permission(session, current_user, data.parent_id, write=True)
-
-    new_type = await db.create_type_no_rehash(session, data, current_user.id)
-    
-    await log(
-        action="add_type_no_rehash",
         details={
             "id": new_type.id,
             "name": data.name,

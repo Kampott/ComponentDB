@@ -39,15 +39,17 @@ async def read_roles(
     # Фильтры
     name: Optional[str] = Query(None),
     name__like: Optional[str] = Query(None),
-    name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
-    
+    name__sort: Optional[str] = Query(None, pattern="^(asc|desc)$"),
+    description: Optional[str] = Query(None),
+    description__like: Optional[str] = Query(None),
+
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
     id__gt: Optional[int] = Query(None),
     id__lt: Optional[int] = Query(None),
     id__gte: Optional[int] = Query(None),
     id__lte: Optional[int] = Query(None),
-    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    id__sort: Optional[str] = Query(None, pattern="^(asc|desc)$"),
     
     limit: Optional[int] = Query(None, ge=1, le=1000),
     
@@ -58,6 +60,8 @@ async def read_roles(
         "name": name,
         "name__like": name__like,
         "name__sort": name__sort,
+        "description": description,
+        "description__like": description__like,
         "id": id,
         "id__in": id__in,
         "id__gt": id__gt,

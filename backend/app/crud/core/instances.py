@@ -113,13 +113,13 @@ async def create_instance(db: AsyncSession, data: InstancesCreate, changed_by_us
     db.add(instance)
     await db.flush()
     await update_merkle_snapshot_no_commit(
-        db, "instance", root_id, changed_by_user_id
+        db, "instances", root_id, changed_by_user_id
     )
     if data.parent_id is None:
         instance.root_id = instance.id
         await db.flush()
         await update_merkle_snapshot_no_commit(
-            db, "instance", instance.root_id, changed_by_user_id
+            db, "instances", instance.root_id, changed_by_user_id
         )
 
     await recalculate_tree(db, Instances, instance.root_id)
@@ -234,39 +234,6 @@ async def create_instance_for_sub_tree(
             return err
 
 async def create_instance_from_object_tree(session: AsyncSession, object_root_id: int) -> Instances | None:
-    query = (
-        select(Objects)
-        .where(Objects.id == object_root_id)
-    )
-    root_object: Objects | None = (await session.execute(query)).scalar_one_or_none()
-    if root_object is None or root_object.parent_id is not None:
-        return None
-
-
-    root_instance_add = Instances(
-        name=root_object.name,
-        object_id=root_object.id,
-        parent_id=None,
-        is_active=True,
-    )
-
-    session.add(root_instance_add)
-    await session.flush()
-    root_instance_add.root_id = root_instance_add.id
-    await session.flush()
-
-
-    root_instance_id = root_instance_add.id
-    err = await create_instance_for_sub_tree(session, object_root_id, root_instance_id, root_instance_id)
-
-
-
-
-    await session.commit()
-    return root_instance_add
-
-
-async def create_instance_from_object_tree(session: AsyncSession, object_root_id: int) -> Instances | None:
     root_object = (await session.execute(
         select(Objects).where(Objects.id == object_root_id)
     )).scalar_one_or_none()
@@ -285,11 +252,11 @@ async def create_instance_from_object_tree(session: AsyncSession, object_root_id
     root_instance.root_id = root_instance.id
     await session.flush()
 
-    err = await create_instance_for_sub_tree(session, object_root_id, root_instance.id, root_instance.id)
-    if err:
-        raise HTTPException(status_code=500, detail=err)
+    error_msg = await create_instance_for_sub_tree(session, object_root_id, root_instance.id, root_instance.id)
+    if error_msg:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=error_msg)
 
-    # Пересчитываем дерево один раз после полного построения
     await recalculate_tree(session, Instances, root_instance.id)
     await session.commit()
     return root_instance

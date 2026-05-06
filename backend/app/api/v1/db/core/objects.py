@@ -36,36 +36,57 @@ async def read_objects(
     name: Optional[str] = Query(None),
     name__like: Optional[str] = Query(None),
     name__in: Optional[List[str]] = Query(None),
-    name__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
-    
+    name__sort: Optional[str] = Query(None, pattern="^(asc|desc)$"),
+
     type_id: Optional[int] = Query(None),
     type_id__in: Optional[List[int]] = Query(None),
     type_id__gt: Optional[int] = Query(None),
     type_id__lt: Optional[int] = Query(None),
     type_id__gte: Optional[int] = Query(None),
     type_id__lte: Optional[int] = Query(None),
-    
+
     parent_id: Optional[int] = Query(None),
     parent_id__in: Optional[List[int]] = Query(None),
     parent_id__gt: Optional[int] = Query(None),
     parent_id__lt: Optional[int] = Query(None),
     parent_id__gte: Optional[int] = Query(None),
     parent_id__lte: Optional[int] = Query(None),
-    
+
     root_id: Optional[int] = Query(None),
     root_id__in: Optional[List[int]] = Query(None),
     root_id__gt: Optional[int] = Query(None),
     root_id__lt: Optional[int] = Query(None),
     root_id__gte: Optional[int] = Query(None),
     root_id__lte: Optional[int] = Query(None),
-    
+
+    tin: Optional[int] = Query(None),
+    tin__in: Optional[List[int]] = Query(None),
+    tin__gt: Optional[int] = Query(None),
+    tin__lt: Optional[int] = Query(None),
+    tin__gte: Optional[int] = Query(None),
+    tin__lte: Optional[int] = Query(None),
+
+    tout: Optional[int] = Query(None),
+    tout__in: Optional[List[int]] = Query(None),
+    tout__gt: Optional[int] = Query(None),
+    tout__lt: Optional[int] = Query(None),
+    tout__gte: Optional[int] = Query(None),
+    tout__lte: Optional[int] = Query(None),
+
+    tree_size: Optional[int] = Query(None),
+    tree_size__in: Optional[List[int]] = Query(None),
+    tree_size__gt: Optional[int] = Query(None),
+    tree_size__lt: Optional[int] = Query(None),
+    tree_size__gte: Optional[int] = Query(None),
+    tree_size__lte: Optional[int] = Query(None),
+
     id: Optional[int] = Query(None),
     id__in: Optional[List[int]] = Query(None),
     id__gt: Optional[int] = Query(None),
     id__lt: Optional[int] = Query(None),
     id__gte: Optional[int] = Query(None),
     id__lte: Optional[int] = Query(None),
-    id__sort: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    id__sort: Optional[str] = Query(None, pattern="^(asc|desc)$"),
     
     limit: Optional[int] = Query(None, ge=1, le=1000),
     
@@ -95,6 +116,24 @@ async def read_objects(
         "root_id__lt": root_id__lt,
         "root_id__gte": root_id__gte,
         "root_id__lte": root_id__lte,
+        "tin": tin,
+        "tin__in": tin__in,
+        "tin__gt": tin__gt,
+        "tin__lt": tin__lt,
+        "tin__gte": tin__gte,
+        "tin__lte": tin__lte,
+        "tout": tout,
+        "tout__in": tout__in,
+        "tout__gt": tout__gt,
+        "tout__lt": tout__lt,
+        "tout__gte": tout__gte,
+        "tout__lte": tout__lte,
+        "tree_size": tree_size,
+        "tree_size__in": tree_size__in,
+        "tree_size__gt": tree_size__gt,
+        "tree_size__lt": tree_size__lt,
+        "tree_size__gte": tree_size__gte,
+        "tree_size__lte": tree_size__lte,
         "id": id,
         "id__in": id__in,
         "id__gt": id__gt,
@@ -127,30 +166,33 @@ async def read_objects(
 
     # Apply access control
     if not has_super_permission:
-        # Fetch allowed root_ids for each level with can_read=True
-        result_object = await session.execute(
-            select(UserObjectAccess.root_id)
-            .where(
-                UserObjectAccess.user_id == current_user.id,
-                UserObjectAccess.can_read.is_(True)
-            )
-        )
-        allowed_object_roots = [row[0] for row in result_object.all()]
+        # Single UNION ALL query to fetch all allowed root_ids at once
+        from sqlalchemy import union_all
 
-        result_type = await session.execute(
-            select(UserTypeAccess.root_id)
-            .where(
-                UserTypeAccess.user_id == current_user.id,
-                UserTypeAccess.can_read.is_(True)
+        result_access = await session.execute(
+            union_all(
+                select(UserObjectAccess.root_id.label("root_id"))
+                .where(
+                    UserObjectAccess.user_id == current_user.id,
+                    UserObjectAccess.can_read.is_(True)
+                ),
+                select(UserTypeAccess.root_id.label("root_id"))
+                .where(
+                    UserTypeAccess.user_id == current_user.id,
+                    UserTypeAccess.can_read.is_(True)
+                )
             )
         )
-        allowed_type_roots = [row[0] for row in result_type.all()]
-        
+        allowed_roots = [row[0] for row in result_access.all()]
+
+        if not allowed_roots:
+            return []
+
         query = query.join(Types, Objects.type_id == Types.id)
         query = query.where(
             or_(
-                Objects.root_id.in_(allowed_object_roots) if allowed_object_roots else false(),
-                Types.root_id.in_(allowed_type_roots) if allowed_type_roots else false()
+                Objects.root_id.in_(allowed_roots),
+                Types.root_id.in_(allowed_roots)
             )
         )
 

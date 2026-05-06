@@ -8,34 +8,44 @@ from app.models.core import Types, Objects, Instances
 from typing import List
 
 async def get_type_tree(db: AsyncSession, root_id: int):
-
     root = await db.get(Types, root_id)
     if not root:
         return None
     if root.parent_id is not None:
         raise HTTPException(status_code=400, detail="Provided id is not a root type")
 
-    result = await db.execute(select(Types).where(Types.root_id == root_id))
+    # Fetch in DFS order (by tin) for single-pass tree building
+    result = await db.execute(
+        select(Types)
+        .where(Types.root_id == root_id)
+        .order_by(Types.tin)
+    )
     all_types = result.scalars().all()
 
-
-    # index by id
-    id_map = {type_.id: type_ for type_ in all_types}
-
-    # loading parent
-    root = await db.get(Types, root_id)
-    if not root:
+    if not all_types:
         return None
 
-    # building tree
-    tree = {type_.id: {"id": type_.id, "name": type_.name, "children": []} for type_ in all_types}
-    tree[root.id] = {"id": root.id, "name": root.name, "children": []}
+    # Single-pass tree building using stack (O(n) instead of O(n²))
+    tree_root = None
+    stack = []  # Stack of (node_dict, type_id)
 
     for type_ in all_types:
-        if type_.parent_id and type_.parent_id in tree:
-            tree[type_.parent_id]["children"].append(tree[type_.id])
+        node = {"id": type_.id, "name": type_.name, "children": []}
 
-    return tree[root.id]
+        if type_.id == root_id:
+            tree_root = node
+
+        # Pop stack until we find the parent
+        while stack and stack[-1][1] != type_.parent_id:
+            stack.pop()
+
+        if stack:
+            # Add as child of parent on stack
+            stack[-1][0]["children"].append(node)
+
+        stack.append((node, type_.id))
+
+    return tree_root
 
 async def get_root_objects(db: AsyncSession) -> List[Objects]:
     result = await db.execute(
@@ -53,14 +63,49 @@ async def get_root_types(db: AsyncSession) -> List[Types]:
 
 
 async def get_all_type_hierarchies(db: AsyncSession):
+    # Fetch all root types
     result = await db.execute(select(Types).where(Types.parent_id == None))
     root_types = result.scalars().all()
 
+    if not root_types:
+        return []
+
+    # Batch fetch all types that belong to any root
+    root_ids = [root.id for root in root_types]
+    all_types_result = await db.execute(
+        select(Types).where(Types.root_id.in_(root_ids)).order_by(Types.tin)
+    )
+    all_types = all_types_result.scalars().all()
+
+    # Build trees in batch using single-pass per root
     trees = []
     for root in root_types:
-        tree = await get_type_tree(db, root.id)
-        if tree:
-            trees.append(tree)
+        # Filter types for this root and build tree
+        root_types_filtered = [t for t in all_types if t.root_id == root.id]
+        if not root_types_filtered:
+            continue
+
+        # Single-pass tree building
+        tree_root = None
+        stack = []
+
+        for type_ in root_types_filtered:
+            node = {"id": type_.id, "name": type_.name, "children": []}
+
+            if type_.id == root.id:
+                tree_root = node
+
+            while stack and stack[-1][1] != type_.parent_id:
+                stack.pop()
+
+            if stack:
+                stack[-1][0]["children"].append(node)
+
+            stack.append((node, type_.id))
+
+        if tree_root:
+            trees.append(tree_root)
+
     return trees
 
 async def get_object_tree(db: AsyncSession, root_id: int):
@@ -71,50 +116,99 @@ async def get_object_tree(db: AsyncSession, root_id: int):
     if root_obj.parent_id is not None:
         raise HTTPException(status_code=400, detail="Provided id is not a root object")
 
-    # Loading all objects with that root_id, with their respective types
+    # Loading all objects with that root_id in DFS order (by tin), with their respective types
     result = await db.execute(
         select(Objects)
         .options(joinedload(Objects.type_))
         .where(Objects.root_id == root_id)
+        .order_by(Objects.tin)
     )
     all_objects = result.scalars().all()
 
-    # Building note dict
-    tree = {
-        obj.id: {
+    if not all_objects:
+        return None
+
+    # Single-pass tree building using stack (O(n) instead of O(n²))
+    tree_root = None
+    stack = []  # Stack of (node_dict, object_id)
+
+    for obj in all_objects:
+        node = {
             "id": obj.id,
             "name": getattr(obj, "name", f"Object {obj.id}"),
             "type_id": obj.type_id,
             "type_name": obj.type_.name if obj.type_ else "Unknown",
             "children": []
         }
-        for obj in all_objects
-    }
-    # Adding root if it didn't come into the dict (sometimes root.root_id could be None)
-    if root_obj.id not in tree:
-        tree[root_obj.id] = {
-            "id": root_obj.id,
-            "name": getattr(root_obj, "name", f"Object {root_obj.id}"),
-            "type_id": root_obj.type_id,
-            "type_name": root_obj.type_.name if root_obj.type_ else "Unknown",
-            "children": []
-        }
 
-    # Linking parents -> children
-    for obj in all_objects:
-        if obj.parent_id and obj.parent_id in tree:
-            tree[obj.parent_id]["children"].append(tree[obj.id])
+        if obj.id == root_id:
+            tree_root = node
 
-    return tree[root_obj.id]
+        # Pop stack until we find the parent
+        while stack and stack[-1][1] != obj.parent_id:
+            stack.pop()
+
+        if stack:
+            # Add as child of parent on stack
+            stack[-1][0]["children"].append(node)
+
+        stack.append((node, obj.id))
+
+    return tree_root
 
 
 async def get_all_object_hierarchies(db: AsyncSession):
+    # Fetch all root objects
     result = await db.execute(select(Objects).where(Objects.parent_id == None))
     root_objects = result.scalars().all()
 
+    if not root_objects:
+        return []
+
+    # Batch fetch all objects that belong to any root
+    root_ids = [root.id for root in root_objects]
+    all_objects_result = await db.execute(
+        select(Objects)
+        .options(joinedload(Objects.type_))
+        .where(Objects.root_id.in_(root_ids))
+        .order_by(Objects.tin)
+    )
+    all_objects = all_objects_result.scalars().all()
+
+    # Build trees in batch using single-pass per root
     trees = []
     for root in root_objects:
-        tree = await get_object_tree(db, root.id)
-        if tree:
-            trees.append(tree)
+        # Filter objects for this root and build tree
+        root_objects_filtered = [o for o in all_objects if o.root_id == root.id]
+        if not root_objects_filtered:
+            continue
+
+        # Single-pass tree building
+        tree_root = None
+        stack = []
+
+        for obj in root_objects_filtered:
+            node = {
+                "id": obj.id,
+                "name": getattr(obj, "name", f"Object {obj.id}"),
+                "type_id": obj.type_id,
+                "type_name": obj.type_.name if obj.type_ else "Unknown",
+                "children": []
+            }
+
+            if obj.id == root.id:
+                tree_root = node
+
+            # Pop stack until we find the parent
+            while stack and stack[-1][1] != obj.parent_id:
+                stack.pop()
+
+            if stack:
+                stack[-1][0]["children"].append(node)
+
+            stack.append((node, obj.id))
+
+        if tree_root:
+            trees.append(tree_root)
+
     return trees

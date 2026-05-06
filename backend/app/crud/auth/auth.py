@@ -17,10 +17,136 @@ from app.db.database import get_async_session
 from app.crud.core.instances import get_instance
 from app.crud.core.types import get_type
 from app.crud.core.objects import get_object
+from app.models.core import Instances, Types, Objects
 
 
 
 from fastapi import Depends, HTTPException, status
+
+
+# ---------------------------------------------------------------------------
+# Shared helpers for N+1 query optimization
+# ---------------------------------------------------------------------------
+
+async def _get_instance_object_type_roots(
+    session: AsyncSession, instance_id: int
+) -> tuple[int | None, int | None, int | None]:
+    """
+    Fetch instance + object + type root_ids in a single JOIN query.
+    Returns (instance_root_id, object_root_id, type_root_id) or (None, None, None) if not found.
+    """
+    row = (
+        await session.execute(
+            select(
+                Instances.root_id.label("instance_root_id"),
+                Objects.root_id.label("object_root_id"),
+                Types.root_id.label("type_root_id"),
+            )
+            .join(Objects, Instances.object_id == Objects.id)
+            .join(Types, Objects.type_id == Types.id)
+            .where(Instances.id == instance_id)
+        )
+    ).one_or_none()
+
+    if row is None:
+        return (None, None, None)
+    return (row.instance_root_id, row.object_root_id, row.type_root_id)
+
+
+async def _check_access_with_union_all(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    instance_root_id: int | None,
+    object_root_id: int | None,
+    type_root_id: int | None,
+    write: bool = False,
+) -> bool:
+    """
+    Check read/write access at instance → object → type level using a single UNION ALL query.
+    Returns True if access is granted at any level.
+    """
+    if instance_root_id is None and object_root_id is None and type_root_id is None:
+        return False
+
+    query_parts = []
+
+    if instance_root_id is not None:
+        can_col = UserInstanceAccess.can_write if write else UserInstanceAccess.can_read
+        query_parts.append(
+            select(UserInstanceAccess.root_id)
+            .where(
+                UserInstanceAccess.user_id == user_id,
+                UserInstanceAccess.root_id == instance_root_id,
+                can_col.is_(True),
+            )
+        )
+
+    if object_root_id is not None:
+        can_col = UserObjectAccess.can_write if write else UserObjectAccess.can_read
+        query_parts.append(
+            select(UserObjectAccess.root_id)
+            .where(
+                UserObjectAccess.user_id == user_id,
+                UserObjectAccess.root_id == object_root_id,
+                can_col.is_(True),
+            )
+        )
+
+    if type_root_id is not None:
+        can_col = UserTypeAccess.can_write if write else UserTypeAccess.can_read
+        query_parts.append(
+            select(UserTypeAccess.root_id)
+            .where(
+                UserTypeAccess.user_id == user_id,
+                UserTypeAccess.root_id == type_root_id,
+                can_col.is_(True),
+            )
+        )
+
+    if not query_parts:
+        return False
+
+    from sqlalchemy import union_all
+
+    combined = union_all(*query_parts)
+    result = await session.execute(select(combined.exists()))
+    return result.scalar_one()
+
+
+async def _get_object_type_roots(
+    session: AsyncSession, object_id: int
+) -> tuple[int | None, int | None]:
+    """
+    Fetch object + type root_ids in a single JOIN query.
+    Returns (object_root_id, type_root_id) or (None, None) if not found.
+    """
+    row = (
+        await session.execute(
+            select(
+                Objects.root_id.label("object_root_id"),
+                Types.root_id.label("type_root_id"),
+            )
+            .join(Types, Objects.type_id == Types.id)
+            .where(Objects.id == object_id)
+        )
+    ).one_or_none()
+
+    if row is None:
+        return (None, None)
+    return (row.object_root_id, row.type_root_id)
+
+
+async def _get_type_root(
+    session: AsyncSession, type_id: int
+) -> int | None:
+    """
+    Fetch type root_id in a single query.
+    Returns type_root_id or None if not found.
+    """
+    row = (
+        await session.execute(select(Types.root_id).where(Types.id == type_id))
+    ).one_or_none()
+    return row[0] if row else None
 
 
 async def create_tokens(session: AsyncSession, user: User) -> dict:
@@ -287,14 +413,21 @@ async def _check_type_permission(
     type_id: int,
     write: bool = False
 ):
-    type_obj = await get_type(db, type_id)
-    if not type_obj:
+    # Single query to get type root_id
+    type_root_id = await _get_type_root(db, type_id)
+
+    if type_root_id is None:
         raise HTTPException(status_code=404, detail="Type not found")
 
-    if write:
-        allowed = await user_can_write_type(db, current_user, type_obj.root_id)
-    else:
-        allowed = await user_can_read_type(db, current_user, type_obj.root_id)
+    # Single UNION ALL query to check access (type level only, but use helper for consistency)
+    allowed = await _check_access_with_union_all(
+        db,
+        current_user.id,
+        None,  # instance_root_id not applicable
+        None,  # object_root_id not applicable
+        type_root_id,
+        write=write,
+    )
 
     superuser = await user_is_superuser(db, current_user)
     if not (allowed or superuser):
@@ -319,29 +452,21 @@ async def _check_object_permission(
     object_id: int,
     write: bool = False
 ):
-    object_obj = await get_object(db, object_id)
-    if not object_obj:
-        raise HTTPException(status_code=404, detail="Object not found")
+    # Single JOIN query to get object + type root_ids
+    object_root_id, type_root_id = await _get_object_type_roots(db, object_id)
 
-    # Check direct object access
-    if write:
-        allowed = await user_can_write_object(db, current_user, object_obj.root_id)
-    else:
-        allowed = await user_can_read_object(db, current_user, object_obj.root_id)
+    if object_root_id is None:
+        raise HTTPException(status_code=404, detail="Object (or its type) not found")
 
-    # If not allowed, check parent type access
-    if not allowed:
-
-        if not hasattr(object_obj, 'type_id') or object_obj.type_id is None:
-            raise HTTPException(status_code=500, detail="Object missing type_id")
-        type_obj = await get_type(db, object_obj.type_id)
-        if not type_obj:
-            raise HTTPException(status_code=404, detail="Parent type not found")
-        if write:
-            allowed = await user_can_write_type(db, current_user, type_obj.root_id)
-        else:
-            allowed = await user_can_read_type(db, current_user, type_obj.root_id)
-
+    # Single UNION ALL query to check access at any level
+    allowed = await _check_access_with_union_all(
+        db,
+        current_user.id,
+        None,  # instance_root_id not applicable
+        object_root_id,
+        type_root_id,
+        write=write,
+    )
 
     superuser = await user_is_superuser(db, current_user)
     if not (allowed or superuser):
@@ -367,44 +492,23 @@ async def _check_instance_permission(
     instance_id: int,
     write: bool = False
 ):
-    instance_obj = await get_instance(db, instance_id)
-    if not instance_obj:
-        raise HTTPException(status_code=404, detail="Instance not found")
+    # Single JOIN query to get all root_ids at once
+    instance_root_id, object_root_id, type_root_id = await _get_instance_object_type_roots(
+        db, instance_id
+    )
 
-    # Check direct instance access
-    if write:
-        allowed = await user_can_write_instance(db, current_user, instance_obj.root_id)
-    else:
-        allowed = await user_can_read_instance(db, current_user, instance_obj.root_id)
+    if instance_root_id is None:
+        raise HTTPException(status_code=404, detail="Instance (or its object/type) not found")
 
-    # If not allowed, check parent object access
-    object_obj = None
-    if not allowed:
-
-        if not hasattr(instance_obj, 'object_id') or instance_obj.object_id is None:
-            raise HTTPException(status_code=500, detail="Instance missing object_id")
-        object_obj = await get_object(db, instance_obj.object_id)
-        if not object_obj:
-            raise HTTPException(status_code=404, detail="Parent object not found")
-        if write:
-            allowed = await user_can_write_object(db, current_user, object_obj.root_id)
-        else:
-            allowed = await user_can_read_object(db, current_user, object_obj.root_id)
-
-    # If still not allowed, check grandparent type access
-    if not allowed:
-        # From the object, get type
-        if object_obj is None:
-            raise HTTPException(status_code=500, detail="Parent object not loaded")
-        if not hasattr(object_obj, 'type_id') or object_obj.type_id is None:
-            raise HTTPException(status_code=500, detail="Object missing type_id")
-        type_obj = await get_type(db, object_obj.type_id)
-        if not type_obj:
-            raise HTTPException(status_code=404, detail="Grandparent type not found")
-        if write:
-            allowed = await user_can_write_type(db, current_user, type_obj.root_id)
-        else:
-            allowed = await user_can_read_type(db, current_user, type_obj.root_id)
+    # Single UNION ALL query to check access at any level
+    allowed = await _check_access_with_union_all(
+        db,
+        current_user.id,
+        instance_root_id,
+        object_root_id,
+        type_root_id,
+        write=write,
+    )
 
     superuser = await user_is_superuser(db, current_user)
     if not (allowed or superuser):

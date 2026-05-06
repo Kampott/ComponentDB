@@ -51,7 +51,7 @@ async def check_all_integrity_endpoint(
 
 @router.post("/rebuild-tree")
 async def rebuild_single_tree(
-    scope_type: str = Query(..., regex="^(types|objects|instances)$"),
+    scope_type: str = Query(..., pattern="^(types|objects|instances)$"),
     root_id: int = Query(...),
     delete_old: bool = Query(False),
 
@@ -81,7 +81,7 @@ async def rebuild_single_tree(
 
 @router.post("/rebuild-all")
 async def rebuild_all(
-    scope_type: Optional[str] = Query(None, regex="^(types|objects|instances)$"),
+    scope_type: Optional[str] = Query(None, pattern="^(types|objects|instances)$"),
     delete_old: bool = Query(False),
 
     session: AsyncSession = Depends(get_async_session),

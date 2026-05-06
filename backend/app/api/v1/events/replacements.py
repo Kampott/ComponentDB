@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 import app.crud.events.replacements as db
 from app.core.security import get_current_user
 from app.crud.auth.auth import require_permission as require_permissions
+from app.crud.auth.auth import _get_instance_object_type_roots, _check_access_with_union_all
 from app.db.database import get_async_session
 from app.logging.deps import LogCallable, LoggerInterface
 from app.models.auth import (
@@ -18,7 +19,6 @@ from app.models.auth import (
     UserObjectAccess,
     UserTypeAccess,
 )
-from app.models.core import Instances, Objects, Types
 from app.models.events import Events, Replacements
 from app.schemas.events import ReplacementsCreate, ReplacementsRead
 
@@ -40,53 +40,23 @@ async def _check_instance_write_access(
     if has_super_permission:
         return True
 
-    instance_result = await session.execute(
-        select(Instances).where(Instances.id == instance_id)
+    # Single JOIN query to get instance + object + type root_ids
+    instance_root_id, object_root_id, type_root_id = await _get_instance_object_type_roots(
+        session, instance_id
     )
-    instance = instance_result.scalar_one_or_none()
-    if not instance:
+
+    if instance_root_id is None:
         return False
 
-    object_result = await session.execute(
-        select(Objects).where(Objects.id == instance.object_id)
+    # Single UNION ALL query to check access at any level
+    return await _check_access_with_union_all(
+        session,
+        current_user.id,
+        instance_root_id,
+        object_root_id,
+        type_root_id,
+        write=True,
     )
-    obj = object_result.scalar_one_or_none()
-    if obj is None:
-        return False
-
-    type_result = await session.execute(select(Types).where(Types.id == obj.type_id))
-    type_ = type_result.scalar_one_or_none()
-    if type_ is None:
-        return False
-
-    instance_access = await session.execute(
-        select(UserInstanceAccess).where(
-            UserInstanceAccess.user_id == current_user.id,
-            UserInstanceAccess.root_id == instance.root_id,
-            UserInstanceAccess.can_write.is_(True),
-        )
-    )
-    if instance_access.scalar_one_or_none():
-        return True
-
-    object_access = await session.execute(
-        select(UserObjectAccess).where(
-            UserObjectAccess.user_id == current_user.id,
-            UserObjectAccess.root_id == obj.root_id,
-            UserObjectAccess.can_write.is_(True),
-        )
-    )
-    if object_access.scalar_one_or_none():
-        return True
-
-    type_access = await session.execute(
-        select(UserTypeAccess).where(
-            UserTypeAccess.user_id == current_user.id,
-            UserTypeAccess.root_id == type_.root_id,
-            UserTypeAccess.can_write.is_(True),
-        )
-    )
-    return type_access.scalar_one_or_none() is not None
 
 
 async def _load_user_with_roles(
