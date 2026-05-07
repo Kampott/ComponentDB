@@ -152,17 +152,8 @@ async def get_event_types_for_instance(
     This endpoint bypasses type-level permissions - if you have access to the instance,
     you can see which event types are valid for it.
     """
-    # Check user has READ access to the instance
-    result_user = await session.execute(
-        select(User)
-        .where(User.id == current_user.id)
-        .options(selectinload(User.roles).selectinload(Role.permissions))
-    )
-    user = result_user.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    # Use cached permissions from get_current_user()
+    user_perms = current_user._permissions if hasattr(current_user, '_permissions') else set()
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
     if not has_super_permission:

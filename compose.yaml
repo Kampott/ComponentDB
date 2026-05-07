@@ -189,10 +189,39 @@ services:
       - ./pg_backuper/config.compose.yaml:/app/config.yaml:ro
       - pg_backuper_data:/app/data
     healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/4040'"]
+      test: ["CMD-SHELL", "bash", "-lc", "'exec 3<>/dev/tcp/127.0.0.1/4040'"]
       interval: 2s
       timeout: 5s
       retries: 15
+
+  backend-test:
+    <<: *python_user
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: "no"
+    env_file:
+      - ./backend/.env
+      - ./postgres/python_core/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}_test
+      LOG_DATABASE_URL: postgresql+asyncpg://${LOG_POSTGRES_USER}:${LOG_POSTGRES_PASSWORD}@log_db:5432/${LOG_POSTGRES_DB}_test
+      PYTHONPATH: /app/backend
+    command:
+      - sh
+      - -c
+      - |
+        pytest tests/ -v --tb=short --cov=app --cov-report=term-missing
+    volumes:
+      - ./backend:/app/backend
+      - ./postgres:/app/postgres
+    depends_on:
+      db:
+        condition: service_healthy
+      log_db:
+        condition: service_healthy
+    profiles: ["test"]
+
 
 volumes:
   pgdata:

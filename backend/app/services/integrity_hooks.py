@@ -19,7 +19,11 @@ async def update_merkle_snapshot_no_commit(
         scope_type=scope_type,
         root_id=root_id,
     )
-
+    
+    # Skip creating snapshot if hash is None (e.g., no rows found)
+    if root_hash is None:
+        return None
+    
     snapshot = IntegritySnapshot(
         scope_type=scope_type,
         root_id=root_id,
@@ -28,5 +32,5 @@ async def update_merkle_snapshot_no_commit(
         changed_by_user_id=changed_by_user_id,
     )
     session.add(snapshot)
-    await session.flush()   # только отправка в текущую транзакцию, без commit
+    await session.flush()  # только отправка в текущую транзакцию, без commit
     return root_hash

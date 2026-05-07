@@ -138,17 +138,8 @@ async def read_types(
     # Парсим параметры
     filters = QueryBuilder.parse_query_params(params)
     
-    # Fetch user permissions
-    result_user = await session.execute(
-        select(User)
-        .where(User.id == current_user.id)
-        .options(selectinload(User.roles).selectinload(Role.permissions))
-    )
-    user = result_user.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+     # Use cached permissions from get_current_user()
+    user_perms = current_user._permissions if hasattr(current_user, '_permissions') else set()
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
     # Строим базовый запрос

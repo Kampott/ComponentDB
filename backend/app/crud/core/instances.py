@@ -1,14 +1,13 @@
-from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import joinedload
-from sqlalchemy.future import select
 from sqlalchemy.sql import and_
 
 from app.crud.core.default import DefaultQueries
 from app.crud.core.dfs import recalculate_tree
-from app.models.core import *
-from app.schemas.core import *
+from app.models.core import Instances, Objects
+from app.schemas.core import InstancesCreate, InstancesUpdate
 from typing import List, Optional
 from fastapi import HTTPException, Depends
 
@@ -212,26 +211,38 @@ async def create_instance_for_sub_tree(
         object_parent_id: int,
         instance_parent_id: int,
         instance_root_id: int) -> str | None:
-    query = select(Objects).where(Objects.parent_id == object_parent_id)
-    objects = (await session.execute(query)).scalars().all()
-    if not objects:
-        return None
+    """
+    Iteratively create instances for a sub-tree of objects.
+    Uses an explicit stack to avoid recursion depth issues.
+    """
+    # Stack entries: (object_parent_id, instance_parent_id, instance_root_id)
+    stack = [(object_parent_id, instance_parent_id, instance_root_id)]
 
-    instances_add = [
-        {'name': obj.name, 'root_id': instance_root_id,
-         'object_id': obj.id, 'parent_id': instance_parent_id, 'is_active': True}
-        for obj in objects
-    ]
-    from sqlalchemy.dialects.postgresql import insert as pg_insert
-    query = insert(Instances).values(instances_add).returning(Instances.id)
-    instances_id = (await session.execute(query)).scalars().all()
-    if len(instances_id) != len(objects):
-        return "Something went wrong"
+    while stack:
+        obj_parent_id, inst_parent_id, inst_root_id = stack.pop()
 
-    for obj, instance_id in zip(objects, instances_id):
-        err = await create_instance_for_sub_tree(session, obj.id, instance_id, instance_root_id)
-        if err:
-            return err
+        # Get all child objects
+        query = select(Objects).where(Objects.parent_id == obj_parent_id)
+        objects = (await session.execute(query)).scalars().all()
+        if not objects:
+            continue
+
+        # Bulk insert instances
+        instances_add = [
+            {'name': obj.name, 'root_id': inst_root_id,
+             'object_id': obj.id, 'parent_id': inst_parent_id, 'is_active': True}
+            for obj in objects
+        ]
+        query = pg_insert(Instances).values(instances_add).returning(Instances.id)
+        instances_id = (await session.execute(query)).scalars().all()
+        if len(instances_id) != len(objects):
+            return "Something went wrong"
+
+        # Push children onto stack (reverse order to maintain DFS traversal)
+        for obj, instance_id in reversed(list(zip(objects, instances_id))):
+            stack.append((obj.id, instance_id, inst_root_id))
+
+    return None
 
 async def create_instance_from_object_tree(session: AsyncSession, object_root_id: int) -> Instances | None:
     root_object = (await session.execute(

@@ -19,3 +19,9 @@ pydantic[email]
 grpcio
 grpcio-tools
 protobuf
+
+# Test dependencies
+pytest
+pytest-asyncio
+httpx
+pytest-cov

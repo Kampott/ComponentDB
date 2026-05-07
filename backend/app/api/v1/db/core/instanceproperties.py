@@ -155,7 +155,7 @@ async def delete_instance_property(instance_property_id: int,
 @router.patch("/{instance_property_id}")
 async def update_property_type(instance_property_id: int,
                     data: InstancePropertiesUpdate,
-                    current_user: User = Depends(require_permissions("update_instance_properties")),
+                    current_user: User = Depends(require_permissions("edit_instance_properties")),
                     session: AsyncSession = Depends(get_async_session),
         log: LogCallable = Depends(LoggerInterface("instance_properties"))):
     updated_instance_property = await db.update_instance_property(

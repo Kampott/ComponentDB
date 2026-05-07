@@ -7,7 +7,14 @@ async def periodic_integrity_check(async_session, stop_event: asyncio.Event):
     integrity_interval_hours = float(os.getenv("INTEGRITY_CHECK_INTERVAL_HOURS", "24"))
     interval_seconds = integrity_interval_hours * 3600
 
-    await asyncio.sleep(interval_seconds)
+    # Run first check immediately
+    print("[integrity] Starting initial integrity check...")
+    try:
+        async with async_session() as session:
+            result = await check_all_integrity(session=session)
+        print(f"[integrity] Initial check completed: {result}")
+    except Exception:
+        print(f"[integrity] Initial check failed: {traceback.format_exc()}")
 
     while not stop_event.is_set():  # <- проверка здесь уже есть, но...
         print("[integrity] Starting scheduled integrity check...")

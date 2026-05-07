@@ -50,7 +50,7 @@ async def read_user_roles(
     
     limit: Optional[int] = Query(None, ge=1, le=1000),
     
-    current_user: User = Depends(require_permissions("read_role")),
+    current_user: User = Depends(require_permissions("read_user_role")),
     log: LogCallable = Depends(LoggerInterface("user_roles"))
 ):
     params = {
@@ -87,7 +87,7 @@ async def delete_user_role_endpoint(
     role_id: int,
     user_id: uuid.UUID,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions("delete_role")),
+    current_user: User = Depends(require_permissions("delete_user_role")),
     log: LogCallable = Depends(LoggerInterface("user_roles"))
 ):
     await delete_user_role(session, user_id, role_id)

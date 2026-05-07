@@ -73,17 +73,8 @@ async def read_event_types_types(
     QueryBuilder.validate_params(EventTypesTypes, params, SEARCH_CONFIG[EventTypesTypes])
     filters = QueryBuilder.parse_query_params(params)
     
-    # Fetch user permissions
-    result_user = await session.execute(
-        select(User)
-        .where(User.id == current_user.id)
-        .options(selectinload(User.roles).selectinload(Role.permissions))
-    )
-    user = result_user.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    # Use cached permissions from get_current_user()
+    user_perms = current_user._permissions if hasattr(current_user, '_permissions') else set()
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
     # Build query with JOIN to Types for access control
@@ -130,16 +121,8 @@ async def create_event_types_type(
     _: None = Depends(require_permissions("create_event_types_types")),
     log: LogCallable = Depends(LoggerInterface("event_types_types"))
 ):
-    result_user = await session.execute(
-        select(User)
-        .where(User.id == current_user.id)
-        .options(selectinload(User.roles).selectinload(Role.permissions))
-    )
-    user = result_user.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    # Use cached permissions from get_current_user()
+    user_perms = current_user._permissions if hasattr(current_user, '_permissions') else set()
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
     if not has_super_permission:
@@ -182,16 +165,8 @@ async def delete_event_types_type(
     _: None = Depends(require_permissions("delete_event_types_types")),
     log: LogCallable = Depends(LoggerInterface("event_types_types"))
 ):
-    result_user = await session.execute(
-        select(User)
-        .where(User.id == current_user.id)
-        .options(selectinload(User.roles).selectinload(Role.permissions))
-    )
-    user = result_user.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    # Use cached permissions from get_current_user()
+    user_perms = current_user._permissions if hasattr(current_user, '_permissions') else set()
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
     if not has_super_permission:

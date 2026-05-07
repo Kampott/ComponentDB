@@ -63,17 +63,10 @@ async def _load_user_with_roles(
     session: AsyncSession,
     current_user: User,
 ) -> tuple[User, bool]:
-    result_user = await session.execute(
-        select(User)
-        .where(User.id == current_user.id)
-        .options(selectinload(User.roles).selectinload(Role.permissions))
-    )
-    user = result_user.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
-    return user, "SUPER_PERMISSION" in user_perms
+    # Use cached permissions from get_current_user()
+    if not hasattr(current_user, '_permissions') or current_user._permissions is None:
+        raise HTTPException(status_code=401, detail="User permissions not loaded")
+    return current_user, "SUPER_PERMISSION" in current_user._permissions
 
 
 @router.get("/", response_model=list[ReplacementsRead])

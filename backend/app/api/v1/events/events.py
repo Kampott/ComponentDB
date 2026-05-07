@@ -29,16 +29,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 # Helpers
 # ---------------------------------------------------------------------------
 
-async def _load_user_with_permissions(session: AsyncSession, user_id: int) -> User:
-    """Load user with roles+permissions in a single query. Raises 401 if not found."""
-    result = await session.execute(
-        select(User)
-        .where(User.id == user_id)
-        .options(selectinload(User.roles).selectinload(Role.permissions))
-    )
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+async def _load_user_with_permissions(session: AsyncSession, user: User) -> User:
+    """Use cached permissions from get_current_user(). Raises 401 if not found."""
+    if not hasattr(user, '_permissions') or user._permissions is None:
+        raise HTTPException(status_code=401, detail="User permissions not loaded")
     return user
 
 
@@ -177,8 +171,8 @@ async def read_events(
     QueryBuilder.validate_params(Events, params, SEARCH_CONFIG[Events])
     filters = QueryBuilder.parse_query_params(params)
 
-    user = await _load_user_with_permissions(session, current_user.id)
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    await _load_user_with_permissions(session, current_user)
+    user_perms = current_user._permissions
     has_super_permission = "SUPER_PERMISSION" in user_perms
 
     query = select(Events).join(Instances, Events.instance_id == Instances.id)
@@ -249,8 +243,8 @@ async def create_event(
     _: None = Depends(require_permissions("create_events")),
     log: LogCallable = Depends(LoggerInterface("events"))
 ):
-    user = await _load_user_with_permissions(session, current_user.id)
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    await _load_user_with_permissions(session, current_user)
+    user_perms = current_user._permissions
 
     if "SUPER_PERMISSION" not in user_perms:
         await _require_write_access_to_instance(session, current_user.id, data.instance_id)
@@ -280,8 +274,8 @@ async def delete_event(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    user = await _load_user_with_permissions(session, current_user.id)
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    user = await _load_user_with_permissions(session, current_user)
+    user_perms = current_user._permissions
 
     if "SUPER_PERMISSION" not in user_perms:
         await _require_write_access_to_instance(session, current_user.id, event.instance_id)
@@ -303,8 +297,8 @@ async def update_event(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    user = await _load_user_with_permissions(session, current_user.id)
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    user = await _load_user_with_permissions(session, current_user)
+    user_perms = current_user._permissions
 
     if "SUPER_PERMISSION" not in user_perms:
         await _require_write_access_to_instance(session, current_user.id, event.instance_id)

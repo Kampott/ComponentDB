@@ -247,6 +247,11 @@ async def user_has_role(db: AsyncSession, user: User, role_name: str) -> bool:
 
 
 async def user_has_permission(db: AsyncSession, user: User, permission_name: str) -> bool:
+    # Use cached permissions if available (request-scoped caching)
+    if hasattr(user, '_permissions') and user._permissions is not None:
+        return permission_name in user._permissions or "SUPER_PERMISSION" in user._permissions
+    
+    # Fallback: query from DB if not cached
     result = await db.execute(
         select(User)
         .where(User.id == user.id)
@@ -266,20 +271,24 @@ async def user_has_permission(db: AsyncSession, user: User, permission_name: str
 
 
 async def _check_permission(current_user: User, db: AsyncSession, permission: str):
-    result = await db.execute(
-        select(User)
-        .where(User.id == current_user.id)
-        .options(selectinload(User.roles).selectinload(Role.permissions))
-    )
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    # Use cached permissions if available
+    if hasattr(current_user, '_permissions') and current_user._permissions is not None:
+        user_perms = current_user._permissions
+    else:
+        result = await db.execute(
+            select(User)
+            .where(User.id == current_user.id)
+            .options(selectinload(User.roles).selectinload(Role.permissions))
+        )
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        user_perms = {perm.name for role in user.roles for perm in role.permissions}
+    
     if permission not in user_perms and "SUPER_PERMISSION" not in user_perms:
-        raise HTTPException(status_code=403, detail=f"Insufficent permissions")
+        raise HTTPException(status_code=403, detail=f"Insufficient permissions")
 
-    return user
+    return current_user
 
 def require_permission(permission: str):
     async def dependency(
