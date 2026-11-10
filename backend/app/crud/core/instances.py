@@ -111,10 +111,12 @@ async def create_instance(db: AsyncSession, data: InstancesCreate, changed_by_us
     instance = Instances(**data.model_dump(), root_id=root_id)
     db.add(instance)
     await db.flush()
-    await update_merkle_snapshot_no_commit(
-        db, "instances", root_id, changed_by_user_id
-    )
-    if data.parent_id is None:
+
+    if data.parent_id:
+        await update_merkle_snapshot_no_commit(
+            db, "instances", root_id, changed_by_user_id
+        )
+    else:
         instance.root_id = instance.id
         await db.flush()
         await update_merkle_snapshot_no_commit(

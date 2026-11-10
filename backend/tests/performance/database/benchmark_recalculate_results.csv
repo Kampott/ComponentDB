@@ -1,0 +1,8 @@
+index_variant,operation,mean_ms,stddev_ms,min_ms,max_ms,iterations
+recalc,recalculate_tree_8_nodes,0.863,0.108,0.727,1.085,15
+recalc,recalculate_tree_16_nodes,1.64,0.566,0.905,2.559,15
+recalc,recalculate_tree_35_nodes,1.433,0.048,1.385,1.564,15
+recalc,recalculate_tree_91_nodes,2.876,0.061,2.782,3.008,15
+recalc,recalculate_tree_242_nodes,8.863,6.907,6.736,34.69,15
+recalc,recalculate_tree_749_nodes,28.823,13.282,19.917,52.323,15
+recalc,recalculate_tree_1955_nodes,78.257,18.744,51.81,99.762,15

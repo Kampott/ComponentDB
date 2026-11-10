@@ -60,12 +60,10 @@ def test_create_object_and_verify_hash(client, super_user_headers, created_test_
             obj_id = obj_get.json()[0]["id"]
             created_test_objects["objects"].append(obj_id)
             
-            # Get object tree to verify hash
-            tree_resp = client.get(f"/objects/tree/{obj_id}", headers=super_user_headers)
+            # Get object subtree to verify hash
+            tree_resp = client.get(f"/objects/{obj_id}/subtree", headers=super_user_headers)
             assert tree_resp.status_code == 200
     else:
-        # Object creation might fail due to permissions or other issues
-        # Just verify the type was created
         assert type_resp.status_code == 200
 
 
@@ -93,8 +91,8 @@ def test_integrity_snapshot_endpoint(client, super_user_headers, created_test_ob
         f"/integrity/snapshots/types/{type_id}",
         headers=super_user_headers
     )
-    # Accept 200 (has snapshots), 404 (endpoint doesn't exist), or 403 (no permission)
-    assert snapshot_resp.status_code in [200, 404, 403]
+    # Accept 200 (has snapshots) or 404 (no snapshots yet)
+    assert snapshot_resp.status_code in [200, 404]
 
 
 def test_integrity_check_triggers_on_write(client, super_user_headers, created_test_objects):
@@ -123,5 +121,4 @@ def test_integrity_check_triggers_on_write(client, super_user_headers, created_t
         json={"name": obj_name, "type_id": type_id},
         headers=super_user_headers
     )
-    # The fact that no errors occurred means integrity checks passed
-    assert obj_resp.status_code in [200, 201, 500]  # 500 might be expected if there are issues
+    assert obj_resp.status_code in [200, 201]

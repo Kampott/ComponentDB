@@ -4,6 +4,7 @@ from sqlalchemy.sql import and_
 
 from app.crud.core.default import DefaultQueries
 from app.crud.core.dfs import recalculate_tree
+from app.services.integrity_hooks import update_merkle_snapshot_no_commit
 from app.models.core import *
 from app.schemas.core import *
 from typing import List, Optional
@@ -83,13 +84,15 @@ async def create_object(db: AsyncSession, data: ObjectsCreate, changed_by_user_i
             raise HTTPException(status_code=404, detail="Parent object not found")
         root_id = parent_obj.root_id
 
-        obj = Objects(**data.model_dump(), root_id=root_id)
-        db.add(obj)
-        await db.flush()
+    obj = Objects(**data.model_dump(), root_id=root_id)
+    db.add(obj)
+    await db.flush()
+
+    if data.parent_id:
         await update_merkle_snapshot_no_commit(
             db, "objects", root_id, changed_by_user_id
         )
-    if data.parent_id is None:
+    else:
         obj.root_id = obj.id
         await db.flush()
         await update_merkle_snapshot_no_commit(

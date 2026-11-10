@@ -121,8 +121,7 @@ def test_move_type_creates_invalid_tree(client, super_user_headers, created_test
             f"/types/{root_id}/move?new_parent_id={child_id}",
             headers=super_user_headers
         )
-        # Should get 400 (bad request) or 422 (validation error)
-        assert move_resp.status_code in [400, 422, 409]
+        assert move_resp.status_code == 400
 
 
 def test_get_nonexistent_type_subtree(client, super_user_headers):

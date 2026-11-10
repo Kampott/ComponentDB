@@ -1,0 +1,10 @@
+index_variant,operation,mean_ms,stddev_ms,min_ms,max_ms,iterations,table_mb,indexes_mb,total_mb
+A,db_size_with_index,0.0,0.0,0.0,0.0,1,12.34,23.20,35.57
+A,insert,0.421,0.004,0.413,0.426,10,,,
+A,delete,1.073,0.194,0.929,1.936,100,,,
+A,select_dfs,0.153,0.077,0.13,0.877,100,,,
+A,select_root_id,0.117,0.022,0.109,0.327,100,,,
+A,select_recursive_cte,0.113,0.047,0.097,0.533,100,,,
+B,db_size_with_index,0.0,0.0,0.0,0.0,1,13.62,22.29,35.95
+B,insert,0.418,0.013,0.401,0.451,10,,,
+B,delete,0.985,0.054,0.928,1.404,100,,,

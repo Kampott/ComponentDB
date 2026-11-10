@@ -95,10 +95,10 @@ def test_read_types_without_permission(client, super_user_headers, created_test_
     token = login_resp.json()["access_token"]
     user_headers = {"Authorization": f"Bearer {token}"}
     
-    # Try to read types - should fail with 403 (no permission)
+    # User has valid JWT but no permissions — endpoint returns 200 with filtered (empty) list
     types_resp = client.get("/types/", headers=user_headers)
-    # Either 403 (forbidden) or 200 if endpoint doesn't require auth
-    assert types_resp.status_code in [200, 403]
+    assert types_resp.status_code == 200
+    assert isinstance(types_resp.json(), list)
 
 
 def test_assign_role_to_user(client, super_user_headers, created_test_objects):
@@ -130,8 +130,7 @@ def test_assign_role_to_user(client, super_user_headers, created_test_objects):
                     f"/users/{user_id}/roles/{role_id}",
                     headers=super_user_headers
                 )
-                # Should succeed
-                assert assign_resp.status_code in [200, 201, 204]
+                assert assign_resp.status_code == 200
                 break
 
 

@@ -5,8 +5,7 @@ import time
 def test_root_endpoint(client):
     """Test that the API root responds."""
     response = client.get("/")
-    # Adjust based on your actual root endpoint
-    assert response.status_code in [200, 404, 422]  # Accept various responses
+    assert response.status_code == 404  # No root endpoint exists
 
 
 def test_auth_login_wrong_credentials(client):
@@ -36,15 +35,13 @@ def test_register_requires_permission(client):
         "/auth/register",
         json={"email": f"regtest_{timestamp}@example.com", "password": "test123"}
     )
-    # Should be 401 (unauthorized - no token) or 403 (no permission)
-    assert response.status_code in [401, 403]
+    assert response.status_code == 401  # no auth header → Unauthorized
 
 
 def test_access_protected_endpoint_without_token(client):
     """Test that protected endpoints reject requests without token."""
     response = client.get("/types/")
-    # Should be 401 (unauthorized) if endpoint requires auth
-    assert response.status_code in [200, 401, 403]
+    assert response.status_code in [401, 403]  # requires auth
 
 
 def test_access_protected_endpoint_with_invalid_token(client):
